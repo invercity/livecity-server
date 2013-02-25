@@ -1,0 +1,58 @@
+html { height: 100% }
+body { height: 100%; margin: 0px; padding: 0px}
+#map_canvas { height: 95%}
+#head {
+    height: 26px;
+    background: url("../img/green.png") ;
+    display: block;
+}
+#head ul {
+    padding: 0;
+    margin: 0;
+}
+
+#head li {
+    display: inline;
+}
+
+#head li .menu-first, .menu, .next{
+    background: transparent;
+    padding-bottom: 2px;
+    border: 0;
+    padding-right: 12px;
+    padding-left: 12px;
+    margin-left: 0;
+    margin-right: 0;    
+    list-style-type: none;
+    color: white;
+    font: 15px/20px sans-serif;
+    cursor: pointer;
+}
+
+#head li .menu-first {
+    margin-left: 10%;
+}
+
+#head li .menu-first:hover {
+    background: green;
+    height: 100%;
+    padding-top: 3px;
+}
+
+#head li .menu:hover {
+    background: green;
+    height: 100%;
+    padding-top: 3px;
+}
+
+#head li .next {
+}
+
+#head li input {
+    font: 12px/19px sans-serif; 
+    text-indent: 3px;
+    padding: 5px 0 3px 0;
+    height: 16px;
+    width: 210px;
+    border: 2px transparent;
+}
