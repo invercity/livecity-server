@@ -1,5 +1,5 @@
 // place station in selected place
-function placeStation(map,a,b,name) {
+function placeStation(map,id,a,b,name) {
     var pos = new google.maps.LatLng(a,b);
     var img = new google.maps.MarkerImage('./engine/img/stop.png',
 	new google.maps.Size(30,30),
@@ -13,6 +13,7 @@ function placeStation(map,a,b,name) {
         icon: img,
         title: name,
         zindex: 15,
+        id: id,
         draggable: false
     });
     return marker;
@@ -34,14 +35,14 @@ function putMarker(map,location) {
   return marker; 
 }
 
-function setDraggable(arr) {
-    for (var i=0;i<arr.length;i++)
-        arr[i].set("draggable","true");
+function setDraggable(val) {
+    for (var i=0;i<val.length;i++)
+    val[i].set("draggable","true");
 }
 
-function unsetDraggable(arr) {
-    for (var i=0;i<arr.length;i++)
-        arr[i].set("draggable","");
+function unsetDraggable(val) {
+    for (var i=0;i<val.length;i++)
+    val[i].set("draggable","false");
 }
 
 

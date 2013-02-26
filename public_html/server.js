@@ -76,21 +76,26 @@ http.createServer(function (request, response) {
               });
           }
           if (values['type'] == "SEND_STATION") {
-              connection.query("INSERT INTO stations(pos_a,pos_b,name) VALUES('" + values['pos_a'] + "','" + 
-                  values['pos_b'] + "','" + values['name'] + "');");
+              if (values['id'][0] == 'i')
+                  connection.query("INSERT INTO stations(pos_a,pos_b,name) VALUES('" + 
+                      values['pos_a'] + "','" + values['pos_b'] + "','" + values['name'] + "');");
+              else connection.query("UPDATE stations SET pos_a='" + values['pos_a'] + "',pos_b='" + 
+                        values['pos_b'] + "',name='" + values['name'] + "' WHERE id='" + 
+                        values['id'] + "';");
               connection.query("SELECT id FROM stations WHERE pos_a = '" + values['pos_a'] + 
-                  "' AND pos_b = '" + values['pos_b'] + "';", function (error, rows, fields) {
-                        response.writeHead(200, {
-                        'Content-Type': 'x-application/json',
-                        'Access-Control-Allow-Origin' : 'http://localhost:8383'
-                        });
-                        // sending JSON data
-                        response.end(JSON.stringify(rows));
+                        "' AND pos_b = '" + values['pos_b'] + "';", function (error, rows, fields) {
+                            response.writeHead(200, {
+                                 'Content-Type': 'x-application/json',
+                                 'Access-Control-Allow-Origin' : 'http://localhost:8880'
+                            });
+                            // sending JSON data
+                            response.end(JSON.stringify(rows));
               });
           }
           // end type checking
        });
    }
+
    
 }).listen(8888);
    

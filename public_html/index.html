@@ -53,18 +53,26 @@
                   //  addToList(stations[i].position);
                     // click handler
                     google.maps.event.addListener(stations[i], 'click', function(event) {
-                        markerClick(this.position,"");
+                        //setDraggable(stations[i]);
+                        markerClick(this.id,this.position,this.title,1);
                     });
                     // drag handler
                     google.maps.event.addListener(stations[i], 'drag', function(event) {
-                        markerClick(this.position,"");
+                        markerClick(this.id,this.position,this.title,0);
                     });
                 }
             });
+            
+            //focus lost function {
+            $('#label_name').focusout(function (event) {
+            
+            })
             // Close & save edit pane click handler
             $("#close_edit").click(function () {
+                //console.log("id=" + $('#label_id').text());
                 var senddata = '{"type" : "SEND_STATION",\n\
-                        "pos_a" : "' + $('#label_posx').text() + 
+                        "id" : "' + $('#label_id').text() + 
+                     '","pos_a" : "' + $('#label_posx').text() + 
                      '","pos_b" : "' + $('#label_posy').text() + 
                      '","name" : "' + $('#label_name').val() + '"}';
                 $.ajax({
@@ -76,11 +84,18 @@
                     //contentType: "charset=utf-8",
                     cache: false,
                     success: function(result) {
-                        // here we must set the id, which was returned with response
-                        console.log(result);
+                        var value = $('#label_id').text();
+                        if (value[0] == 'i') {
+                            var id = result[0];
+                            var num = value.substring(2,value.length);
+                            stations[num].set("id",id['id']);
+                            $('#label_id').text(id['id']);
+                        }
                     }
+                    
                 })
-                $('#cancel_edit').click(); 
+                console.log("saved");
+                //$('#cancel_edit').click(); 
             });
             // Cancel edit click handler 
             $("#cancel_edit").click(function () {
@@ -98,6 +113,8 @@
                 //clear fields
                 $("#label_posx").text("");
                 $("#label_posy").text("");
+                $("#label_name").val("");
+                $("#label_id").text("");
             });
         
           $.ajax({
@@ -112,7 +129,7 @@
                     for (var i=0;i<result.length;i++) {
                         var station = result[i];
                         //console.log(station['name']);  
-                        stations.push(placeStation(map,station['pos_a'],station['pos_b'],
+                        stations.push(placeStation(map,station['id'],station['pos_a'],station['pos_b'],
                         station['name']));
                     }
                 }
@@ -145,6 +162,7 @@
         <center> Editing stations </center>
         <div>
             <div class="labels">
+                <div id="label_id" style="display: none"></div>
                 <div class="edit_labels"> Latitude: </div>
                 <div class="edit_values" id="label_posx"> &nbsp; </div>
                 <div class="edit_labels"> Longitude: </div>

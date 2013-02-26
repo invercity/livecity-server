@@ -25,24 +25,29 @@ function onEscape(e) {
 }
 
 // get latLng from marker and set edits
-function markerClick(latLng,name) {
+function markerClick(id,latLng,name,focus) {
     var lat = latLng.lat();
     var lng = latLng.lng();
     $("#label_posx").text(Number(lat).toFixed(6)); 
     $("#label_posy").text(Number(lng).toFixed(6));
     $("#label_name").val(name);
-    $('#label_name').focus();
+    $('#label_name').focusout();
+    if (focus==1) $('#label_name').focus();
+    $('#label_id').text(id);
+    
 }
 
 function addMarkerMap(map,stations,latLng) {
     stations.push(putMarker(map,latLng));
-    markerClick(latLng,"");
+    var title = "id";
+    title+=stations.length-1;
+    markerClick(title,latLng,title,1);
     // add handler for new marker
     google.maps.event.addListener(stations[stations.length-1], 'click', function(event) {
-          markerClick(this.position);
+          markerClick(this.id,this.position,this.title,1);
     });
     google.maps.event.addListener(stations[stations.length-1], 'drag', function(event) {
-          markerClick(this.position);
+          markerClick(this.id,this.position,this.title,0);
     });
 }
 
