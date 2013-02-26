@@ -63,6 +63,23 @@
             });
             // Close & save edit pane click handler
             $("#close_edit").click(function () {
+                var senddata = '{"type" : "SEND_STATION",\n\
+                        "pos_a" : "' + $('#label_posx').text() + 
+                     '","pos_b" : "' + $('#label_posy').text() + 
+                     '","name" : "' + $('#label_name').val() + '"}';
+                $.ajax({
+                    datatype: 'jsonp',
+                    type: 'POST',
+                    url: 'http://localhost:8888',
+                    data: senddata,
+                    jsonp: 'callback',
+                    //contentType: "charset=utf-8",
+                    cache: false,
+                    success: function(result) {
+                        // here we must set the id, which was returned with response
+                        console.log(result);
+                    }
+                })
                 $('#cancel_edit').click(); 
             });
             // Cancel edit click handler 
@@ -85,13 +102,16 @@
         
           $.ajax({
                 datatype: 'jsonp',
+                type: 'POST',
                 url: 'http://localhost:8888',
-                data: 'id=testdata',
+                //contentType: "charset=utf-8",
+                data: '{"type" : "GET_STATION"}',
                 jsonp: 'callback',
                 cache: false,
                 success: function(result) {
                     for (var i=0;i<result.length;i++) {
                         var station = result[i];
+                        //console.log(station['name']);  
                         stations.push(placeStation(map,station['pos_a'],station['pos_b'],
                         station['name']));
                     }

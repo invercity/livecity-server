@@ -4,7 +4,7 @@ function placeStation(map,a,b,name) {
     var img = new google.maps.MarkerImage('./engine/img/stop.png',
 	new google.maps.Size(30,30),
 	new google.maps.Point(0,0),
-	new google.maps.Point(0,0)
+	new google.maps.Point(15,20)
     );
     
     marker = new google.maps.Marker({
@@ -24,7 +24,7 @@ function putMarker(map,location) {
   var img = new google.maps.MarkerImage('./engine/img/stop.png',
 	new google.maps.Size(30,30),
 	new google.maps.Point(0,0),
-	new google.maps.Point(20,20));
+	new google.maps.Point(15,20));
   marker = new google.maps.Marker({
       position: location, 
       map: map,

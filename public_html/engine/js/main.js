@@ -13,6 +13,7 @@ function initialize() {
                 // creating map with specific settings
                 var map = new google.maps.Map(document.getElementById("map_canvas"), settings);
                 return map;
+                //document.getElementById('label_posx').
 }
 
 function onEdit() {
