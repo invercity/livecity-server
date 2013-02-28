@@ -1,7 +1,9 @@
 #edit_marker {
     position: absolute;
     right: 0;
-    width: 15%;
+    padding: 0;
+    margin: 0;
+    width: 18%;
     height: 94%;
     padding-top: 10px;
     background: #eeefee;
@@ -10,8 +12,22 @@
     font-weight: bolder;
     opacity: 0.8;
     display: none;
-    border-left: 1px inset activeborder;
     cursor: default;
+}
+
+#close_button {
+    background:  url('../img/close.png') transparent no-repeat;
+    border: none;
+    width: 20px;
+    margin-left: 0;
+    height: 20px;
+    position: relative;
+    padding-top: 4px;
+}
+
+.edit_marker_title {
+    float: inside;
+    margin-left: 40%;
 }
 
 .edit_controls button{
@@ -43,7 +59,7 @@
 .labels .edit_labels {
     margin-top: 8px;
     margin-bottom: 8px;
-    font: 13px/16px Arial;
+    font: 15px/16px Arial;
 }
 
 .labels input {

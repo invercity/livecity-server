@@ -13,20 +13,22 @@ body { height: 100%; margin: 0px; padding: 0px}
 
 #head li {
     display: inline;
+    margin: 0;
+    padding:0;
 }
 
 #head li .menu-first, .menu, .next{
     background: transparent;
     padding-bottom: 2px;
+    padding-top: 3px;
     border: 0;
     padding-right: 12px;
-    padding-left: 12px;
-    margin-left: 0;
-    margin-right: 0;    
+    padding-left: 12px; 
     list-style-type: none;
     color: white;
     font: 15px/20px sans-serif;
     cursor: pointer;
+    margin: 0;
 }
 
 #head li .menu-first {
@@ -36,23 +38,38 @@ body { height: 100%; margin: 0px; padding: 0px}
 #head li .menu-first:hover {
     background: green;
     height: 100%;
-    padding-top: 3px;
+    margin-top: 0;
 }
 
 #head li .menu:hover {
     background: green;
     height: 100%;
-    padding-top: 3px;
+    
 }
 
-#head li .next {
+#head li .next:hover {
+    background: green;
+    height: 100%;
 }
 
 #head li input {
     font: 12px/19px sans-serif; 
     text-indent: 3px;
-    padding: 5px 0 3px 0;
-    height: 16px;
+    padding: 8px 0 4px 0;
+    height: 13px;
     width: 210px;
     border: 2px transparent;
+}
+
+#tootltip {
+    position: relative;
+    left: -50%;
+    font: 14px/19px sans-serif; 
+    color: #0c2233;
+    background: rgba(0,255,0,0.8);
+    padding: 4px;
+    border-radius: 4px;
+    z-index: 20;
+    text-align: center;
+    display: none;
 }

@@ -2,7 +2,7 @@
 <html lang="ru">
   <head>
     <meta charset="utf-8">
-    <title> Livecity - official page </title>
+    <title> Livecity </title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="author" content="invercity" >
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
@@ -12,10 +12,27 @@
     <script src="./engine/js/jquery-1.9.1.min.js"></script>
     <script src="./engine/js/main.js"></script>
     <script src="./engine/js/stations.js"></script>
+    <script src="./engine/js/ajax.js"></script>
     <script type="text/javascript">
         var map;
         var stations = [];
         var transport = [];
+        // function for changing current marker
+        function setCurrent(station) {
+                // just unset current marker 
+                if (station == -1) {
+                    prepos = $('#pos').text();
+                    if (prepos != -1) stations[prepos].setIcon(getMarkerIcon(1));
+                    $('#pos').text(-1);
+                }
+                pos = stations.indexOf(station);
+                if (pos != -1) {
+                    prepos = $('#pos').text();
+                    if (prepos != -1) stations[prepos].setIcon(getMarkerIcon(1));
+                    $('#pos').text(pos);
+                    station.setIcon(getMarkerIcon(2));
+                }
+       }
     </script>
     
     <!-- STYLES -->
@@ -26,117 +43,18 @@
   
     <!-- AJAX -->
     <script type="text/javascript">
+    // init document
     $(document).ready( function() {
-
-            // Edit button click function
-            document.documentElement.onkeydown = function(e) {
-                    if (e.keyCode==27) $('#close_edit').click(); 
-            };
-            
-            $("#edit").click(function () {
-                //document.getElementById('edit_marker').style.display = 'block';
-                $('#edit_marker').show('500');
-                map.setOptions({ draggableCursor: 'crosshair'});
-                //escape handler
-                document.documentElement.onkeydown = function(e) {
-                    if (e.keyCode==27) $('#cancel_edit').click(); 
-                };
-                //click handler
-                google.maps.event.addListener(map, 'click', function(event){
-                    addMarkerMap(map,stations,event.latLng);
-                });
-                // enable drag markers
-                setDraggable(stations);
-                //add marker handler
-                for (var i=0;i<stations.length;i++) {
-                    //adding to list
-                  //  addToList(stations[i].position);
-                    // click handler
-                    google.maps.event.addListener(stations[i], 'click', function(event) {
-                        //setDraggable(stations[i]);
-                        markerClick(this.id,this.position,this.title,1);
-                    });
-                    // drag handler
-                    google.maps.event.addListener(stations[i], 'drag', function(event) {
-                        markerClick(this.id,this.position,this.title,0);
-                    });
-                }
-            });
-            
-            //focus lost function {
-            $('#label_name').focusout(function (event) {
-            
-            })
-            // Close & save edit pane click handler
-            $("#close_edit").click(function () {
-                //console.log("id=" + $('#label_id').text());
-                var senddata = '{"type" : "SEND_STATION",\n\
-                        "id" : "' + $('#label_id').text() + 
-                     '","pos_a" : "' + $('#label_posx').text() + 
-                     '","pos_b" : "' + $('#label_posy').text() + 
-                     '","name" : "' + $('#label_name').val() + '"}';
-                $.ajax({
-                    datatype: 'jsonp',
-                    type: 'POST',
-                    url: 'http://localhost:8888',
-                    data: senddata,
-                    jsonp: 'callback',
-                    //contentType: "charset=utf-8",
-                    cache: false,
-                    success: function(result) {
-                        var value = $('#label_id').text();
-                        if (value[0] == 'i') {
-                            var id = result[0];
-                            var num = value.substring(2,value.length);
-                            stations[num].set("id",id['id']);
-                            $('#label_id').text(id['id']);
-                        }
-                    }
-                    
-                })
-                console.log("saved");
-                //$('#cancel_edit').click(); 
-            });
+            // Edit stations click handler
+            $("#edit").click(function () { editClick(map,stations); }); 
+            // Close edit panel handler
+            $("#save_edit").click(function () { saveStation(stations)});
             // Cancel edit click handler 
-            $("#cancel_edit").click(function () {
-                $('#edit_marker').hide('500');
-                map.setOptions({ draggableCursor: 'pointer'});
-                //unset click handler
-                google.maps.event.clearListeners(map, 'click');
-                //unset marler click handler
-                for (var i=0;i<stations.length;i++) {
-                    google.maps.event.clearListeners(stations, 'click');
-                    google.maps.event.clearListeners(stations, 'drag');
-                }
-                // disable drag markers
-                unsetDraggable(stations);
-                //clear fields
-                $("#label_posx").text("");
-                $("#label_posy").text("");
-                $("#label_name").val("");
-                $("#label_id").text("");
-            });
-        
-          $.ajax({
-                datatype: 'jsonp',
-                type: 'POST',
-                url: 'http://localhost:8888',
-                //contentType: "charset=utf-8",
-                data: '{"type" : "GET_STATION"}',
-                jsonp: 'callback',
-                cache: false,
-                success: function(result) {
-                    for (var i=0;i<result.length;i++) {
-                        var station = result[i];
-                        //console.log(station['name']);  
-                        stations.push(placeStation(map,station['id'],station['pos_a'],station['pos_b'],
-                        station['name']));
-                    }
-                }
-            });
-        });
-        
-    //});
+            $("#close_button").click(function () {closeEditor(map,stations)});
+            // remove button click
+            $("#delete_edit").click(function () {deleteStation(stations)});
+            // load required data from server
+    });
     </script>
     </head>
     
@@ -145,37 +63,47 @@
         <div id="head"> 
         <ul>
             <li>
-                <button class="menu-first" id="staions"> Stations </button>
+                <button class="menu-first" id="staions"> Места </button>
             </li>
             <li>
-                <button class="menu" id="routes"> Routes </button>
+                <button class="menu" id="routes"> Маршруты </button>
             </li>
             <li>  
-                <input type="text" id="searchpane" placeholder="Search places...">
+                <input type="text" id="searchpane" placeholder="Искать...">
             </li>
             <li>
-                <button class="next" id="edit">Edit</button>
+                <button class="next" id="edit">Редактировать места</button>
             </li>
+            <li><div class="infobox"> lalal <span> ++++ </span></div></li>
         </ul>
+            
     </div>
     <div id="edit_marker"> 
-        <center> Editing stations </center>
-        <div>
+         <div class="edit_marker_title">
+             <div style="margin-left: -50%"> Редактирование Мест 
+                 <button id="close_button" title="Закрыть">  
+                 </button> 
+             </div>
+             
+         </div> 
+         <div>
             <div class="labels">
-                <div id="label_id" style="display: none"></div>
-                <div class="edit_labels"> Latitude: </div>
-                <div class="edit_values" id="label_posx"> &nbsp; </div>
-                <div class="edit_labels"> Longitude: </div>
-                <div class="edit_values" id="label_posy"> &nbsp;</div>
-                <div class="edit_labels"> Name: </div>
+                <div id="old_a" style="display: none"></div>
+                <div id="old_b" style="display: none"></div>
+                <div id="pos" style="display: none"> -1 </div>
+                <div class="edit_labels"> Широта: </div>
+                <div class="edit_values" id="label_posx">  </div>
+                <div class="edit_labels"> Долгота: </div>
+                <div class="edit_values" id="label_posy"> </div>
+                <div class="edit_labels"> Название: </div>
                 <input id="label_name" type="text">
             </div>
             <div class="edit_controls">
-                <button id='close_edit'> Save </button>
-                <button id='cancel_edit' style="float: right; margin-right: 10px"> Cancel </button>
+                <button id='save_edit'> Сохранить </button>
+                <button id='delete_edit'> Удалить </button>
             </div>
             <div class="tab_control">
-                <center> List of stations: </center>
+                <center> Список мест: </center>
             </div>
             <div id="marker_list">
                 <ul id="ul_list">
@@ -184,5 +112,11 @@
         </div>
     </div>
     <div id="map_canvas"></div>
+    <div style="position: absolute; left: 50%; bottom: 2%;">
+        <div id="tootltip">
+            Данные сохранены
+        </div>
+    </div>
+        
  </body>
  </html>

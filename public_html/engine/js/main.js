@@ -12,42 +12,56 @@ function initialize() {
                 };
                 // creating map with specific settings
                 var map = new google.maps.Map(document.getElementById("map_canvas"), settings);
+                $.ajax({
+                datatype: 'jsonp',
+                type: 'POST',
+                url: 'http://localhost:8888',
+                data: '{"type" : "GET_STATION"}',
+                jsonp: 'callback',
+                cache: true,
+                success: function(result) {
+                    //data1 = JSON.parse(result);
+                    
+                    for (var i=0;i<result.length;i++) {
+                        var station = result[i];
+                        stations.push(placeStation(map,station['id'],station['pos_a'],station['pos_b'],
+                        station['name']));
+                    }
+                }
+                });
                 return map;
-                //document.getElementById('label_posx').
-}
-
-function onEdit() {
-    document.getElementById('edit_marker').style.display = "";
-}
-
-function onEscape(e) {
-    if (e.keyCode==27) $('#close_edit').click(); 
 }
 
 // get latLng from marker and set edits
-function markerClick(id,latLng,name,focus) {
+function markerClick(latLng,name,focus) {
     var lat = latLng.lat();
     var lng = latLng.lng();
-    $("#label_posx").text(Number(lat).toFixed(6)); 
-    $("#label_posy").text(Number(lng).toFixed(6));
+    $("#label_posx").text(Number(lat).toFixed(4)); 
+    $("#label_posy").text(Number(lng).toFixed(4));
     $("#label_name").val(name);
-    $('#label_name').focusout();
-    if (focus==1) $('#label_name').focus();
-    $('#label_id').text(id);
-    
+    if (focus == 1) $('#label_name').focus();
 }
 
 function addMarkerMap(map,stations,latLng) {
-    stations.push(putMarker(map,latLng));
-    var title = "id";
-    title+=stations.length-1;
-    markerClick(title,latLng,title,1);
+    var title = "id" + (stations.length);
+    stations.push(putMarker(map,latLng,title));
+    markerClick(latLng,title,1);
     // add handler for new marker
     google.maps.event.addListener(stations[stations.length-1], 'click', function(event) {
-          markerClick(this.id,this.position,this.title,1);
+          markerClick(this.position,this.title,1);
+          setOld(this.position.lat(),this.position.lng());
+          setCurrent(this);
     });
     google.maps.event.addListener(stations[stations.length-1], 'drag', function(event) {
-          markerClick(this.id,this.position,this.title,0);
+        var name = $('#label_name').val();
+          markerClick(this.position,name,0);
+    });
+    google.maps.event.addListener(stations[stations.length-1], 'dragstart', function(event) {
+                        setOld(event.latLng.lat(),event.latLng.lng());
+                        setCurrent(this);
+    });
+    google.maps.event.addListener(stations[stations.length-1], 'dragend', function(event) {
+                        saveStation(stations);
     });
 }
 
@@ -56,6 +70,12 @@ function addToList(value){
     var li = document.createElement('LI'); 
     li.innerHTML = value;
     list.appendChild(li);
+}
+
+// save previos values
+function setOld(a,b) {
+    $('#old_a').text(Number(a).toFixed(4));
+    $('#old_b').text(Number(b).toFixed(4));
 }
 
 

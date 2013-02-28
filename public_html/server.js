@@ -51,7 +51,6 @@ http.createServer(function(request,response) {
 http.createServer(function (request, response) {
     // check request type
    if (request.method == "POST") {
-       console.log("new POST connection");
        // data buffer
        var data = '';
        // getting data chunks
@@ -62,7 +61,6 @@ http.createServer(function (request, response) {
        request.on('end', function () {
           // parsing JSON
           var values = JSON.parse(data);
-          console.log("type = " + values['type']);
           // if webpage requires load stations
           if (values['type'] == "GET_STATION") {
               connection.query("SELECT * FROM stations", function (error, rows, fields) {
@@ -72,16 +70,33 @@ http.createServer(function (request, response) {
                     });
                     // sending JSON data
                     response.end(JSON.stringify(rows));
+                    console.log('data was send');
                     //console.log(JSON.stringify(rows));
               });
           }
           if (values['type'] == "SEND_STATION") {
-              if (values['id'][0] == 'i')
-                  connection.query("INSERT INTO stations(pos_a,pos_b,name) VALUES('" + 
-                      values['pos_a'] + "','" + values['pos_b'] + "','" + values['name'] + "');");
-              else connection.query("UPDATE stations SET pos_a='" + values['pos_a'] + "',pos_b='" + 
+              // check FLOAT type
+              var old_a = values['old_a'];
+              var old_b = values['old_b'];
+              while (old_a[old_a.length-1] == '0') old_a = old_a.substring(0,old_a.length-1);
+              while (old_b[old_b.length-1] == '0') old_b = old_b.substring(0,old_b.length-1);
+              connection.query("SELECT id FROM stations WHERE cast(pos_a as char) = " + old_a + 
+                   " AND cast (pos_b as char) = " + old_b + ";", function (error, rows, fields) {
+                   //insert new
+                   if ((error) || (rows.length == 0)) {
+                         connection.query("INSERT INTO stations(pos_a,pos_b,name) VALUES('" + 
+                         values['pos_a'] + "','" + values['pos_b'] + "','" + values['name'] + "');");
+                   }
+                   // update such station
+                   else {
+                       //console.log(row['id']);
+                       var row = rows[0];
+                       connection.query("UPDATE stations SET pos_a='" + values['pos_a'] + "',pos_b='" + 
                         values['pos_b'] + "',name='" + values['name'] + "' WHERE id='" + 
-                        values['id'] + "';");
+                        row['id'] + "';");
+                   }
+              });
+              
               connection.query("SELECT id FROM stations WHERE pos_a = '" + values['pos_a'] + 
                         "' AND pos_b = '" + values['pos_b'] + "';", function (error, rows, fields) {
                             response.writeHead(200, {
@@ -93,6 +108,23 @@ http.createServer(function (request, response) {
               });
           }
           // end type checking
+          if (values['type'] == "DELETE_STATION") {
+              // check FLOAT type
+              var old_a = values['pos_a'];
+              var old_b = values['pos_b'];
+              while (old_a[old_a.length-1] == '0') old_a = old_a.substring(0,old_a.length-1);
+              while (old_b[old_b.length-1] == '0') old_b = old_b.substring(0,old_b.length-1);
+              connection.query("DELETE FROM stations WHERE cast(pos_a as char) = " + old_a + 
+                   " AND cast (pos_b as char) = " + old_b + ";", function (error, rows, fields) {
+                   if (!error) console.log("removed succ");
+              });
+              response.writeHead(200, {
+                   'Content-Type': 'x-application/json',
+                   'Access-Control-Allow-Origin' : 'http://localhost:8880'
+              });
+              // sending JSON data
+              response.end(JSON.stringify("result : ok"));
+          }
        });
    }
 
