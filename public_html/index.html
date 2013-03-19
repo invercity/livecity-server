@@ -25,7 +25,9 @@
                     if (prepos != -1) stations[prepos].setIcon(getMarkerIcon(1));
                     $('#pos').text(-1);
                 }
+                
                 pos = stations.indexOf(station);
+                console.log(pos);
                 if (pos != -1) {
                     prepos = $('#pos').text();
                     if (prepos != -1) stations[prepos].setIcon(getMarkerIcon(1));
@@ -74,7 +76,6 @@
             <li>
                 <button class="next" id="edit">Редактировать места</button>
             </li>
-            <li><div class="infobox"> lalal <span> ++++ </span></div></li>
         </ul>
             
     </div>

@@ -54,7 +54,7 @@ function saveStation(stations) {
                 $.ajax({
                     datatype: 'jsonp',
                     type: 'POST',
-                    url: 'http://localhost:8888',
+                    url: 'http://localhost:9090/',
                     data: senddata,
                     jsonp: 'callback',
                     //contentType: "charset=utf-8",
@@ -81,7 +81,7 @@ function deleteStation(stations) {
     $.ajax({
           datatype: 'jsonp',
           type: 'POST',
-          url: 'http://localhost:8888',
+          url: 'http://localhost:9090/',
           data: senddata,
           jsonp: 'callback',
           //contentType: "charset=utf-8",

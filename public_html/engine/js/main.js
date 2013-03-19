@@ -13,12 +13,12 @@ function initialize() {
                 // creating map with specific settings
                 var map = new google.maps.Map(document.getElementById("map_canvas"), settings);
                 $.ajax({
-                datatype: 'jsonp',
+                datatype: 'json',
                 type: 'POST',
-                url: 'http://localhost:8888',
+                url: 'http://localhost:9090/',
                 data: '{"type" : "GET_STATION"}',
-                jsonp: 'callback',
-                cache: true,
+               // json: 'callback',
+               // cache: true,
                 success: function(result) {
                     //data1 = JSON.parse(result);
                     
@@ -27,6 +27,8 @@ function initialize() {
                         stations.push(placeStation(map,station['id'],station['pos_a'],station['pos_b'],
                         station['name']));
                     }
+                    makeRoute(map,stations[2],stations[9]);
+                    makeRoute(map,stations[18],stations[2]);
                 }
                 });
                 return map;
@@ -76,6 +78,31 @@ function addToList(value){
 function setOld(a,b) {
     $('#old_a').text(Number(a).toFixed(4));
     $('#old_b').text(Number(b).toFixed(4));
+}
+
+function makeRoute(map,placeA,placeB) {
+    var directionsService = new google.maps.DirectionsService();
+    var directions = new google.maps.DirectionsRenderer();
+    directions.setMap(map); 
+    var request = {
+        origin:placeA.getPosition(),
+        destination:placeB.getPosition(),
+        travelMode: google.maps.TravelMode.DRIVING,
+        optimizeWaypoints: false,
+        
+    };
+    directionsService.route(request, function(result, status) {
+        if (status == google.maps.DirectionsStatus.OK) {
+            directions.setDirections(result);
+            var total = 0;
+            var myroute = result.routes[0];
+            for (i = 0; i < myroute.legs.length; i++) {
+                total += myroute.legs[i].distance.value;
+            }
+            console.log(total);
+        }
+    }); 
+    
 }
 
 
