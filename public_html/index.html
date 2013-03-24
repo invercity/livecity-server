@@ -10,82 +10,53 @@
     <!-- SCRIPTS --> 
     <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false&language=uk"></script>
     <script src="./engine/js/jquery-1.9.1.min.js"></script>
-    <script src="./engine/js/main.js"></script>
-    <script src="./engine/js/stations.js"></script>
-    <script src="./engine/js/ajax.js"></script>
-    <script type="text/javascript">
-        var map;
-        var stations = [];
-        var transport = [];
-        // function for changing current marker
-        function setCurrent(station) {
-                // just unset current marker 
-                if (station == -1) {
-                    prepos = $('#pos').text();
-                    if (prepos != -1) stations[prepos].setIcon(getMarkerIcon(1));
-                    $('#pos').text(-1);
-                }
-                
-                pos = stations.indexOf(station);
-                console.log(pos);
-                if (pos != -1) {
-                    prepos = $('#pos').text();
-                    if (prepos != -1) stations[prepos].setIcon(getMarkerIcon(1));
-                    $('#pos').text(pos);
-                    station.setIcon(getMarkerIcon(2));
-                }
-       }
-    </script>
+    <script src="./engine/js/citymap.js"></script>
+    <script src="./engine/js/infobox.js"></script>
     
     <!-- STYLES -->
     <link rel="stylesheet" href="engine/css/global.css">
     <link rel="stylesheet" href="engine/css/editor.css">
     <link rel="shortcut icon" href="engine/img/favicon.ico" type="image/gif">
     
-  
     <!-- AJAX -->
     <script type="text/javascript">
     // init document
+    var city;
     $(document).ready( function() {
             // Edit stations click handler
-            $("#edit").click(function () { editClick(map,stations); }); 
+            $("#edit").click(function() { city.onEditMarker() }); 
             // Close edit panel handler
-            $("#save_edit").click(function () { saveStation(stations)});
+            $("#save_edit").click(function () {city.onSavePoint()});
             // Cancel edit click handler 
-            $("#close_button").click(function () {closeEditor(map,stations)});
+            $("#close_button").click(function () {city.onCloseMarkerEditor()});
             // remove button click
-            $("#delete_edit").click(function () {deleteStation(stations)});
-            // load required data from server
+            $("#delete_edit").click(function () {city.onDeletePoint()});
+            // edit route handler
+            $("#edit2").click(function () { city.onEditRoute() });
+            // show stations handler
+            $("#stations").click(function () { /*city.onShowMarkers()*/ city.outMsg("Меню не активно") });
+            // show route handler
+            $("#routes").click(function () {city.onShowRoute()});
     });
     </script>
     </head>
     
     <!-- MAPS API -->
-    <body onload="map = initialize();">
+    <body onload="city = new CityMap(new google.maps.LatLng(51.4982000,31.2893500));city.init();">
         <div id="head"> 
-        <ul>
-            <li>
-                <button class="menu-first" id="staions"> Места </button>
-            </li>
-            <li>
-                <button class="menu" id="routes"> Маршруты </button>
-            </li>
-            <li>  
-                <input type="text" id="searchpane" placeholder="Искать...">
-            </li>
-            <li>
-                <button class="next" id="edit">Редактировать места</button>
-            </li>
-        </ul>
-            
-    </div>
+            <ul>
+                <li><button class="menu-first" id="stations"> Места </button></li>
+                <li><button class="menu" id="routes"> Маршруты </button></li>
+                <li><input type="text" id="searchpane" placeholder="Искать..."></li>
+                <li><button class="next" id="edit">Редактировать места</button></li>
+                <li><button class="next" id="edit2">Редактировать маршруты</button></li>
+            </ul>
+        </div>
     <div id="edit_marker"> 
-         <div class="edit_marker_title">
+         <div class="edit_title">
              <div style="margin-left: -50%"> Редактирование Мест 
-                 <button id="close_button" title="Закрыть">  
-                 </button> 
+                 <button id="close_button" title="Закрыть"></button> 
              </div>
-             
          </div> 
          <div>
             <div class="labels">
@@ -112,12 +83,36 @@
             </div>
         </div>
     </div>
+    <div id="edit_route"> 
+         <div class="edit_title">
+             <div style="margin-left: -50%"> Редактирование Маршр.
+                 <button id="close_button" title="Закрыть">  
+                 </button> 
+             </div>
+         </div> 
+         <div>
+            <div class="labels">
+                <div class="edit_labels"> Название: </div>
+                <input id="label_name" type="text">
+            </div>
+            <div class="edit_controls">
+                <button id='save_edit'> Сохранить </button>
+                <button id='delete_edit'> Удалить </button>
+            </div>
+            <div class="tab_control">
+                <center> Список маршрутов: </center>
+            </div>
+            <div id="route_list">
+                <ul id="ul_list">
+                </ul>
+            </div>
+        </div>
+    </div>
     <div id="map_canvas"></div>
     <div style="position: absolute; left: 50%; bottom: 2%;">
         <div id="tootltip">
             Данные сохранены
         </div>
     </div>
-        
  </body>
  </html>

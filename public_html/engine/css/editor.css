@@ -1,4 +1,4 @@
-#edit_marker {
+#edit_marker,#edit_route {
     position: absolute;
     right: 0;
     padding: 0;
@@ -25,7 +25,7 @@
     padding-top: 4px;
 }
 
-.edit_marker_title {
+.edit_title {
     float: inside;
     margin-left: 40%;
 }

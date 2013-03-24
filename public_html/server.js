@@ -13,7 +13,7 @@ var connection = mysql.createConnection({
 // universal http server
 http.createServer(function (request, response) {
     // check request type
-    console.log(request.connection.remoteAddress);
+    //console.log(request.connection.remoteAddress);
    if (request.method == "POST") {
        // data buffer
        var data = '';
@@ -48,8 +48,8 @@ http.createServer(function (request, response) {
                   old_b = values['old_b'];
               }
               // check FLOAT type
-              while (old_a[old_a.length-1] == '0') old_a = old_a.substring(0,old_a.length-1);
-              while (old_b[old_b.length-1] == '0') old_b = old_b.substring(0,old_b.length-1);
+              //while (old_a[old_a.length-1] == '0') old_a = old_a.substring(0,old_a.length-1);
+              //while (old_b[old_b.length-1] == '0') old_b = old_b.substring(0,old_b.length-1);
               var query = "SELECT id FROM stations WHERE cast(pos_a as char) = " + old_a + 
                    " AND cast (pos_b as char) = " + old_b + ";";
               connection.query(query, function (error, rows, fields) {
@@ -80,11 +80,13 @@ http.createServer(function (request, response) {
               // check FLOAT type
               var old_a = values['pos_a'];
               var old_b = values['pos_b'];
-              while (old_a[old_a.length-1] == '0') old_a = old_a.substring(0,old_a.length-1);
-              while (old_b[old_b.length-1] == '0') old_b = old_b.substring(0,old_b.length-1);
+              //while (old_a[old_a.length-1] == '0') old_a = old_a.substring(0,old_a.length-1);
+              //while (old_b[old_b.length-1] == '0') old_b = old_b.substring(0,old_b.length-1);
               connection.query("DELETE FROM stations WHERE cast(pos_a as char) = " + old_a + 
                    " AND cast (pos_b as char) = " + old_b + ";", function (error, rows, fields) {
                    if (!error) console.log("removed succ");
+                   console.log(old_a);
+                   console.log(old_b);
               });
               response.writeHead(200, {'Content-Type': 'x-application/json'});
               // sending JSON data
@@ -126,4 +128,4 @@ http.createServer(function (request, response) {
     });
    }
 
-}).listen(9090);
+}).listen(8080);

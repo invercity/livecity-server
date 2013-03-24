@@ -73,3 +73,36 @@ body { height: 100%; margin: 0px; padding: 0px}
     text-align: center;
     display: none;
 }
+
+.infoBox {
+    border: solid 1.5px #9f9c9c;
+    border-radius: 6px;
+    background: #ffffff;
+    width: 300px;
+    height: 100px;
+    font-size: 12px;
+    font-weight: bolder;
+    opacity: 0.8;
+} 
+
+.infoBox #text {
+    columns: auto;
+    column-width: 20;
+    text-align: center;
+}
+
+.infoRoute {
+    width: 300px;
+    height: 15px;
+}
+
+.infoRoute .text {
+    width: 100px;
+    font-size: 12px;
+    text-align: center;
+    font-weight: bolder;
+    background: #ffffff;
+    opacity: 0.8;
+    border: solid 1.5px #9f9c9c;
+    border-radius: 3px;
+}
