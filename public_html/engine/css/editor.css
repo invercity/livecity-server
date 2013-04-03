@@ -15,7 +15,7 @@
     cursor: default;
 }
 
-#close_button {
+#close_button_point, #close_button_route {
     background:  url('../img/close.png') transparent no-repeat;
     border: none;
     width: 20px;

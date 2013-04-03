@@ -8,7 +8,9 @@
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
     
     <!-- SCRIPTS --> 
-    <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false&language=uk"></script>
+    <script type="text/javascript" 
+        src="http://maps.google.com/maps/api/js?key=AIzaSyCtoc2CLiq0QkGfdVKuyxJPhMfvSvNriRo&sensor=false&language=uk"> 
+    </script>
     <script src="./engine/js/jquery-1.9.1.min.js"></script>
     <script src="./engine/js/citymap.js"></script>
     <script src="./engine/js/infobox.js"></script>
@@ -27,16 +29,20 @@
             $("#edit").click(function() { city.onEditMarker() }); 
             // Close edit panel handler
             $("#save_edit").click(function () {city.onSavePoint()});
-            // Cancel edit click handler 
-            $("#close_button").click(function () {city.onCloseMarkerEditor()});
+            // Cancel edit point click handler 
+            $("#close_button_point").click(function () {city.onCloseMarkerEditor()});
+            // Cancel edit route click handler 
+            $("#close_button_route").click(function () {city.onCloseRouteEditor()});
             // remove button click
             $("#delete_edit").click(function () {city.onDeletePoint()});
             // edit route handler
             $("#edit2").click(function () { city.onEditRoute() });
             // show stations handler
-            $("#stations").click(function () { /*city.onShowMarkers()*/ city.outMsg("Меню не активно") });
+            $("#stations").click(function () { city.pointLayer.setVisible(true); });
             // show route handler
             $("#routes").click(function () {city.onShowRoute()});
+            // save route handler
+            $("#save_route").click(function() { city.routeBuilder.save();});
     });
     </script>
     </head>
@@ -55,7 +61,7 @@
     <div id="edit_marker"> 
          <div class="edit_title">
              <div style="margin-left: -50%"> Редактирование Мест 
-                 <button id="close_button" title="Закрыть"></button> 
+                 <button id="close_button_point" title="Закрыть"></button> 
              </div>
          </div> 
          <div>
@@ -86,7 +92,7 @@
     <div id="edit_route"> 
          <div class="edit_title">
              <div style="margin-left: -50%"> Редактирование Маршр.
-                 <button id="close_button" title="Закрыть">  
+                 <button id="close_button_route" title="Закрыть">  
                  </button> 
              </div>
          </div> 
@@ -96,8 +102,8 @@
                 <input id="label_name" type="text">
             </div>
             <div class="edit_controls">
-                <button id='save_edit'> Сохранить </button>
-                <button id='delete_edit'> Удалить </button>
+                <button id='save_route'> Сохранить </button>
+                <button id='delete_route'> Удалить </button>
             </div>
             <div class="tab_control">
                 <center> Список маршрутов: </center>
