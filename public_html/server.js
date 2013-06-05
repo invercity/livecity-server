@@ -130,7 +130,7 @@ getRouteArrival = function(num, point_id, route_id, callback) {
                         var dist = 0;
                         for (var i = 0; i < trans.length; i++) {
                             // check for availability
-                            if (trans.current !== -1) {
+                            if (trans[i].current !== -1) {
                                 var next = trans[i].next;
                                 var pos_next = points.indexOf(next);
                                 // if this transport going before this station
@@ -321,7 +321,6 @@ http.createServer(function(request, response) {
 
             // updating coordinates
             if (values.type === "SEND_TRANS") {
-                console.log(values);
                 response.writeHead(200, {
                     'Content-Type': 'x-application/json'
                 });

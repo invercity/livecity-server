@@ -99,7 +99,7 @@ function CityMap(mapCenter) {
         $('#tootltip').text(txt);
         setTimeout(function() {
             $('#tootltip').css("display", "none");
-        }, 2000);
+        }, 3000);
     };
 
     // add new point on map 
@@ -254,7 +254,7 @@ function SearchBar(main) {
             // get visible routes
             var oldR = obj.main.routeLayer.getVisible();
             // get visible points
-            var oldP = obj.main.pointLayer.getVisible();
+            var oldP = obj.main.pointLayer.getVisibleMarkers();
             // if something selected
             if (obj.selected !== null) {
                 // fill buffers with points/routes
@@ -363,7 +363,7 @@ function PointLayer(main) {
         });
     };
 
-    // get array of visible points
+    // get array of visible points (infos)
     this.getVisible = function() {
         var result = [];
         for (var i = 0; i < this.points.length; i++) {
@@ -373,6 +373,17 @@ function PointLayer(main) {
         }
         return result;
     };
+    
+    // get array of visible markers
+    this.getVisibleMarkers = function() {
+        var result = [];
+        for (var i = 0; i < this.points.length; i++) {
+            if (this.points[i].marker.visible) {
+                result.push(this.points[i]);
+            }
+        }
+        return result;
+    }
 
     // add point to layer
     this.add = function(point) {
@@ -1046,9 +1057,12 @@ function MapPoint(main, position, icon, title) {
                 // hide info, which was opened before
                 //if (main.pointLayer.current !== -1) main.pointLayer.current.info.hide();
                 //main.pointLayer.current = obj;
-                obj.updateInfo();
-                obj.info.open(obj.main.map, this);
-                obj.info.show();
+                if (obj.visible) obj.setVisible(false);
+                else {
+                    obj.updateInfo();
+                    obj.setVisible(true);
+                }
+                
             }
         });
         google.maps.event.addListener(this.marker, 'drag', function(event) {
@@ -1176,34 +1190,39 @@ function RouteBuilder(main) {
 
     // set endpoint of route
     this.setEnd = function() {
-        var infoB = this.route.infoB;
-        // close prevoius endpoint info
-        if (infoB !== -1) infoB.open(null);
-        var lastPoint = this.points[this.points.length - 1];
-        // set new endpoint
-        this.route.setEnd(lastPoint.marker.position, lastPoint.marker.title);
-        // set new endpoint id
-        this.route.idE = lastPoint.id;
-        // show new endpoint info
-        this.route.infoB.open(this.main.map, lastPoint.marker);
-        // set info in box
-        $('#routeEndText').text(lastPoint.marker.title);
+        if (this.points.length === 0) main.outMsg("Ничего не выбрано","red");
+        else {
+            var infoB = this.route.infoB;
+            // close prevoius endpoint info
+            if (infoB !== -1) infoB.open(null);
+            var lastPoint = this.points[this.points.length - 1];
+            // set new endpoint
+            this.route.setEnd(lastPoint.marker.position, lastPoint.marker.title);
+            // set new endpoint id
+            this.route.idE = lastPoint.id;
+            // show new endpoint info
+            this.route.infoB.open(this.main.map, lastPoint.marker);
+            // set info in box
+            $('#routeEndText').text(lastPoint.marker.title);
+        }
     };
 
     // set start point of route
     this.setStart = function() {
-        var infoA = this.route.infoA;
-        // close prevoius endpoint info
-        if (infoA !== -1) infoA.open(null);
-        var lastPoint = this.points[this.points.length - 1];
-        // set new endpoint
-        this.route.setStart(lastPoint.marker.position, lastPoint.marker.title);
-        // set new endpoint id
-        this.route.idS = lastPoint.id;
-        // show new endpoint info
-        this.route.infoA.open(this.main.map, lastPoint.marker);// set info in box
-        $('#routeStartText').text(lastPoint.marker.title);
-        
+        if (this.points.length === 0) main.outMsg("Ничего не выбрано","red");
+        else {
+            var infoA = this.route.infoA;
+            // close prevoius endpoint info
+            if (infoA !== -1) infoA.open(null);
+            var lastPoint = this.points[this.points.length - 1];
+            // set new endpoint
+            this.route.setStart(lastPoint.marker.position, lastPoint.marker.title);
+            // set new endpoint id
+            this.route.idS = lastPoint.id;
+            // show new endpoint info
+            this.route.infoA.open(this.main.map, lastPoint.marker);// set info in box
+            $('#routeStartText').text(lastPoint.marker.title);
+        }
     };
 
     // init routeBuilder by existing route

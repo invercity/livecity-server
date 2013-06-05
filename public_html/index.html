@@ -45,7 +45,7 @@
             // show stations handler
             $("#stations").click(function () { city.pointLayer.setVisible(true); });
             // back to city center
-            $("#main").click(function (){city.map.setCenter(city.center);});
+            $("#main").click(function (){city.map.setCenter(city.center); city.outMsg("Вы вернулись в исходное положение","green")});
             // save route handler
             $("#save_route").click(function() { city.routeBuilder.save();});
             // auth button handler
@@ -59,7 +59,7 @@
     <body onload="city = new CityMap(new google.maps.LatLng(51.4982000,31.2893500));city.init();">
         <div class="container">
             <div class="menu" style="padding: 0">
-              <button class="menu-button"id="main">livecity</button>
+                <button class="menu-button"id="main" >livecity</button>
               <div style="height:30px;width:60%; float:left;">
                 <select class="chosen" id="main-search" data-placeholder="Искать..." multiple tabindex="3" style="z-index: 1000"> 
                     <optgroup label="Места"></optgroup>
