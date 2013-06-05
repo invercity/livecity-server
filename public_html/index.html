@@ -14,50 +14,63 @@
     <script src="./engine/js/jquery-1.9.1.min.js"></script>
     <script src="./engine/js/citymap.js"></script>
     <script src="./engine/js/infobox.js"></script>
-    
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script type="text/javascript" src="http://harvesthq.github.com/chosen/chosen/chosen.jquery.js"></script>
     <!-- STYLES -->
     <link rel="stylesheet" href="engine/css/global.css">
     <link rel="stylesheet" href="engine/css/editor.css">
+    <link rel="stylesheet" href="http://harvesthq.github.com/chosen/chosen/chosen.css" />
     <link rel="shortcut icon" href="engine/img/favicon.ico" type="image/gif">
     
     <!-- AJAX -->
     <script type="text/javascript">
-    // init document
+    // main Object
     var city;
+    // main
     $(document).ready( function() {
+            // set update function with interval
+            setInterval('city.update()',5000);
             // Edit stations click handler
-            $("#edit").click(function() { city.onEditMarker() }); 
+            $("#edit").click(function() { city.onEditMarker(); }); 
             // Close edit panel handler
-            $("#save_edit").click(function () {city.onSavePoint()});
+            $("#save_edit").click(function () {city.onSavePoint();});
             // Cancel edit point click handler 
-            $("#close_button_point").click(function () {city.onCloseMarkerEditor()});
+            $("#close_button_point").click(function () {city.onCloseMarkerEditor();});
             // Cancel edit route click handler 
-            $("#close_button_route").click(function () {city.onCloseRouteEditor()});
+            $("#close_button_route").click(function () {city.onCloseRouteEditor();});
             // remove button click
-            $("#delete_edit").click(function () {city.onDeletePoint()});
+            $("#delete_edit").click(function () {city.onDeletePoint();});
             // edit route handler
-            $("#edit2").click(function () { city.onEditRoute() });
+            $("#edit2").click(function () { city.onEditRoute();});
             // show stations handler
             $("#stations").click(function () { city.pointLayer.setVisible(true); });
-            // show route handler
-            $("#routes").click(function () {city.onShowRoute()});
+            // back to city center
+            $("#main").click(function (){city.map.setCenter(city.center);});
             // save route handler
             $("#save_route").click(function() { city.routeBuilder.save();});
+            // auth button handler
+            $("#auth").click(function() {city.auth();});
     });
     </script>
     </head>
     
     <!-- MAPS API -->
+    
     <body onload="city = new CityMap(new google.maps.LatLng(51.4982000,31.2893500));city.init();">
-        <div id="head"> 
-            <ul>
-                <li><button class="menu-first" id="stations"> Места </button></li>
-                <li><button class="menu" id="routes"> Маршруты </button></li>
-                <li><input type="text" id="searchpane" placeholder="Искать..."></li>
-                <li><button class="next" id="edit">Редактировать места</button></li>
-                <li><button class="next" id="edit2">Редактировать маршруты</button></li>
-            </ul>
-        </div>
+        <div class="container">
+            <div class="menu" style="padding: 0">
+              <button class="menu-button"id="main">livecity</button>
+              <div style="height:30px;width:60%; float:left;">
+                <select class="chosen" id="main-search" data-placeholder="Искать..." multiple tabindex="3" style="z-index: 1000"> 
+                    <optgroup label="Места"></optgroup>
+                    <optgroup label="Маршруты"></optgroup> -->
+		</select>
+              </div>
+              <button class="menu-button-auth" id="auth"> Вход </button>
+          </div>
+    </div>
+      <button class="next" id="edit">Места</button>
+      <button class="next" id="edit2">Маршруты</button>
     <div id="edit_marker"> 
          <div class="edit_title">
              <div style="margin-left: -50%"> Редактирование Мест 
@@ -92,18 +105,22 @@
     <div id="edit_route"> 
          <div class="edit_title">
              <div style="margin-left: -50%"> Редактирование Маршр.
-                 <button id="close_button_route" title="Закрыть">  
-                 </button> 
+                 <button id="close_button_route" title="Закрыть">  </button> 
              </div>
          </div> 
          <div>
             <div class="labels">
                 <div class="edit_labels"> Название: </div>
-                <input id="label_name" type="text">
+                <input id="label_route_name" type="text">
+                
             </div>
             <div class="edit_controls">
+                <button id="setRouteStart"> Задать начальную </button> <br/>
+                <div class="routeText" id="routeStartText"></div>
+                <button id="setRouteEnd"> Задать конечную </button> <br/>
+                <div class="routeText" id="routeEndText"></div>
                 <button id='save_route'> Сохранить </button>
-                <button id='delete_route'> Удалить </button>
+                <!-- <button id='delete_route'> Удалить </button> -->
             </div>
             <div class="tab_control">
                 <center> Список маршрутов: </center>

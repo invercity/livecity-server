@@ -1,64 +1,88 @@
 html { height: 100% }
 body { height: 100%; margin: 0px; padding: 0px}
-#map_canvas { height: 95%}
-#head {
-    height: 26px;
-    background: url("../img/green.png") ;
-    display: block;
-}
-#head ul {
+#map_canvas { height: 100%}
+
+.container {
+    background: url(../img/green.png);
+    margin: 0;
     padding: 0;
-    margin: 0;
+    position: absolute;
+    width: 40%;
+    height: 30px;
+    left: 30%;
+    top:0;
+    border-bottom-right-radius:5px;
+    border-bottom-left-radius: 5px;
+    z-index: 1000
 }
 
-#head li {
-    display: inline;
-    margin: 0;
-    padding:0;
+.container:hover {
+    cursor: pointer;
 }
 
-#head li .menu-first, .menu, .next{
-    background: transparent;
-    padding-bottom: 2px;
-    padding-top: 3px;
-    border: 0;
-    padding-right: 12px;
-    padding-left: 12px; 
-    list-style-type: none;
+.menu-button-auth {
+    background: url(../img/key.png) transparent right no-repeat;
     color: white;
-    font: 15px/20px sans-serif;
+    font-size: 13px;
+    font-weight: bolder;
+    text-align: left;
+    border: none;
+    width: 20%; 
+    height: 30px;
+    cursor: pointer;
+    float:right;
+}
+
+.menu-button {
+  float:left;
+    height: 30px;
+    background: none;
+    border: none;
+    font-size: 13px;
+    font-weight: bolder;
+    text-align: left;
+    color: white;
     cursor: pointer;
     margin: 0;
+    width: 20%;
 }
 
-#head li .menu-first {
-    margin-left: 10%;
-}
-
-#head li .menu-first:hover {
-    background: green;
-    height: 100%;
-    margin-top: 0;
-}
-
-#head li .menu:hover {
-    background: green;
-    height: 100%;
-    
-}
-
-#head li .next:hover {
-    background: green;
+.chosen {
+    width: 100%;
     height: 100%;
 }
 
-#head li input {
-    font: 12px/19px sans-serif; 
-    text-indent: 3px;
-    padding: 8px 0 4px 0;
-    height: 13px;
-    width: 210px;
-    border: 2px transparent;
+.chzn-results {
+    z-index: 1000;
+}
+
+.active-result {
+    color: black;
+}
+
+#edit,#edit2 {
+    visibility: hidden;
+    position: absolute;
+    font-size: 13px;
+    text-align: left;
+    font-weight: bolder;
+    top: 0;
+    right: 20%;
+    z-index: 1000;
+    background: url(../img/edit.png);
+    color: white;
+    width: 120px;
+    height: 30px;
+    border-radius: 3px;
+    border : #cccccc solid 1px;
+}
+
+#edit,#edit2:hover {
+    cursor: pointer;
+}
+
+#edit {
+    top: 40px;
 }
 
 #tootltip {
@@ -72,6 +96,10 @@ body { height: 100%; margin: 0px; padding: 0px}
     z-index: 20;
     text-align: center;
     display: none;
+}
+
+#searchpane {
+    visibility: hidden;
 }
 
 .infoBox {

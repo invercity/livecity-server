@@ -15,6 +15,12 @@
     cursor: default;
 }
 
+.routeText {
+    font: 14px/19px sans-serif;
+    left: 10px;
+    margin-left: 10px;
+}
+
 #close_button_point, #close_button_route {
     background:  url('../img/close.png') transparent no-repeat;
     border: none;
