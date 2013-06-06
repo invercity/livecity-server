@@ -157,7 +157,6 @@ getRouteArrival = function(num, point_id, route_id, callback) {
                             db.nodes.find(function(err, data) {
                                 var total = 0;
                                 for (var z = 0; z < data.length; z++) if (node_ids.indexOf(data[z]._id.toString()) !== -1) total += data[z].total;
-                                //console.log(total);
                                 result.status = "OK";
                                 /*
                                  *  Formula
@@ -325,7 +324,6 @@ http.createServer(function(request, response) {
                     'Content-Type': 'x-application/json'
                 });
                 getCurrentInfo(values.data.id_route, values.data.id_station, values.data.a, values.data.b, function(result) {
-                    console.log(result)
                     db.trans.save({
                         _id: ObjectID(values.data._id),
                         a: values.data.a,

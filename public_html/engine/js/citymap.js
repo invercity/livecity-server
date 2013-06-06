@@ -246,7 +246,11 @@ function SearchBar(main) {
         jQuery(".chosen").chosen({
             no_results_text: "Ничего не найдено для"
         }).change(function(e) {
-            //$('.chosen').trigger("liszt:updated");
+            // check if this is not base mode
+            if ((main.pointEditorOpened) || (main.routeEditorOpened)) {
+                obj.deselect();
+                main.outMsg("Данное действие не доступно в режиме редактирования","red");
+            }
             obj.selected = $(this).val();
             // buffers for selected values
             var n = [];
@@ -896,7 +900,12 @@ function MapNode(main, pointA, pointB, resNode) {
         this.visible = is;
         this.a.marker.setVisible(is);
         this.b.marker.setVisible(is);
-        if (!is) this.base.setMap(null);
+        if (!is) {
+            this.base.setMap(null);
+            // if info was opened
+            this.a.setVisible(false);
+            this.b.setVisible(false);
+        }
         else this.base.setMap(this.main.map);
     };
 
@@ -1077,10 +1086,8 @@ function MapPoint(main, position, icon, title) {
                 main.outMsg("Метка сохранена","green");
             }
         });
-        // setting click listener for infobox
-        //var obj = this;
-        //var infoID = "'#info" + this.id + "'";
-        //$(infoID).click(function(){alert('ok');});
+        // TBD
+        // it will be good feture to deselect item from searchbox when i click "close" button on its info
     };
 
     // delete point
@@ -1253,13 +1260,12 @@ function RouteBuilder(main) {
             this.route.setName(name);
             // save each route
             this.route.save();
-            // NEED TEST
-            //this.leavePoints();
+            // check if this is a new route, if not add it to route layer
             var indx = this.main.routeLayer.routes.indexOf(this.route);
             if (indx === -1) this.main.routeLayer.routes.push(this.route);
             else this.main.routeLayer.routes[indx] = this.route;
-            // need to add this route in search pane
-            // TBD
+            // add this route to search box
+            this.main.searchBar.add(1,this.route.id,this.route.name);
         }
     };
 
