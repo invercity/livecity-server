@@ -34,8 +34,9 @@ getCurrentInfo = function(route_id, current_id, pos_a, pos_b, callback) {
         // get point ID's of this route
         var points = data[0].points;
         // check current station ID
-        if (current_id === '-1') {
+        if (current_id == '-1') {
             // get all points from db
+            console.log("current id === -1")
             db.points.find(function(err, data) {
                 var point = -1;
                 // getting each points, and chacking distance to it
@@ -47,6 +48,7 @@ getCurrentInfo = function(route_id, current_id, pos_a, pos_b, callback) {
                 var result = {};
                 // if we get eny station
                 if (point !== -1) {
+                    console.log("GET station");
                     result.current = point._id.toString();
                     result.next = point._id.toString();
                     result.dist = 0;
@@ -54,6 +56,7 @@ getCurrentInfo = function(route_id, current_id, pos_a, pos_b, callback) {
                 }
                 // if trans is between two stations
                 else {
+                    console.log("DONT GET station")
                     result.current = -1;
                     result.next = -1;
                     result.dist = 0;
@@ -61,6 +64,7 @@ getCurrentInfo = function(route_id, current_id, pos_a, pos_b, callback) {
                 if (callback) callback(result);
             });
         } else {
+            console.log("CURRENT ID !== -1")
             db.points.find(function(err, data) {
                 // get poition of current station ID
                 var pos = points.indexOf(current_id.toString());
@@ -323,7 +327,10 @@ http.createServer(function(request, response) {
                 response.writeHead(200, {
                     'Content-Type': 'x-application/json'
                 });
+                console.log(values.data);
                 getCurrentInfo(values.data.id_route, values.data.id_station, values.data.a, values.data.b, function(result) {
+                    // some DEBUG
+                    console.log(result);
                     db.trans.save({
                         _id: ObjectID(values.data._id),
                         a: values.data.a,
@@ -346,6 +353,7 @@ http.createServer(function(request, response) {
                 response.writeHead(200, {
                     'Content-Type': 'x-application/json'
                 });
+                console.log("init");
                 db.routes.find(function(error, routes) {
                     if (!error) db.trans.save({
                         a: values.a,
@@ -437,4 +445,4 @@ http.createServer(function(request, response) {
         });
     }
 
-}).listen(8880);
+}).listen(3000);

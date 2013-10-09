@@ -240,6 +240,10 @@ function CityMap(mapCenter) {
 // class for search bar
 function SearchBar(main) {
     this.main = main;
+    // array for points, opened before
+    this.oldP = [];
+    // array for routes, opened before
+    this.oldR = [];
     // init function
     this.init = function() {
         var obj = this;
@@ -251,14 +255,13 @@ function SearchBar(main) {
                 obj.deselect();
                 main.outMsg("Данное действие не доступно в режиме редактирования","red");
             }
+            // get copy of prevous selected points/routes
+            var oldP = obj.oldP.slice();
+            var oldR = obj.oldR.slice();
             obj.selected = $(this).val();
             // buffers for selected values
             var n = [];
             var r = [];
-            // get visible routes
-            var oldR = obj.main.routeLayer.getVisible();
-            // get visible points
-            var oldP = obj.main.pointLayer.getVisibleMarkers();
             // if something selected
             if (obj.selected !== null) {
                 // fill buffers with points/routes
@@ -272,7 +275,6 @@ function SearchBar(main) {
                     }
                 }
             }
-
             // if there is any points selected
             if (n.length > -1) {
                 // if we need to hide something
@@ -285,9 +287,11 @@ function SearchBar(main) {
                 // if we need to show something new
                 else if ((n.length > 0) && (n.length !== oldP.length)) {
                     var point = $(n).not(oldP).get()[0];
-                    point.updateInfo();
-                    point.setVisible(true);
-                    point.setBaseVisible(true);
+                    if (point) {
+                        point.updateInfo();
+                        point.setVisible(true);
+                        point.setBaseVisible(true);
+                    }
                 }
             }
             // if there is any rotes selected
@@ -305,7 +309,11 @@ function SearchBar(main) {
                     obj.main.transLayer.setVisibleByRoute($(r).not(oldR).get()[0].id, true);
                 }
             }
+            // set currently selected points/routes as previous
+            obj.oldP = n.slice();
+            obj.oldR = r.slice();
         });
+        
     };
     
     // add item to search pane
