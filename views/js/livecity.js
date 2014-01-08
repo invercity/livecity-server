@@ -2,22 +2,29 @@
 var city = null;
 
 // $.ready handler
-$(document).ready( function() {
+$(document).ready(function() {
+    // links to page objects
+    var objects = {
+        alertbox: $('#alertbox'),
+        map: document.getElementById('map_canvas')
+    };
+    // livecity settings
+    var settings = {
+        zoom: 15,
+        center: new google.maps.LatLng(51.4982000,31.2893500),
+        mapTypeControl: true,
+        mapTypeControlOptions: {
+            style: google.maps.MapTypeControlStyle,
+            position: google.maps.ControlPosition.BOTTOM_LEFT
+        },
+        navigationControl: true,
+        navigationControlOptions: {
+            style: google.maps.NavigationControlStyle.SMALL
+        },
+        mapTypeId: google.maps.MapTypeId.ROADMAP
+    }
     // create new city
-    city = new CityMap({
-            zoom: 15,
-            center: new google.maps.LatLng(51.4982000,31.2893500),
-            mapTypeControl: true,
-            mapTypeControlOptions: {
-                style: google.maps.MapTypeControlStyle,
-                position: google.maps.ControlPosition.BOTTOM_LEFT
-            },
-            navigationControl: true,
-            navigationControlOptions: {
-                style: google.maps.NavigationControlStyle.SMALL
-            },
-            mapTypeId: google.maps.MapTypeId.ROADMAP
-    });
+    city = new Livecity(objects,settings);
     // init city
     city.init();
     // set update function with interval
@@ -59,11 +66,13 @@ $(document).ready( function() {
 /*
  * City Class
  */
-function CityMap(settings) {
+function Livecity(objects,settings) {
     // UID [unused]
-    this.uid = null;
+    var __uid = null;
+    // objects
+    var __objects = objects;
     // set settings
-    this.settings = settings;
+    var __settings = settings;
     // server url
     this.url = 'http://localhost:3000';
     // static objects
@@ -73,7 +82,50 @@ function CityMap(settings) {
     // visible items
     this.view = [];
     // map
-    this.map = new google.maps.Map(document.getElementById("map_canvas"), this.settings);
+    this.map = new google.maps.Map(__objects.map,__settings);
+
+    /*
+     * GETTTERS & SETTERS
+     */
+
+    // GET uid
+    this.getUID = function() {
+        return __uid;
+    }
+    // SET uid
+    this.setUID = function(uid) {
+        __uid = uid;
+    }
+    // GET objects
+    this.getObjects = function() {
+        return __objects;
+    }
+    // SET objects
+    this.setObjects = function(objs) {
+        __objects = objs;
+    }
+    // GET selected object
+    this.getObject = function(name) {
+        return __objects[name];
+    }
+    // SET selected object
+    this.setObject = function(name,value) {
+        __objects[name] = value;
+    }
+    // GET property
+    this.getProperty = function(name) {
+        return __settings[name];
+    }
+    // SET property
+    this.setProperty = function(name,value) {
+        __settings[name] = value;
+    }
+    // GET settings
+    this.getProperties = function() {
+        return __settings;
+    }
+    // notifier
+    this.notifier = new Notifier(this);
     // point layer
     this.pointLayer = new PointLayer(this);
     // route layer
@@ -95,7 +147,7 @@ function CityMap(settings) {
 }
 
 // [P] init - init map
-CityMap.prototype.init = function() {
+Livecity.prototype.init = function() {
     // load points on map
     this.pointLayer.load();
     // load nodes/routes on map
@@ -134,8 +186,13 @@ CityMap.prototype.init = function() {
     this.update();
 };
 
+// [P] outMsg - show notification message
+Livecity.prototype.outMsg = function(text,color) {
+    this.notifier.msg(text,color);
+}
+
 // [P] setEditPointData - set edits for editing marker
-CityMap.prototype.setEditPointData = function(position, title, focus) {
+Livecity.prototype.setEditPointData = function(position, title, focus) {
     var lat = position.lat();
     var lng = position.lng();
     $("#label_posx").text(Number(lat).toFixed(4));
@@ -144,18 +201,8 @@ CityMap.prototype.setEditPointData = function(position, title, focus) {
     if (focus) $('#label_name').focus();
 };
 
-// [P] outMsg - out message on page [DEPRECATED]
-CityMap.prototype.outMsg = function(txt, color) {
-    $('#tootltip').css("display", "block");
-    $('#tootltip').css("background-color", color);
-    $('#tootltip').text(txt);
-    setTimeout(function() {
-        $('#tootltip').css("display", "none");
-    }, 3000);
-};
-
 // [P] addPoint - add new point on map
-CityMap.prototype.addPoint = function(position) {
+Livecity.prototype.addPoint = function(position) {
     var title = "id" + (this.pointLayer.points.length);
     var point = new MapPoint(this, position, this.objects.ICON_RED(), title);
     point.marker.setDraggable(true);
@@ -168,7 +215,7 @@ CityMap.prototype.addPoint = function(position) {
 };
 
 // [P] clearEditor - clear editor inputs
-CityMap.prototype.clearEditor = function() {
+Livecity.prototype.clearEditor = function() {
     $("#label_posx").text("0");
     $("#label_posy").text("0");
     $("#label_name").val("");
@@ -181,7 +228,7 @@ CityMap.prototype.clearEditor = function() {
 };
 
 // [P] setCenter - set map to selected map position
-CityMap.prototype.setCenter = function(center) {
+Livecity.prototype.setCenter = function(center) {
     // if center is not selected, set map center default value
     if (!center) this.map.setCenter(this.settings.center);
     // if selected - set value and save to settings
@@ -192,15 +239,15 @@ CityMap.prototype.setCenter = function(center) {
 };
 
 // [P] auth - authorize user/end session
-CityMap.prototype.auth = function() {
-    if (this.uid) {
+Livecity.prototype.auth = function() {
+    if (this.getUID()) {
         // end session
         $("#auth").css("background", "url('img/key.png') right no-repeat");
         $("#auth").text("Вход");
         $("#edit").css("visibility", "hidden");
         $("#edit2").css("visibility", "hidden");
         $("#opt").css("visibility", "hidden");
-        this.uid = null;
+        this.setUID(null);
         if (this.routeBuilder !== -1) this.routeBuilder.end();
         if (this.routeEditorOpened) this.onCloseRouteEditor();
         if (this.pointEditorOpened) this.onCloseMarkerEditor();
@@ -213,18 +260,18 @@ CityMap.prototype.auth = function() {
         $("#edit").css("visibility", "visible");
         $("#edit2").css("visibility", "visible");
         $("#opt").css("visibility", "visible");
-        this.uid = 1;
+        this.setUID(1);
         this.outMsg("Вы успешно авторизированы","green");
     }
 };
 
 // [P] update - update trans layer on a map
-CityMap.prototype.update = function() {
+Livecity.prototype.update = function() {
     this.transLayer.update();
 };
 
 // [P] onSavePoint - save point handler [DEPRECATED]
-CityMap.prototype.onSavePoint = function() {
+Livecity.prototype.onSavePoint = function() {
     if (this.pointLayer.current === -1) this.outMsg("Нет данных для сохранения","red");
     else {
         this.pointLayer.current.save();
@@ -234,7 +281,7 @@ CityMap.prototype.onSavePoint = function() {
 };
 
 // [P] onDeletePoint - delete point handler {DEPRECATED]
-CityMap.prototype.onDeletePoint = function() {
+Livecity.prototype.onDeletePoint = function() {
     if (this.pointLayer.current === -1) this.outMsg("Ничего не выбрано","red");
     else {
         this.pointLayer.current.delete();
@@ -243,7 +290,7 @@ CityMap.prototype.onDeletePoint = function() {
 };
 
 // [P] onEditMarker - edit marker button handler [DEPRECATED]
-CityMap.prototype.onEditMarker = function() {
+Livecity.prototype.onEditMarker = function() {
     //close other editors
     if (this.routeEditorOpened) this.onCloseRouteEditor();
     if (this.guideOpened) this.onCloseGuide();
@@ -266,7 +313,7 @@ CityMap.prototype.onEditMarker = function() {
 };
 
 // [P] onEditRoute - edit route button handler [DEPRECATED]
-CityMap.prototype.onEditRoute = function() {
+Livecity.prototype.onEditRoute = function() {
     // close other editors
     if (this.pointEditorOpened) this.onCloseMarkerEditor();
     if (this.guideOpened) this.onCloseGuide();
@@ -292,7 +339,7 @@ CityMap.prototype.onEditRoute = function() {
 };
 
 // [P] onGuide - actions on open guide [DEPRECATED]
-CityMap.prototype.onGuide = function() {
+Livecity.prototype.onGuide = function() {
     if (this.guideOpened) return;
     // close other editors
     if (this.pointEditorOpened) this.onCloseMarkerEditor();
@@ -312,7 +359,7 @@ CityMap.prototype.onGuide = function() {
 };
 
 // [P] onCloseMarkerEditor - actions for closing editor [DEPRECATED]
-CityMap.prototype.onCloseMarkerEditor = function() {
+Livecity.prototype.onCloseMarkerEditor = function() {
     $('#edit_marker').hide('500');
     // change cursor to default
     this.map.setOptions({
@@ -326,7 +373,7 @@ CityMap.prototype.onCloseMarkerEditor = function() {
 };
 
 // [P] onCloseRouteEditor - actions for closing editor [DEPRECATED]
-CityMap.prototype.onCloseRouteEditor = function() {
+Livecity.prototype.onCloseRouteEditor = function() {
     $('#edit_route').hide('500');
     this.routeEditorOpened = false;
     this.routeBuilder.end();
@@ -334,7 +381,7 @@ CityMap.prototype.onCloseRouteEditor = function() {
 };
 
 // [P] onCloseGuide - actions for closing guide [DEPRECATED]
-CityMap.prototype.onCloseGuide = function() {
+Livecity.prototype.onCloseGuide = function() {
     $('#guide').hide('500');
     this.guideOpened = false;
     this.map.setOptions({
@@ -343,6 +390,31 @@ CityMap.prototype.onCloseGuide = function() {
     this.guide.popAll();
     this.guide = null;
 };
+
+/*
+ * Notifier Class
+ */
+function Notifier(parent) {
+    // link to parent object
+    var __parent = parent;
+    // alertbox
+    var __box = parent.getObjects().alertbox;
+    // GET alertbox
+    this.getBox = function() {
+        return __box;
+    }
+}
+
+// [P] msg - show message with selected text
+Notifier.prototype.msg = function(text,color) {
+    var link = this;
+    this.getBox().css("display", "block");
+    this.getBox().css("background-color", color);
+    this.getBox().text(text);
+    setTimeout(function() {
+        link.getBox().css("display", "none");
+    }, 3000);
+}
 
 /*
  * SearchBar Class

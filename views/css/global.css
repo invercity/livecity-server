@@ -89,7 +89,7 @@ body { height: 100%; margin: 0px; padding: 0px}
     top: 80px;
 }
 
-#tootltip {
+#alertbox {
     position: relative;
     left: -50%;
     font: 14px/19px sans-serif; 
