@@ -26,17 +26,20 @@ $(document).ready( function() {
     // remove button click
     $("#delete_edit").click(function () {city.onDeletePoint();});
     // back to city center
-    $("#main").click(function (){city.map.setCenter(city.center); city.outMsg("Вы вернулись в исходное положение","green")});
+    $("#main").click(function (){city.setCenter(); city.outMsg("Вы вернулись в исходное положение","green")});
     // save route handler
     $("#save_route").click(function() { city.routeBuilder.save();});
     // auth button handler
     $("#auth").click(function() {city.auth();});
     // guide chkbox
     $('#guide_show_places').change(function() {
+        // check 'checked' property
         if ($('#guide_show_places').prop('checked') === true) city.pointLayer.setVisible(true);
         else city.pointLayer.setVisible(false);
     })
+    // new guide handler
     $('#guide_new').click(function() {city.guide.popAll();});
+    // demo handler (temporary)
     $('#guide_demo').click(function(){city.guide.demo();});
 });
 
@@ -310,11 +313,6 @@ function CityMap(mapCenter) {
         this.guide = null;
     };
 
-    // show route [testing]
-    this.onShowRoute = function() {
-        if (!this.routeLayer.visible) this.routeLayer.setVisible(true);
-    };
-
     this.auth = function() {
         if (this.uid !== -1) {
             // out
@@ -340,6 +338,17 @@ function CityMap(mapCenter) {
         }
     };
 }
+
+// setCenter - set map to selected map position
+CityMap.prototype.setCenter = function(center) {
+    // if center is not selected, set map center default value
+    if (!center) this.map.setCenter(this.settings.center);
+    // if selected - set value and save to settings
+    else {
+        this.map.setCenter(center);
+        this.settings.center = center;
+    }
+};
 
 /*
  * SearchBar Class
