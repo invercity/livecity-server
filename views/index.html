@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <title> Livecity </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="invercity" >
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    
+    <!-- SCRIPTS --> 
+    <script type="text/javascript" 
+        src="http://maps.google.com/maps/api/js?key=AIzaSyCtoc2CLiq0QkGfdVKuyxJPhMfvSvNriRo&sensor=false&language=uk"> 
+    </script>
+    <script src="js/jquery-1.9.1.min.js"></script>
+    <script src="js/livecity.js"></script>
+    <script src="js/infobox.js"></script>
+    <script src="js/bootstrap.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script type="text/javascript" src="js/chosen.jquery.js"></script>
+    <!-- STYLES -->
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/editor.css">
+    <link rel="stylesheet" href="css/chosen.css"/>
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="css/bootstrap-responsive.css">
+
+    <link rel="shortcut icon" href="img/favicon.ico" type="image/gif">
+    </head>
+    <body>
+
+    <!-- AUTHORIZATION -->
+
+    <!--<div class="container" style="">
+        <div class="row">
+            <div class="span4 offset4 well">
+                <legend>Please Sign In</legend>
+                <div class="alert alert-error">
+                    <a class="close" data-dismiss="alert" href="#">×</a>Incorrect Username or Password!
+                </div>
+                <form method="POST" action="" accept-charset="UTF-8">
+                    <input type="text" id="username" class="span4" name="username" placeholder="Username">
+                    <input type="password" id="password" class="span4" name="password" placeholder="Password">
+                    <label class="checkbox">
+                        <input type="checkbox" name="remember" value="1"> Remember Me
+                    </label>
+                    <button type="submit" name="submit" class="btn btn-info btn-block">Sign in</button>
+                </form>
+            </div>
+      <!--  </div>
+     </div> -->
+
+    <!-- MAIN MENU -->
+
+    <div class="container0">
+        <div class="menu" style="padding: 0">
+            <button class="menu-button"id="main" >livecity</button>
+            <div style="height:30px;width:60%; float:left;">
+                <select class="chosen" id="main-search" data-placeholder="Искать..." multiple tabindex="3" style="z-index: 1000"> 
+                    <optgroup label="Места"></optgroup>
+                    <optgroup label="Маршруты"></optgroup> -->
+		        </select>
+            </div>
+            <button class="menu-button-auth" id="auth"> Вход </button>
+        </div>
+    </div>
+
+    <!-- CONTROL BUTTONS -->
+    <div id="buttons">
+        <button class="next" id="opt">Гид</button>
+        <button class="next" id="edit">Места</button>
+        <button class="next" id="edit2">Маршруты</button>
+    </div>
+
+    <!-- GUIDE -->
+
+    <div id="guide">
+        <!-- GUIDE.TITLE -->
+        <div class="edit_title">
+            <div style="margin-left: -20%"> Найти путь
+                <button id="close_button_guide" title="Закрыть"></button>
+            </div>
+        </div>
+        <!-- GUIDE.INPUT -->
+        <div class="input-group input-group-sm" style="margin-left: 5%">
+            <h5>
+                Начальная точка<br/>
+                <span class="label label-default"><div id="guide_start">Не задано</div></span>
+            </h5>
+            <h5>
+                Конечная точка<br/>
+                <span class="label label-default"><div id="guide_end">Не задано</div></span>
+            </h5>
+            <h5>
+                Длина маршрута, м.:<br/>
+                <span class="label label-default"><div id="guide_length">0</div></span>
+            </h5>
+            <h5>
+                <input type="checkbox" id="guide_show_places">
+                Отобразить места
+            </h5>
+            <input type="text" id="guide_url" placeholder="url" onkeypress="false" class="form-control" style="width: 90%">
+        </div>
+        <!-- GUIDE.BUTTONS -->
+        <div class="edit_controls">
+            <button id='guide_save'> Сохранить </button>
+            <button id='guide_new'> Новый путь </button>
+            <br />
+            <button id="guide_demo"> Demo </button>
+        </div>
+    </div>
+
+    <!-- POINT EDITOR -->
+
+    <div id="edit_marker"> 
+         <div class="edit_title">
+             <div style="margin-left: -50%"> Редактирование Мест
+                 <button id="close_button_point" title="Закрыть"></button> 
+             </div>
+         </div> 
+         <div>
+             <div class="input-group input-group-sm" style="margin-left: 5%">
+                 <h5>
+                     Широта<br/>
+                     <span class="label label-default"><div id="label_posx">0</div></span>
+                 </h5>
+                 <h5>
+                     Долгота<br/>
+                     <span class="label label-default"><div id="label_posy">0</div></span>
+                 </h5>
+                 <input type="text" id="label_name" class="form-control" placeholder="Название" style="width: 90%">
+             </div>
+            <div class="edit_controls">
+                <button id='save_edit'> Сохранить </button>
+                <button id='delete_edit'> Удалить </button>
+            </div>
+            <div class="tab_control">
+                <center> Список мест: </center>
+            </div>
+            <div id="marker_list">
+                <ul id="ul_list">
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- ROUTE EDITOR -->
+
+    <div id="edit_route"> 
+         <div class="edit_title">
+             <div style="margin-left: -50%"> Редактирование Маршр.
+                 <button id="close_button_route" title="Закрыть">  </button> 
+             </div>
+         </div>
+
+         <div>
+             <div class="input-group input-group-sm" style="margin-left: 5%">
+                 <br />
+                 <input type="text" id="label_route_name" class="form-control" placeholder="Название" style="width: 90%">
+             </div>
+             <div class="edit_controls">
+                 <button id="setRouteStart"> Задать начальную </button> <br/>
+             </div>
+             <div class="input-group input-group-sm" style="margin-left: 5%">
+                 <span class="label label-default"><div id="routeStartText">Не выбрано</div></span><br />
+             </div>
+             <div class="edit_controls">
+                 <button id="setRouteEnd"> Задать конечную </button> <br/>
+             </div>
+             <div class="input-group input-group-sm" style="margin-left: 5%">
+                 <span class="label label-default"><div id="routeEndText">Не выбрано</div></span>
+             </div>
+             <div class="edit_controls">
+                 <button id='save_route'> Сохранить </button>
+                 <!-- <button id='delete_route'> Удалить </button> -->
+             </div>
+            <div class="tab_control">
+                <center> Список маршрутов: </center>
+            </div>
+            <div id="route_list">
+                <ul id="ul_list">
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div id="map_canvas"></div>
+    <div style="position: absolute; left: 50%; bottom: 2%;">
+        <div id="tootltip">
+            Данные сохранены
+        </div>
+    </div>
+ </body>
+ </html>
