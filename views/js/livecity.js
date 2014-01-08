@@ -4,7 +4,20 @@ var city = null;
 // $.ready handler
 $(document).ready( function() {
     // create new city
-    city = new CityMap(new google.maps.LatLng(51.4982000,31.2893500));
+    city = new CityMap({
+            zoom: 15,
+            center: new google.maps.LatLng(51.4982000,31.2893500),
+            mapTypeControl: true,
+            mapTypeControlOptions: {
+                style: google.maps.MapTypeControlStyle,
+                position: google.maps.ControlPosition.BOTTOM_LEFT
+            },
+            navigationControl: true,
+            navigationControlOptions: {
+                style: google.maps.NavigationControlStyle.SMALL
+            },
+            mapTypeId: google.maps.MapTypeId.ROADMAP
+    });
     // init city
     city.init();
     // set update function with interval
@@ -46,24 +59,11 @@ $(document).ready( function() {
 /*
  * City Class
  */
-function CityMap(mapCenter) {
-    // map settings
-    this.center = mapCenter;
-    this.settings = {
-        zoom: 15,
-        center: mapCenter,
-        mapTypeControl: true,
-        mapTypeControlOptions: {
-            style: google.maps.MapTypeControlStyle,
-            position: google.maps.ControlPosition.BOTTOM_LEFT
-        },
-        navigationControl: true,
-        navigationControlOptions: {
-            style: google.maps.NavigationControlStyle.SMALL
-        },
-        mapTypeId: google.maps.MapTypeId.ROADMAP
-    };
-    this.uid = -1;
+function CityMap(settings) {
+    // UID [unused]
+    this.uid = null;
+    // set settings
+    this.settings = settings;
     // server url
     this.url = 'http://localhost:3000';
     // static objects
@@ -314,14 +314,14 @@ function CityMap(mapCenter) {
     };
 
     this.auth = function() {
-        if (this.uid !== -1) {
+        if (this.uid) {
             // out
             $("#auth").css("background", "url('img/key.png') right no-repeat");
             $("#auth").text("Вход");
             $("#edit").css("visibility", "hidden");
             $("#edit2").css("visibility", "hidden");
             $("#opt").css("visibility", "hidden");
-            this.uid = -1;
+            this.uid = null;
             if (this.routeBuilder !== -1) this.routeBuilder.end();
             if (this.routeEditorOpened) this.onCloseRouteEditor();
             if (this.pointEditorOpened) this.onCloseMarkerEditor();
