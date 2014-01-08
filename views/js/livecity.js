@@ -6,7 +6,50 @@ $(document).ready(function() {
     // links to page objects
     var objects = {
         alertbox: $('#alertbox'),
-        map: document.getElementById('map_canvas')
+        map: document.getElementById('map_canvas'),
+        auth : $('#auth'),
+        constrol: $('#control'),
+        editPoints: $('#edit_points'),
+        editRoutes: $('#edit_routes'),
+        editGuide: $('#edit_guide'),
+        pointEditor: {
+            base: $('#edit_point'),
+            close: $('#close_button_point'),
+            save: $('#save_edit'),
+            remove: $('#delete_edit'),
+            valueLat: $('#label_posx'),
+            valueLng: $('#label_posy'),
+            valueTitle: $('#label_name')
+        },
+        routeEditor: {
+            base: $('#edit_route'),
+            close: $('#close_button_route'),
+            save: $('#save_route'),
+            start: $('#setRouteStart'),
+            end: $('#setRouteEnd'),
+            valueTitle: $('#label_route_name'),
+            valueStart: $('#routeStartText'),
+            valueEnd: $('#routeEndText')
+        },
+        guideEditor : {
+            base: $('#guide'),
+            close: $('#close_button_guide'),
+            save: $('#guide_save'),
+            create: $('#guide_new'),
+            demo: $('#guide_demo'),
+            valueStart: $('#guide_start'),
+            valueEnd: $('#guide_end'),
+            valueLength: $('#guide_length'),
+            valueUrl: $('#guide_url'),
+            valueIfPlacesShowed: $('#guide_show_places')
+        },
+        searchBar: {
+            base: $('#main-search'),
+            chosen: $('.chosen'),
+            option: $('option'),
+            groups: $('optgroup')
+
+        }
     };
     // livecity settings
     var settings = {
@@ -30,37 +73,37 @@ $(document).ready(function() {
     // set update function with interval
     setInterval('city.update()',5000);
     // Edit stations click handler
-    $("#edit").click(function() { city.onEditMarker(); });
+    objects.editPoints.click(function() { city.onEditMarker(); });
     // edit route handler
-    $("#edit2").click(function () { city.onEditRoute();});
+    objects.editRoutes.click(function () { city.onEditRoute();});
     // guide handler
-    $('#opt').click(function() {city.onGuide();});
+    objects.editGuide.click(function() {city.onGuide();});
     // Close edit panel handler
-    $("#save_edit").click(function () {city.onSavePoint();});
+    objects.pointEditor.save.click(function () {city.onSavePoint();});
     // Cancel edit point click handler
-    $("#close_button_point").click(function () {city.onCloseMarkerEditor();});
+    objects.pointEditor.close.click(function () {city.onCloseMarkerEditor();});
     // Cancel edit route click handler
-    $("#close_button_route").click(function () {city.onCloseRouteEditor();});
+    objects.routeEditor.close.click(function () {city.onCloseRouteEditor();});
     // Cancel guide
-    $('#close_button_guide').click(function() {city.onCloseGuide();});
+    objects.guideEditor.close.click(function() {city.onCloseGuide();});
     // remove button click
-    $("#delete_edit").click(function () {city.onDeletePoint();});
+    objects.pointEditor.remove.click(function () {city.onDeletePoint();});
     // back to city center
-    $("#main").click(function (){city.setCenter(); city.outMsg("Вы вернулись в исходное положение","green")});
+    objects.constrol.click(function (){city.setCenter(); city.outMsg("Вы вернулись в исходное положение","green")});
     // save route handler
-    $("#save_route").click(function() { city.routeBuilder.save();});
+    objects.routeEditor.save.click(function() { city.routeBuilder.save();});
     // auth button handler
-    $("#auth").click(function() {city.auth();});
+    objects.auth.click(function() {city.auth();});
     // guide chkbox
-    $('#guide_show_places').change(function() {
+    objects.guideEditor.valueIfPlacesShowed.change(function() {
         // check 'checked' property
-        if ($('#guide_show_places').prop('checked') === true) city.pointLayer.setVisible(true);
+        if (objects.guideEditor.valueIfPlacesShowed.prop('checked') === true) city.pointLayer.setVisible(true);
         else city.pointLayer.setVisible(false);
     })
     // new guide handler
-    $('#guide_new').click(function() {city.guide.popAll();});
+    objects.guideEditor.create.click(function() {city.guide.popAll();});
     // demo handler (temporary)
-    $('#guide_demo').click(function(){city.guide.demo();});
+    objects.guideEditor.demo.click(function(){city.guide.demo();});
 });
 
 /*
@@ -195,10 +238,12 @@ Livecity.prototype.outMsg = function(text,color) {
 Livecity.prototype.setEditPointData = function(position, title, focus) {
     var lat = position.lat();
     var lng = position.lng();
-    $("#label_posx").text(Number(lat).toFixed(4));
-    $("#label_posy").text(Number(lng).toFixed(4));
-    $("#label_name").val(title);
-    if (focus) $('#label_name').focus();
+    // FEATURE - add option Round?
+    this.getObjects().pointEditor.valueLat.text(Number(lat).toFixed(4));
+    this.getObjects().pointEditor.valueLng.text(Number(lng).toFixed(4));
+    this.getObjects().pointEditor.valueTitle.val(title);
+    // FEATURE
+    if (focus) this.getObjects().pointEditor.valueTitle.focus();
 };
 
 // [P] addPoint - add new point on map
@@ -216,15 +261,15 @@ Livecity.prototype.addPoint = function(position) {
 
 // [P] clearEditor - clear editor inputs
 Livecity.prototype.clearEditor = function() {
-    $("#label_posx").text("0");
-    $("#label_posy").text("0");
-    $("#label_name").val("");
-    $("#label_route_name").val("");
-    $("#routeStartText").text("Не выбрано");
-    $("#routeEndText").text("Не выбрано");
-    $('#guide_start').text('Не задано');
-    $('#guide_end').text('Не задано');
-    $('#guide_length').text('0');
+    this.getObjects().pointEditor.valueLat.text("0");
+    this.getObjects().pointEditor.valueLng.text("0");
+    this.getObjects().pointEditor.valueTitle.val("");
+    this.getObjects().routeEditor.valueTitle.val("");
+    this.getObjects().routeEditor.valueStart.text("Не выбрано");
+    this.getObjects().routeEditor.valueEnd.text("Не выбрано");
+    this.getObjects().guideEditor.valueStart.text('Не задано');
+    this.getObjects().guideEditor.valueEnd.text('Не задано');
+    this.getObjects().guideEditor.valueLength.text('0');
 };
 
 // [P] setCenter - set map to selected map position
@@ -242,11 +287,13 @@ Livecity.prototype.setCenter = function(center) {
 Livecity.prototype.auth = function() {
     if (this.getUID()) {
         // end session
-        $("#auth").css("background", "url('img/key.png') right no-repeat");
-        $("#auth").text("Вход");
-        $("#edit").css("visibility", "hidden");
-        $("#edit2").css("visibility", "hidden");
-        $("#opt").css("visibility", "hidden");
+        this.getObjects().auth.css("background", "url('img/key.png') right no-repeat");
+        this.getObjects().auth.text("Вход");
+        // FEATURE - replace with load()
+        this.getObjects().editPoints.css("visibility", "hidden");
+        this.getObjects().editRoutes.css("visibility", "hidden");
+        this.getObjects().editGuide.css("visibility", "hidden");
+        // F
         this.setUID(null);
         if (this.routeBuilder !== -1) this.routeBuilder.end();
         if (this.routeEditorOpened) this.onCloseRouteEditor();
@@ -255,11 +302,13 @@ Livecity.prototype.auth = function() {
         this.outMsg("Сессия завершена","green");
         // login
     } else {
-        $("#auth").css("background", "url('img/lock.png') right no-repeat");
-        $("#auth").text("Выйти");
-        $("#edit").css("visibility", "visible");
-        $("#edit2").css("visibility", "visible");
-        $("#opt").css("visibility", "visible");
+        this.getObjects().auth.css("background", "url('img/lock.png') right no-repeat");
+        this.getObjects().auth.text("Выйти");
+        // FEATURE
+        this.getObjects().editPoints.css("visibility", "visible");
+        this.getObjects().editRoutes.css("visibility", "visible");
+        this.getObjects().editGuide.css("visibility", "visible");
+        // F
         this.setUID(1);
         this.outMsg("Вы успешно авторизированы","green");
     }
@@ -307,7 +356,7 @@ Livecity.prototype.onEditMarker = function() {
     // set current point
     this.pointLayer.setCurrent(-1);
     // show editor
-    $('#edit_marker').show('500');
+    this.getObjects().pointEditor.base.show('500');
     // set the document flag
     this.pointEditorOpened = true;
 };
@@ -333,7 +382,7 @@ Livecity.prototype.onEditRoute = function() {
         rb.setStart();
     });
     // show editor
-    $('#edit_route').show('500');
+    this.getObjects().routeEditor.base.show('500');
     // set editor flag
     this.routeEditorOpened = true;
 };
@@ -345,7 +394,7 @@ Livecity.prototype.onGuide = function() {
     if (this.pointEditorOpened) this.onCloseMarkerEditor();
     if (this.routeEditorOpened) this.onCloseRouteEditor();
     // show guide
-    $('#guide').show('500');
+    this.getObjects().guideEditor.base.show('500');
     // set guide flag
     this.guideOpened = true;
     // set map handlers
@@ -360,7 +409,7 @@ Livecity.prototype.onGuide = function() {
 
 // [P] onCloseMarkerEditor - actions for closing editor [DEPRECATED]
 Livecity.prototype.onCloseMarkerEditor = function() {
-    $('#edit_marker').hide('500');
+    this.getObjects().pointEditor.base.hide('500');
     // change cursor to default
     this.map.setOptions({
         draggableCursor: 'pointer'
@@ -374,7 +423,7 @@ Livecity.prototype.onCloseMarkerEditor = function() {
 
 // [P] onCloseRouteEditor - actions for closing editor [DEPRECATED]
 Livecity.prototype.onCloseRouteEditor = function() {
-    $('#edit_route').hide('500');
+    this.getObjects().routeEditor.base.hide('500');
     this.routeEditorOpened = false;
     this.routeBuilder.end();
     this.clearEditor();
@@ -382,7 +431,7 @@ Livecity.prototype.onCloseRouteEditor = function() {
 
 // [P] onCloseGuide - actions for closing guide [DEPRECATED]
 Livecity.prototype.onCloseGuide = function() {
-    $('#guide').hide('500');
+    this.getObjects().guideEditor.base.hide('500');
     this.guideOpened = false;
     this.map.setOptions({
         draggableCursor: 'pointer'
@@ -420,7 +469,7 @@ Notifier.prototype.msg = function(text,color) {
  * SearchBar Class
  */
 function SearchBar(main) {
-    this.main = main;
+    var parent = main;
     // array for points, opened before
     this.oldP = [];
     // array for routes, opened before
@@ -428,7 +477,7 @@ function SearchBar(main) {
     // init function
     this.init = function() {
         var obj = this;
-        jQuery(".chosen").chosen({
+        parent.getObjects().searchBar.chosen.chosen({
             no_results_text: "Ничего не найдено для"
         }).change(function(e) {
             // check if this is not base mode
@@ -436,7 +485,7 @@ function SearchBar(main) {
                 obj.deselect();
                 main.outMsg("Данное действие не доступно в режиме редактирования","red");
             }
-            // get copy of prevous selected points/routes
+            // get copy of previous selected points/routes
             var oldP = obj.oldP.slice();
             var oldR = obj.oldR.slice();
             obj.selected = $(this).val();
@@ -499,7 +548,7 @@ function SearchBar(main) {
     
     // add item to search pane
     this.add = function (group,id,name) {
-        var groups = $("optgroup");
+        var groups = parent.getObjects().searchBar.groups;
         $(groups[group]).append('<option value="' + id + '" >' + name + '</option>');
         this.update();
     };
@@ -509,22 +558,13 @@ function SearchBar(main) {
 
     // update items
     this.update = function() {
-        $('.chosen').trigger("liszt:updated");
+        parent.getObjects().searchBar.chosen.trigger("liszt:updated");
     };
 
     // deselect all items
     this.deselect = function() {
-        $('option').prop('selected', false);
+        parent.getObjects().searchBar.option.prop('selected', false);
         this.update();
-    };
-
-    this.test = function() {
-        $("#main-search").val(2).trigger("liszt:updated");
-    };
-
-    this.select = function(id) {
-        $('.chosen').select()
-        $('.chosen').trigger("liszt:updated");
     };
 
     // operations on creating
@@ -556,7 +596,7 @@ function PointLayer(main) {
         });
     };
 
-    // get array of visible points (infos)
+    // get array of visible points (info's)
     this.getVisible = function() {
         var result = [];
         for (var i = 0; i < this.points.length; i++) {
@@ -1233,8 +1273,8 @@ function MapPoint(main, position, icon, title) {
         });
         google.maps.event.addListener(this.marker, 'drag', function(event) {
             if (main.pointEditorOpened) {
-                var name = $('#label_name').val();
-                main.setEditPointData(this.position, name, false);
+                var title = main.getObjects().pointEditor.valueTitle.val();
+                main.setEditPointData(this.position, title, false);
             }
         });
         google.maps.event.addListener(this.marker, 'dragend', function(event) {

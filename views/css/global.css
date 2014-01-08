@@ -60,7 +60,7 @@ body { height: 100%; margin: 0px; padding: 0px}
     color: black;
 }
 
-#edit,#edit2,#opt{
+#edit_points, #edit_routes, #edit_guide {
     visibility: hidden;
     position: absolute;
     font-size: 13px;
@@ -77,15 +77,15 @@ body { height: 100%; margin: 0px; padding: 0px}
     border : #cccccc solid 1px;
 }
 
-#edit,#edit2, #opt:hover {
+#edit_points, #edit_routes, #edit_guide:hover {
     cursor: pointer;
 }
 
-#edit2 {
+#edit_routes {
     top: 40px;
 }
 
-#edit {
+#edit_points {
     top: 80px;
 }
 
