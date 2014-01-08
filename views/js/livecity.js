@@ -92,254 +92,95 @@ function CityMap(settings) {
     this.routeEditorOpened = false;
     // flag for guide
     this.guideOpened = false;
-
-    // ---------- Methods -------- //
-
-    // update map
-    this.update = function() {
-        this.transLayer.update();
-    };
-
-    // init map
-    this.init = function() {
-        // load points on map
-        this.pointLayer.load();
-        // load nodes/routes on map
-        this.routeLayer.load();
-        // link to main document
-        var obj = this;
-        // map click handler
-        google.maps.event.addListener(this.map, 'click', function(event) {
-            // editor mode
-            if (obj.pointEditorOpened) {
-                obj.addPoint(event.latLng);
-                obj.pointLayer.current.save();
-                obj.outMsg("Метка сохранена","green");
-                // user mode
-              // NEED TEST
-            } //else if (obj.pointLayer.current !== -1) obj.pointLayer.current.info.hide();
-            if (obj.guideOpened) {
-                obj.guide.push(event.latLng);
-            }
-        });
-        // button click handler
-        document.documentElement.onkeydown = function(e) {
-            // if escape
-            if (e.keyCode === 27) {
-                if (obj.pointEditorOpened) {
-                    if (obj.pointLayer.current === -1) obj.onCloseMarkerEditor();
-                    else {
-                        obj.pointLayer.setCurrent(-1);
-                        obj.clearEditor();
-                    }
-                }
-                if (obj.routeEditorOpened) obj.onCloseRouteEditor();
-                if (obj.guideOpened) obj.onCloseGuide();
-            }
-        };
-        this.update();
-    };
-
-    // set edits during editing marker
-    this.setEditPointData = function(position, title, focus) {
-        var lat = position.lat();
-        var lng = position.lng();
-        $("#label_posx").text(Number(lat).toFixed(4));
-        $("#label_posy").text(Number(lng).toFixed(4));
-        $("#label_name").val(title);
-        if (focus) $('#label_name').focus();
-    };
-
-    // out message on page with choosed color
-    this.outMsg = function(txt, color) {
-        $('#tootltip').css("display", "block");
-        $('#tootltip').css("background-color", color);
-        $('#tootltip').text(txt);
-        setTimeout(function() {
-            $('#tootltip').css("display", "none");
-        }, 3000);
-    };
-
-    // add new point on map 
-    this.addPoint = function(position) {
-        var title = "id" + (this.pointLayer.points.length);
-        var point = new MapPoint(this, position, this.objects.ICON_RED(), title);
-        point.marker.setDraggable(true);
-        point.marker.setVisible(true);
-        //point.setId(this.pointLayer.points.length);
-        this.pointLayer.add(point);
-        this.pointLayer.setCurrent(point);
-        this.setEditPointData(position, title, true);
-        return point;
-    };
-
-    // clear editor inputs
-    this.clearEditor = function() {
-        $("#label_posx").text("0");
-        $("#label_posy").text("0");
-        $("#label_name").val("");
-        $("#label_route_name").val("");
-        $("#routeStartText").text("Не выбрано");
-        $("#routeEndText").text("Не выбрано");
-        $('#guide_start').text('Не задано');
-        $('#guide_end').text('Не задано');
-        $('#guide_length').text('0');
-    };
-
-    // ------------ Handlers ----------- //
-
-    // edit marker button handler
-    this.onEditMarker = function() {
-        //close other editors
-        if (this.routeEditorOpened) this.onCloseRouteEditor();
-        if (this.guideOpened) this.onCloseGuide();
-        // setting up cursor
-        this.map.setOptions({
-            draggableCursor: 'crosshair'
-        });
-        // show all points
-        this.routeLayer.setVisible(false);
-        this.pointLayer.setVisible(false);
-        this.pointLayer.setVisible(true);
-        // deselect search bar
-        this.searchBar.deselect();
-        // set current point
-        this.pointLayer.setCurrent(-1);
-        // show editor
-        $('#edit_marker').show('500');
-        // set the document flag
-        this.pointEditorOpened = true;
-    };
-
-    // edit route button handler
-    this.onEditRoute = function() {
-        // close other editors
-        if (this.pointEditorOpened) this.onCloseMarkerEditor();
-        if (this.guideOpened) this.onCloseGuide();
-        // disable searchbar
-        this.searchBar.deselect();
-        // show all points
-        this.routeLayer.setVisible(false);
-        this.pointLayer.setVisible(false);
-        this.pointLayer.setVisible(true);
-        this.routeBuilder = new RouteBuilder(this);
-        var rb = this.routeBuilder;
-        // setting onSetRouteEnd handler
-        $('#setRouteEnd').click(function() {
-            rb.setEnd();
-        });
-        $('#setRouteStart').click(function() {
-            rb.setStart();
-        });
-        // show editor
-        $('#edit_route').show('500');
-        // set editor flag
-        this.routeEditorOpened = true;
-    };
-
-    //run guide
-    this.onGuide = function() {
-        if (this.guideOpened) return;
-        // close other editors
-        if (this.pointEditorOpened) this.onCloseMarkerEditor();
-        if (this.routeEditorOpened) this.onCloseRouteEditor();
-        // show guide
-        $('#guide').show('500');
-        // set guide flag
-        this.guideOpened = true;
-        // set map handlers
-        // FUN
-        //$('#guide_url').val('citymap.me/path/fhfw23wq');
-        //$('#guide_url').select();
-
-        this.map.setOptions({
-            draggableCursor: 'crosshair'
-        });
-
-        this.guide = new Guide(this);
-        this.searchBar.deselect();
-        this.outMsg('Виберите начальную и конечную точку на карте','green');
-    };
-
-    // save point handler
-    this.onSavePoint = function() {
-        if (this.pointLayer.current === -1) this.outMsg("Нет данных для сохранения","red");
-        else {
-            this.pointLayer.current.save();
-            this.outMsg("Метка сохранена","green");
-        }
-        //else this.outMsg("Произошла ошибка", "red");
-    };
-
-    // delete point handler
-    this.onDeletePoint = function() {
-        if (this.pointLayer.current === -1) this.outMsg("Ничего не выбрано","red");
-        else {
-            this.pointLayer.current.delete();
-            this.outMsg("Метка удалена","green");
-        }
-    };
-
-    // close point editor handler
-    this.onCloseMarkerEditor = function() {
-        $('#edit_marker').hide('500');
-        // change cursor to default
-        this.map.setOptions({
-            draggableCursor: 'pointer'
-        });
-        // unset marker
-        this.pointLayer.setCurrent(-1);
-        // set the main document flag
-        this.pointEditorOpened = false;
-        this.pointLayer.setVisible(false);
-    };
-
-    // close route editor
-    this.onCloseRouteEditor = function() {
-        $('#edit_route').hide('500');
-        this.routeEditorOpened = false;
-        this.routeBuilder.end();
-        this.clearEditor();
-    };
-
-    // close guide
-    this.onCloseGuide = function() {
-        $('#guide').hide('500');
-        this.guideOpened = false;
-        this.map.setOptions({
-            draggableCursor: 'pointer'
-        });
-        this.guide.popAll();
-        this.guide = null;
-    };
-
-    this.auth = function() {
-        if (this.uid) {
-            // out
-            $("#auth").css("background", "url('img/key.png') right no-repeat");
-            $("#auth").text("Вход");
-            $("#edit").css("visibility", "hidden");
-            $("#edit2").css("visibility", "hidden");
-            $("#opt").css("visibility", "hidden");
-            this.uid = null;
-            if (this.routeBuilder !== -1) this.routeBuilder.end();
-            if (this.routeEditorOpened) this.onCloseRouteEditor();
-            if (this.pointEditorOpened) this.onCloseMarkerEditor();
-            if (this.guideOpened) this.onCloseGuide();
-            this.outMsg("Сессия завершена","green");
-        } else {
-            $("#auth").css("background", "url('img/lock.png') right no-repeat");
-            $("#auth").text("Выйти");
-            $("#edit").css("visibility", "visible");
-            $("#edit2").css("visibility", "visible");
-            $("#opt").css("visibility", "visible");
-            this.uid = 0;
-            this.outMsg("Вы успешно авторизированы","green");
-        }
-    };
 }
 
-// setCenter - set map to selected map position
+// [P] init - init map
+CityMap.prototype.init = function() {
+    // load points on map
+    this.pointLayer.load();
+    // load nodes/routes on map
+    this.routeLayer.load();
+    // link to main document
+    var obj = this;
+    // map click handler
+    google.maps.event.addListener(this.map, 'click', function(event) {
+        // editor mode
+        if (obj.pointEditorOpened) {
+            obj.addPoint(event.latLng);
+            obj.pointLayer.current.save();
+            obj.outMsg("Метка сохранена","green");
+            // user mode
+            // NEED TEST
+        } //else if (obj.pointLayer.current !== -1) obj.pointLayer.current.info.hide();
+        if (obj.guideOpened) {
+            obj.guide.push(event.latLng);
+        }
+    });
+    // button click handler
+    document.documentElement.onkeydown = function(e) {
+        // if escape
+        if (e.keyCode === 27) {
+            if (obj.pointEditorOpened) {
+                if (obj.pointLayer.current === -1) obj.onCloseMarkerEditor();
+                else {
+                    obj.pointLayer.setCurrent(-1);
+                    obj.clearEditor();
+                }
+            }
+            if (obj.routeEditorOpened) obj.onCloseRouteEditor();
+            if (obj.guideOpened) obj.onCloseGuide();
+        }
+    };
+    this.update();
+};
+
+// [P] setEditPointData - set edits for editing marker
+CityMap.prototype.setEditPointData = function(position, title, focus) {
+    var lat = position.lat();
+    var lng = position.lng();
+    $("#label_posx").text(Number(lat).toFixed(4));
+    $("#label_posy").text(Number(lng).toFixed(4));
+    $("#label_name").val(title);
+    if (focus) $('#label_name').focus();
+};
+
+// [P] outMsg - out message on page [DEPRECATED]
+CityMap.prototype.outMsg = function(txt, color) {
+    $('#tootltip').css("display", "block");
+    $('#tootltip').css("background-color", color);
+    $('#tootltip').text(txt);
+    setTimeout(function() {
+        $('#tootltip').css("display", "none");
+    }, 3000);
+};
+
+// [P] addPoint - add new point on map
+CityMap.prototype.addPoint = function(position) {
+    var title = "id" + (this.pointLayer.points.length);
+    var point = new MapPoint(this, position, this.objects.ICON_RED(), title);
+    point.marker.setDraggable(true);
+    point.marker.setVisible(true);
+    //point.setId(this.pointLayer.points.length);
+    this.pointLayer.add(point);
+    this.pointLayer.setCurrent(point);
+    this.setEditPointData(position, title, true);
+    return point;
+};
+
+// [P] clearEditor - clear editor inputs
+CityMap.prototype.clearEditor = function() {
+    $("#label_posx").text("0");
+    $("#label_posy").text("0");
+    $("#label_name").val("");
+    $("#label_route_name").val("");
+    $("#routeStartText").text("Не выбрано");
+    $("#routeEndText").text("Не выбрано");
+    $('#guide_start').text('Не задано');
+    $('#guide_end').text('Не задано');
+    $('#guide_length').text('0');
+};
+
+// [P] setCenter - set map to selected map position
 CityMap.prototype.setCenter = function(center) {
     // if center is not selected, set map center default value
     if (!center) this.map.setCenter(this.settings.center);
@@ -348,6 +189,159 @@ CityMap.prototype.setCenter = function(center) {
         this.map.setCenter(center);
         this.settings.center = center;
     }
+};
+
+// [P] auth - authorize user/end session
+CityMap.prototype.auth = function() {
+    if (this.uid) {
+        // end session
+        $("#auth").css("background", "url('img/key.png') right no-repeat");
+        $("#auth").text("Вход");
+        $("#edit").css("visibility", "hidden");
+        $("#edit2").css("visibility", "hidden");
+        $("#opt").css("visibility", "hidden");
+        this.uid = null;
+        if (this.routeBuilder !== -1) this.routeBuilder.end();
+        if (this.routeEditorOpened) this.onCloseRouteEditor();
+        if (this.pointEditorOpened) this.onCloseMarkerEditor();
+        if (this.guideOpened) this.onCloseGuide();
+        this.outMsg("Сессия завершена","green");
+        // login
+    } else {
+        $("#auth").css("background", "url('img/lock.png') right no-repeat");
+        $("#auth").text("Выйти");
+        $("#edit").css("visibility", "visible");
+        $("#edit2").css("visibility", "visible");
+        $("#opt").css("visibility", "visible");
+        this.uid = 1;
+        this.outMsg("Вы успешно авторизированы","green");
+    }
+};
+
+// [P] update - update trans layer on a map
+CityMap.prototype.update = function() {
+    this.transLayer.update();
+};
+
+// [P] onSavePoint - save point handler [DEPRECATED]
+CityMap.prototype.onSavePoint = function() {
+    if (this.pointLayer.current === -1) this.outMsg("Нет данных для сохранения","red");
+    else {
+        this.pointLayer.current.save();
+        this.outMsg("Метка сохранена","green");
+    }
+    //else this.outMsg("Произошла ошибка", "red");
+};
+
+// [P] onDeletePoint - delete point handler {DEPRECATED]
+CityMap.prototype.onDeletePoint = function() {
+    if (this.pointLayer.current === -1) this.outMsg("Ничего не выбрано","red");
+    else {
+        this.pointLayer.current.delete();
+        this.outMsg("Метка удалена","green");
+    }
+};
+
+// [P] onEditMarker - edit marker button handler [DEPRECATED]
+CityMap.prototype.onEditMarker = function() {
+    //close other editors
+    if (this.routeEditorOpened) this.onCloseRouteEditor();
+    if (this.guideOpened) this.onCloseGuide();
+    // setting up cursor
+    this.map.setOptions({
+        draggableCursor: 'crosshair'
+    });
+    // show all points
+    this.routeLayer.setVisible(false);
+    this.pointLayer.setVisible(false);
+    this.pointLayer.setVisible(true);
+    // deselect search bar
+    this.searchBar.deselect();
+    // set current point
+    this.pointLayer.setCurrent(-1);
+    // show editor
+    $('#edit_marker').show('500');
+    // set the document flag
+    this.pointEditorOpened = true;
+};
+
+// [P] onEditRoute - edit route button handler [DEPRECATED]
+CityMap.prototype.onEditRoute = function() {
+    // close other editors
+    if (this.pointEditorOpened) this.onCloseMarkerEditor();
+    if (this.guideOpened) this.onCloseGuide();
+    // disable searchbar
+    this.searchBar.deselect();
+    // show all points
+    this.routeLayer.setVisible(false);
+    this.pointLayer.setVisible(false);
+    this.pointLayer.setVisible(true);
+    this.routeBuilder = new RouteBuilder(this);
+    var rb = this.routeBuilder;
+    // setting onSetRouteEnd handler
+    $('#setRouteEnd').click(function() {
+        rb.setEnd();
+    });
+    $('#setRouteStart').click(function() {
+        rb.setStart();
+    });
+    // show editor
+    $('#edit_route').show('500');
+    // set editor flag
+    this.routeEditorOpened = true;
+};
+
+// [P] onGuide - actions on open guide [DEPRECATED]
+CityMap.prototype.onGuide = function() {
+    if (this.guideOpened) return;
+    // close other editors
+    if (this.pointEditorOpened) this.onCloseMarkerEditor();
+    if (this.routeEditorOpened) this.onCloseRouteEditor();
+    // show guide
+    $('#guide').show('500');
+    // set guide flag
+    this.guideOpened = true;
+    // set map handlers
+    this.map.setOptions({
+        draggableCursor: 'crosshair'
+    });
+
+    this.guide = new Guide(this);
+    this.searchBar.deselect();
+    this.outMsg('Виберите начальную и конечную точку на карте','green');
+};
+
+// [P] onCloseMarkerEditor - actions for closing editor [DEPRECATED]
+CityMap.prototype.onCloseMarkerEditor = function() {
+    $('#edit_marker').hide('500');
+    // change cursor to default
+    this.map.setOptions({
+        draggableCursor: 'pointer'
+    });
+    // unset marker
+    this.pointLayer.setCurrent(-1);
+    // set the main document flag
+    this.pointEditorOpened = false;
+    this.pointLayer.setVisible(false);
+};
+
+// [P] onCloseRouteEditor - actions for closing editor [DEPRECATED]
+CityMap.prototype.onCloseRouteEditor = function() {
+    $('#edit_route').hide('500');
+    this.routeEditorOpened = false;
+    this.routeBuilder.end();
+    this.clearEditor();
+};
+
+// [P] onCloseGuide - actions for closing guide [DEPRECATED]
+CityMap.prototype.onCloseGuide = function() {
+    $('#guide').hide('500');
+    this.guideOpened = false;
+    this.map.setOptions({
+        draggableCursor: 'pointer'
+    });
+    this.guide.popAll();
+    this.guide = null;
 };
 
 /*
