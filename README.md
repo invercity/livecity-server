@@ -1,6 +1,7 @@
 livecity
 ========
 
-developing system for monitoring city traffic, etc
+developing system for monitoring city traffic
 
-TBA (October, 2013)
+current version: 0.01
+preparing for release 0.1 beta (January, 11)
