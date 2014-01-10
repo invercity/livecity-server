@@ -43,7 +43,7 @@ TEXT = {
         notSet: 'Not set',
         sessionEnd: 'Current session finished',
         authSucc: 'You have been authorized successfully',
-        auth: 'Login',
+        login: 'Login',
         exit: 'Exit'
     }
 }
@@ -112,7 +112,7 @@ $(document).ready(function() {
             style: google.maps.NavigationControlStyle.SMALL
         },
         mapTypeId: google.maps.MapTypeId.ROADMAP,
-        lang: 'RU'
+        lang: 'ENG'
     }
     // create new city
     city = new Livecity(objects,settings);
