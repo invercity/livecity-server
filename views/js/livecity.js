@@ -1,6 +1,53 @@
 // city object
 var city = null;
 
+// text
+TEXT = {
+    zero: '0',
+    empty: '',
+    RU: {
+        backToDefaultPlace: 'Вы вернулись в исходное положение',
+        thisActionIsNotAllowed: 'Данное действие не доступно в режиме редактора',
+        noDataToSave: 'Нет данных для сохранения',
+        nothingSelected: 'Ничего не сохранено',
+        selectFirstEndPointOnMap: 'Выберите начальную и конечную точку на карте',
+        pointRemoved: 'Метка удалена',
+        pointSaved: 'Метка сохранена',
+        routeSaved: 'Маршрут сохранен',
+        routeEndNotSelected: 'Конец маршрута не задан',
+        routeStartNotSelected: 'Начало маршрута не задано',
+        notSelected: 'Не выбрано',
+        noData: 'Нет данных',
+        noAvialableRoutes: 'Нет доступных маршрутов',
+        nameNotChoosed: 'Имя не задано',
+        notSet: 'Не задано',
+        sessionEnd: 'Текущая сессия завершена',
+        authSucc: 'Вы успешно авторизированы',
+        login: 'Вход',
+        exit: 'Выход'
+    },
+    ENG: {
+        backToDefaultPlace: 'You have back to default place',
+        noDataToSave: 'No data to save',
+        nothingSelected: 'Nothing selected',
+        selectFirstEndPointOnMap: 'Select first and end point on map',
+        pointRemoved: 'Point removed successfully',
+        pointSaved: 'Point saved successfully',
+        routeSaved: 'Route saved successfully',
+        routeEndNotSelected: 'Route end not selected',
+        routeStartNotSelected: 'Route start not selected',
+        noData: 'No data',
+        noAvialableRoutes: 'No avialable routes',
+        nameNotChoosed: 'Name not choosed',
+        notSelected: 'Not selected',
+        notSet: 'Not set',
+        sessionEnd: 'Current session finished',
+        authSucc: 'You have been authorized successfully',
+        auth: 'Login',
+        exit: 'Exit'
+    }
+}
+
 // $.ready handler
 $(document).ready(function() {
     // links to page objects
@@ -48,9 +95,9 @@ $(document).ready(function() {
             chosen: $('.chosen'),
             option: $('option'),
             groups: $('optgroup')
-
         }
     };
+
     // livecity settings
     var settings = {
         zoom: 15,
@@ -64,7 +111,8 @@ $(document).ready(function() {
         navigationControlOptions: {
             style: google.maps.NavigationControlStyle.SMALL
         },
-        mapTypeId: google.maps.MapTypeId.ROADMAP
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+        lang: 'RU'
     }
     // create new city
     city = new Livecity(objects,settings);
@@ -89,9 +137,13 @@ $(document).ready(function() {
     // remove button click
     objects.pointEditor.remove.click(function () {city.onDeletePoint();});
     // back to city center
-    objects.constrol.click(function (){city.setCenter(); city.outMsg("Вы вернулись в исходное положение","green")});
+    objects.constrol.click(function (){city.setCenter();});
     // save route handler
     objects.routeEditor.save.click(function() { city.routeBuilder.save();});
+    // set route start handler
+    objects.routeEditor.start.click(function() {city.routeBuilder.setStart();});
+    // set route start handler
+    objects.routeEditor.end.click(function() {city.routeBuilder.setEnd();});
     // auth button handler
     objects.auth.click(function() {city.auth();});
     // guide chkbox
@@ -117,15 +169,34 @@ function Livecity(objects,settings) {
     // set settings
     var __settings = settings;
     // server url
-    this.url = 'http://localhost:3000';
+    var __url = 'http://localhost:3000';
     // static objects
-    this.objects = new Objects();
-    // static values
-    this.values = new Values();
+    this.static = {
+        ICON_BLUE: function() {
+            return new google.maps.MarkerImage('img/stop2.png', new google.maps.Size(16, 16), new google.maps.Point(0, 0), new google.maps.Point(8, 10));
+        },
+        ICON_RED: function() {
+            return new google.maps.MarkerImage('img/stop-m2.png', new google.maps.Size(16, 16), new google.maps.Point(0, 0), new google.maps.Point(8, 10));
+        },
+        ICON_TRANS: function() {
+            return new google.maps.MarkerImage('img/bus.png', new google.maps.Size(32, 37), new google.maps.Point(0, 0), new google.maps.Point(16, 33));
+        },
+        ICON_A: function() {
+            return new google.maps.MarkerImage('http://www.google.com/mapfiles/markerA.png', new google.maps.Size(36, 36), new google.maps.Point(0, 0), new google.maps.Point(9, 33));
+        },
+        ICON_B: function() {
+            return new google.maps.MarkerImage('http://www.google.com/mapfiles/markerB.png', new google.maps.Size(36, 36), new google.maps.Point(0, 0), new google.maps.Point(9, 33));
+        },
+        TYPE_POST: 'POST',
+        TYPE_JSON: 'JSON',
+        TYPE_GET: 'GET',
+        TYPE_DELETE: 'DELETE',
+        TYPE_PUT: 'PUT'
+    }
     // visible items
-    this.view = [];
+    this.view = []; //????
     // map
-    this.map = new google.maps.Map(__objects.map,__settings);
+    var __map = new google.maps.Map(__objects.map,__settings);
 
     /*
      * GETTTERS & SETTERS
@@ -167,6 +238,23 @@ function Livecity(objects,settings) {
     this.getProperties = function() {
         return __settings;
     }
+    // GET lang property
+    this.getLang = function() {
+        return __settings.lang;
+    }
+    // SET lang property
+    this.setLang = function(lng) {
+        __settings.lang = lng;
+    }
+    this.getMap = function() {
+        return __map;
+    }
+    this.getStatic = function() {
+        return __static;
+    }
+    this.getUrl = function() {
+        return __url;
+    }
     // notifier
     this.notifier = new Notifier(this);
     // point layer
@@ -178,7 +266,7 @@ function Livecity(objects,settings) {
     // search bar
     this.searchBar = new SearchBar(this);
     // route builder
-    this.routeBuilder = -1;
+    this.routeBuilder = null;
     // guide
     this.guide = null;
     // flag for point editor
@@ -189,41 +277,40 @@ function Livecity(objects,settings) {
     this.guideOpened = false;
 }
 
-// [P] init - init map
+// [P] init - init map [DEPRECATED]
 Livecity.prototype.init = function() {
     // load points on map
     this.pointLayer.load();
     // load nodes/routes on map
     this.routeLayer.load();
     // link to main document
-    var obj = this;
+    var link = this;
     // map click handler
-    google.maps.event.addListener(this.map, 'click', function(event) {
-        // editor mode
-        if (obj.pointEditorOpened) {
-            obj.addPoint(event.latLng);
-            obj.pointLayer.current.save();
-            obj.outMsg("Метка сохранена","green");
-            // user mode
-            // NEED TEST
-        } //else if (obj.pointLayer.current !== -1) obj.pointLayer.current.info.hide();
-        if (obj.guideOpened) {
-            obj.guide.push(event.latLng);
+    google.maps.event.addListener(this.getMap(), 'click', function(event) {
+        // point editor mode
+        if (link.pointEditorOpened) {
+            link.addPoint(event.latLng);
+            link.pointLayer.current.save();
+            link.outMsg(TEXT[link.getLang()].pointSaved,"green");
+        }
+        // guide editor mode
+        if (link.guideOpened) {
+            link.guide.push(event.latLng);
         }
     });
     // button click handler
     document.documentElement.onkeydown = function(e) {
         // if escape
         if (e.keyCode === 27) {
-            if (obj.pointEditorOpened) {
-                if (obj.pointLayer.current === -1) obj.onCloseMarkerEditor();
+            if (link.pointEditorOpened) {
+                if (link.pointLayer.current === -1) link.onCloseMarkerEditor();
                 else {
-                    obj.pointLayer.setCurrent(-1);
-                    obj.clearEditor();
+                    link.pointLayer.setCurrent(-1);
+                    link.clearEditor();
                 }
             }
-            if (obj.routeEditorOpened) obj.onCloseRouteEditor();
-            if (obj.guideOpened) obj.onCloseGuide();
+            if (link.routeEditorOpened) link.onCloseRouteEditor();
+            if (link.guideOpened) link.onCloseGuide();
         }
     };
     this.update();
@@ -249,7 +336,7 @@ Livecity.prototype.setEditPointData = function(position, title, focus) {
 // [P] addPoint - add new point on map
 Livecity.prototype.addPoint = function(position) {
     var title = "id" + (this.pointLayer.points.length);
-    var point = new MapPoint(this, position, this.objects.ICON_RED(), title);
+    var point = new MapPoint(this, position, this.static.ICON_RED(), title);
     point.marker.setDraggable(true);
     point.marker.setVisible(true);
     //point.setId(this.pointLayer.points.length);
@@ -261,21 +348,24 @@ Livecity.prototype.addPoint = function(position) {
 
 // [P] clearEditor - clear editor inputs
 Livecity.prototype.clearEditor = function() {
-    this.getObjects().pointEditor.valueLat.text("0");
-    this.getObjects().pointEditor.valueLng.text("0");
-    this.getObjects().pointEditor.valueTitle.val("");
-    this.getObjects().routeEditor.valueTitle.val("");
-    this.getObjects().routeEditor.valueStart.text("Не выбрано");
-    this.getObjects().routeEditor.valueEnd.text("Не выбрано");
-    this.getObjects().guideEditor.valueStart.text('Не задано');
-    this.getObjects().guideEditor.valueEnd.text('Не задано');
-    this.getObjects().guideEditor.valueLength.text('0');
+    this.getObjects().pointEditor.valueLat.text(TEXT.zero);
+    this.getObjects().pointEditor.valueLng.text(TEXT.zero);
+    this.getObjects().pointEditor.valueTitle.val(TEXT.empty);
+    this.getObjects().routeEditor.valueTitle.val(TEXT.empty);
+    this.getObjects().routeEditor.valueStart.text(TEXT[this.getLang()].notSelected);
+    this.getObjects().routeEditor.valueEnd.text(TEXT[this.getLang()].notSelected);
+    this.getObjects().guideEditor.valueStart.text(TEXT[this.getLang()].notSet);
+    this.getObjects().guideEditor.valueEnd.text(TEXT[this.getLang()].notSet);
+    this.getObjects().guideEditor.valueLength.text(TEXT.zero);
 };
 
 // [P] setCenter - set map to selected map position
 Livecity.prototype.setCenter = function(center) {
     // if center is not selected, set map center default value
-    if (!center) this.map.setCenter(this.settings.center);
+    if (!center) {
+        this.map.setCenter(this.settings.center);
+        this.outMsg(TEXT[this.getLang()].backToDefaultPlace);
+    }
     // if selected - set value and save to settings
     else {
         this.map.setCenter(center);
@@ -288,29 +378,29 @@ Livecity.prototype.auth = function() {
     if (this.getUID()) {
         // end session
         this.getObjects().auth.css("background", "url('img/key.png') right no-repeat");
-        this.getObjects().auth.text("Вход");
+        this.getObjects().auth.text(TEXT[this.getLang()].login);
         // FEATURE - replace with load()
         this.getObjects().editPoints.css("visibility", "hidden");
         this.getObjects().editRoutes.css("visibility", "hidden");
         this.getObjects().editGuide.css("visibility", "hidden");
         // F
         this.setUID(null);
-        if (this.routeBuilder !== -1) this.routeBuilder.end();
+        if (this.routeBuilder) this.routeBuilder.end();
         if (this.routeEditorOpened) this.onCloseRouteEditor();
         if (this.pointEditorOpened) this.onCloseMarkerEditor();
         if (this.guideOpened) this.onCloseGuide();
-        this.outMsg("Сессия завершена","green");
+        this.outMsg(TEXT[this.getLang().sessionEnd],"green");
         // login
     } else {
         this.getObjects().auth.css("background", "url('img/lock.png') right no-repeat");
-        this.getObjects().auth.text("Выйти");
+        this.getObjects().auth.text(TEXT[this.getLang()].exit);
         // FEATURE
         this.getObjects().editPoints.css("visibility", "visible");
         this.getObjects().editRoutes.css("visibility", "visible");
         this.getObjects().editGuide.css("visibility", "visible");
         // F
         this.setUID(1);
-        this.outMsg("Вы успешно авторизированы","green");
+        this.outMsg(TEXT[this.getLang()].authSucc,"green");
     }
 };
 
@@ -321,20 +411,20 @@ Livecity.prototype.update = function() {
 
 // [P] onSavePoint - save point handler [DEPRECATED]
 Livecity.prototype.onSavePoint = function() {
-    if (this.pointLayer.current === -1) this.outMsg("Нет данных для сохранения","red");
+    if (this.pointLayer.current === -1) this.outMsg(TEXT[this.getLang()].noDataToSave,"red");
     else {
         this.pointLayer.current.save();
-        this.outMsg("Метка сохранена","green");
+        this.outMsg(TEXT[this.getLang()].pointSaved,"green");
     }
     //else this.outMsg("Произошла ошибка", "red");
 };
 
 // [P] onDeletePoint - delete point handler {DEPRECATED]
 Livecity.prototype.onDeletePoint = function() {
-    if (this.pointLayer.current === -1) this.outMsg("Ничего не выбрано","red");
+    if (this.pointLayer.current === -1) this.outMsg(TEXT[this.getLang()].nothingSelected,"red");
     else {
         this.pointLayer.current.delete();
-        this.outMsg("Метка удалена","green");
+        this.outMsg(TEXT[this.getLang()].pointRemoved,"green");
     }
 };
 
@@ -344,7 +434,7 @@ Livecity.prototype.onEditMarker = function() {
     if (this.routeEditorOpened) this.onCloseRouteEditor();
     if (this.guideOpened) this.onCloseGuide();
     // setting up cursor
-    this.map.setOptions({
+    this.getMap().setOptions({
         draggableCursor: 'crosshair'
     });
     // show all points
@@ -374,13 +464,6 @@ Livecity.prototype.onEditRoute = function() {
     this.pointLayer.setVisible(true);
     this.routeBuilder = new RouteBuilder(this);
     var rb = this.routeBuilder;
-    // setting onSetRouteEnd handler
-    $('#setRouteEnd').click(function() {
-        rb.setEnd();
-    });
-    $('#setRouteStart').click(function() {
-        rb.setStart();
-    });
     // show editor
     this.getObjects().routeEditor.base.show('500');
     // set editor flag
@@ -398,23 +481,24 @@ Livecity.prototype.onGuide = function() {
     // set guide flag
     this.guideOpened = true;
     // set map handlers
-    this.map.setOptions({
+    this.getMap().setOptions({
         draggableCursor: 'crosshair'
     });
 
     this.guide = new Guide(this);
     this.searchBar.deselect();
-    this.outMsg('Виберите начальную и конечную точку на карте','green');
+    this.outMsg(TEXT[this.getLang()].selectFirstEndPointOnMap,'green');
 };
 
 // [P] onCloseMarkerEditor - actions for closing editor [DEPRECATED]
 Livecity.prototype.onCloseMarkerEditor = function() {
     this.getObjects().pointEditor.base.hide('500');
     // change cursor to default
-    this.map.setOptions({
+    this.getMap().setOptions({
         draggableCursor: 'pointer'
     });
     // unset marker
+    // FEATURE - -1
     this.pointLayer.setCurrent(-1);
     // set the main document flag
     this.pointEditorOpened = false;
@@ -426,6 +510,7 @@ Livecity.prototype.onCloseRouteEditor = function() {
     this.getObjects().routeEditor.base.hide('500');
     this.routeEditorOpened = false;
     this.routeBuilder.end();
+    this.routeBuilder = null;
     this.clearEditor();
 };
 
@@ -433,7 +518,7 @@ Livecity.prototype.onCloseRouteEditor = function() {
 Livecity.prototype.onCloseGuide = function() {
     this.getObjects().guideEditor.base.hide('500');
     this.guideOpened = false;
-    this.map.setOptions({
+    this.getMap().setOptions({
         draggableCursor: 'pointer'
     });
     this.guide.popAll();
@@ -444,9 +529,6 @@ Livecity.prototype.onCloseGuide = function() {
  * Notifier Class
  */
 function Notifier(parent) {
-    // link to parent object
-    var __parent = parent;
-    // alertbox
     var __box = parent.getObjects().alertbox;
     // GET alertbox
     this.getBox = function() {
@@ -469,36 +551,57 @@ Notifier.prototype.msg = function(text,color) {
  * SearchBar Class
  */
 function SearchBar(main) {
-    var parent = main;
+    var __parent = main;
     // array for points, opened before
-    this.oldP = [];
+    var __oldP = [];
     // array for routes, opened before
-    this.oldR = [];
-    // init function
-    this.init = function() {
-        var obj = this;
-        parent.getObjects().searchBar.chosen.chosen({
-            no_results_text: "Ничего не найдено для"
-        }).change(function(e) {
+    var __oldR = [];
+    // GET parent
+    this.getParent = function() {
+        return __parent;
+    };
+    this.getPoints = function() {
+        return __oldP;
+    };
+    this.setPoints = function(pts) {
+        __oldP = pts;
+    };
+    this.getRoutes = function() {
+        return __oldR;
+    };
+    this.setRoutes = function(rts) {
+        __oldR = rts;
+    };
+    this.init();
+}
+
+// init function
+SearchBar.prototype.init = function() {
+    var link = this;
+    this.getParent().getObjects().searchBar.chosen.chosen({
+        no_results_text: TEXT[link.getParent().getLang()] ///
+    }).change(function(e) {
             // check if this is not base mode
-            if ((main.pointEditorOpened) || (main.routeEditorOpened) || (main.guideOpened)) {
-                obj.deselect();
-                main.outMsg("Данное действие не доступно в режиме редактирования","red");
+            if ((link.getParent().pointEditorOpened) ||
+                (link.getParent().routeEditorOpened) ||
+                (link.getParent().guideOpened)) {
+                    link.deselect();
+                    lnk.getParent().outMsg(TEXT[link.getParent().getLang()].thisActionIsNotAllowed,"red");
             }
             // get copy of previous selected points/routes
-            var oldP = obj.oldP.slice();
-            var oldR = obj.oldR.slice();
-            obj.selected = $(this).val();
+            var oldP = link.getPoints().slice();
+            var oldR = link.getRoutes().slice();
+            var selected = $(this).val();
             // buffers for selected values
-            var n = [];
             var r = [];
+            var n = [];
             // if something selected
-            if (obj.selected !== null) {
+            if (selected !== null) {
                 // fill buffers with points/routes
-                for (var i = 0; i < obj.selected.length; i++) {
-                    var point = obj.main.pointLayer.getPointById(obj.selected[i]);
+                for (var i = 0; i < selected.length; i++) {
+                    var point = link.getParent().pointLayer.getPointById(selected[i]);
                     if (point === -1) {
-                        var route = obj.main.routeLayer.getRouteById(obj.selected[i]);
+                        var route = link.getParent().routeLayer.getRouteById(selected[i]);
                         r.push(route);
                     } else {
                         n.push(point);
@@ -511,7 +614,7 @@ function SearchBar(main) {
                 if ($(oldP).not(n).get().length === 1) {
                     var point = $(oldP).not(n).get()[0];
                     // check, if this point is not part of visible route
-                    if (!obj.main.routeLayer.isPointOfVisibleRoute(point.id)) point.setBaseVisible(false);
+                    if (!link.getParent().routeLayer.isPointOfVisibleRoute(point.id)) point.setBaseVisible(false);
                     point.setVisible(false);
                 }
                 // if we need to show something new
@@ -529,47 +632,40 @@ function SearchBar(main) {
                 // if we need to hide route
                 if ($(oldR).not(r).get().length === 1) {
                     $(oldR).not(r).get()[0].setVisible(false);
-                    obj.main.transLayer.setVisibleByRoute($(oldR).not(r).get()[0].id, false);
+                    link.getParent().transLayer.setVisibleByRoute($(oldR).not(r).get()[0].id, false);
                     // set visible selected points
                     for (var x = 0; x < n.length; x++) if (!n[x].marker.visible) n[x].marker.setVisible(true);
                 }
                 // if we need to show new route
                 else if ((r.length > 0) && (oldR.length !== r.length)) {
                     $(r).not(oldR).get()[0].setVisible(true);
-                    obj.main.transLayer.setVisibleByRoute($(r).not(oldR).get()[0].id, true);
+                    link.getParent().transLayer.setVisibleByRoute($(r).not(oldR).get()[0].id, true);
                 }
             }
             // set currently selected points/routes as previous
-            obj.oldP = n.slice();
-            obj.oldR = r.slice();
+            link.setPoints(n.slice());
+            link.setRoutes(r.slice());
         });
-        
-    };
-    
-    // add item to search pane
-    this.add = function (group,id,name) {
-        var groups = parent.getObjects().searchBar.groups;
-        $(groups[group]).append('<option value="' + id + '" >' + name + '</option>');
-        this.update();
-    };
 
-    // buffer for selected items
-    var selected = [];
+};
 
-    // update items
-    this.update = function() {
-        parent.getObjects().searchBar.chosen.trigger("liszt:updated");
-    };
+// [P] add - add item to search pane
+SearchBar.prototype.add = function (group,id,name) {
+    var groups = this.getParent().getObjects().searchBar.groups;
+    $(groups[group]).append('<option value="' + id + '" >' + name + '</option>');
+    this.update();
+};
 
-    // deselect all items
-    this.deselect = function() {
-        parent.getObjects().searchBar.option.prop('selected', false);
-        this.update();
-    };
+// [P] update - update items in searchbar
+SearchBar.prototype.update = function() {
+    this.getParent().getObjects().searchBar.chosen.trigger("liszt:updated");
+};
 
-    // operations on creating
-    this.init();
-}
+// deselect all items
+SearchBar.prototype.deselect = function() {
+    this.getParent().getObjects().searchBar.option.prop('selected', false);
+    this.update();
+};
 
 // marker layer
 function PointLayer(main) {
@@ -628,14 +724,15 @@ function PointLayer(main) {
         var main = this.main;
         var layer = this;
         $.ajax({
-            datatype: main.values.TYPE_JSON,
-            type: main.values.TYPE_GET,
-            url: main.url + '/data/points',
+            datatype: main.static.TYPE_JSON,
+            type: main.static.TYPE_GET,
+            url: main.getUrl() + '/data/points',
             async: false,
             success: function(result) {
                 for (var i = 0; i < result.length; i++) {
                     var station = result[i];
-                    var point = new MapPoint(main, new google.maps.LatLng(station.lat, station.lng), main.objects.ICON_BLUE(), station.title);
+                    var point = new MapPoint(main, new google.maps.LatLng(station.lat, station.lng),
+                        main.static.ICON_BLUE(), station.title);
                     point.setId(station._id);
                     layer.add(point);
                     main.searchBar.add(0,point.id,point.marker.title);
@@ -647,7 +744,7 @@ function PointLayer(main) {
     // set point as current
     this.setCurrent = function(point) {
         if (this.current !== -1) {
-            this.current.marker.setIcon(main.objects.ICON_BLUE());
+            this.current.marker.setIcon(main.static.ICON_BLUE());
             this.current.marker.setDraggable(false);
         }
         // unset point
@@ -659,7 +756,7 @@ function PointLayer(main) {
             var pos = this.points.indexOf(point);
             if (pos !== -1) {
                 this.current = point;
-                point.marker.setIcon(main.objects.ICON_RED());
+                point.marker.setIcon(main.static.ICON_RED());
             }
         }
     };
@@ -699,7 +796,8 @@ function RouteLayer(main) {
     // visibility [async]
     this.setVisible = function(is) {
         this.visible = is;
-        routes = this.routes;
+        var routes = this.routes;
+        // FEATURE - replace asyncloop with async.js
         asyncLoop(this.routes.length, function(loop) {
             routes[loop.iteration()].setVisible(is);
             loop.next();
@@ -749,9 +847,9 @@ function RouteLayer(main) {
         var obj = this;
         // at first - getting nodes
         $.ajax({
-            datatype: main.values.TYPE_JSON,
-            type: main.values.TYPE_GET,
-            url: main.url + '/data/nodes',
+            datatype: main.static.TYPE_JSON,
+            type: main.static.TYPE_GET,
+            url: main.getUrl() + '/data/nodes',
             async: false,
             success: function(result) {
                 for (var i = 0; i < result.length; i++) {
@@ -768,12 +866,12 @@ function RouteLayer(main) {
                 }
                 // next step - getting routes
                 $.ajax({
-                    datatype: main.values.TYPE_JSON,
-                    type: main.values.TYPE_GET,
-                    url: main.url + '/data/routes',
+                    datatype: main.static.TYPE_JSON,
+                    type: main.static.TYPE_GET,
+                    url: main.getUrl() + '/data/routes',
                     async: false,
                     success: function(result) {
-                        var groups = $("optgroup");
+                        var groups = main.getObjects().searchBar.groups;
                         for (var i = 0; i < result.length; i++) {
                             var route = result[i];
                             var end = {};
@@ -794,8 +892,10 @@ function RouteLayer(main) {
                             r.idS = route.start;
                             r.setId(route._id);
                             obj.routes.push(r);
-                            $(groups[1]).append('<option value="' + route._id + '" >' + route.title + '</option>');
-                            main.searchBar.update();
+                            // FEATURE - update with SearchBar.add
+                            //$(groups[1]).append('<option value="' + route._id + '" >' + route.title + '</option>');
+                            //main.searchBar.update();
+                            main.searchBar.add(1,route._id,route.title);
                         }
                     }
                 });
@@ -833,9 +933,9 @@ function TransLayer(main) {
         var main = this.main;
         var obj = this;
         $.ajax({
-            datatype: main.values.TYPE_JSON,
-            type: main.values.TYPE_GET,
-            url: main.url + '/data/transport',
+            datatype: main.static.TYPE_JSON,
+            type: main.static.TYPE_GET,
+            url: main.getUrl() + '/data/transport',
             async: false,
             success: function(result) {
                 if ((!result) || (result.length === 0)) return;
@@ -859,6 +959,7 @@ function TransLayer(main) {
     this.setVisibleByRoute = function(id, is) {
         var t = this.trans;
         var r = this.routes;
+        // FEATURE - replace with async.js
         asyncLoop(t.length, function(loop) {
             var iter = loop.iteration();
             if (t[iter].id_route === id) {
@@ -875,6 +976,7 @@ function TransLayer(main) {
         this.clear();
         this.load();
         // TBD
+        // FEATURE
     };
 }
 
@@ -884,10 +986,6 @@ function MapRoute(main) {
     this.main = main;
     // unique identifier
     this.id = -1;
-    // start point
-    this.a;
-    // end point
-    this.b;
     // start id
     this.idS = -1;
     // end id
@@ -910,14 +1008,15 @@ function MapRoute(main) {
     this.setVisible = function(is) {
         var nodes = this.nodes;
         var main = this.main;
+        // FEATURE - replace with async.js
         asyncLoop(nodes.length, function(loop) {
             nodes[loop.iteration()].setVisible(is);
             loop.next();
         });
         // UPD
         if (is) {
-            if (this.infoA !== -1) this.infoA.open(this.main.map);
-            if (this.infoB !== -1) this.infoB.open(this.main.map);
+            if (this.infoA !== -1) this.infoA.open(this.main.getMap());
+            if (this.infoB !== -1) this.infoB.open(this.main.getMap());
         } else {
             if (this.infoA !== -1) this.infoA.open(null);
             if (this.infoB !== -1) this.infoB.open(null);
@@ -976,6 +1075,7 @@ function MapRoute(main) {
     this.init = function(ids) {
         var main = this.main;
         var obj = this;
+        // FEATURE - replace with async.js
         asyncLoop(ids.length, function(loop) {
             var iter = loop.iteration();
             for (var j = 0; j < main.routeLayer.nodes.length; j++) {
@@ -995,6 +1095,7 @@ function MapRoute(main) {
         var nodes = this.nodes;
         // save new nodes at first
         var globalNodes = this.main.routeLayer.nodes;
+        // async.js
         asyncLoop(nodes.length, function(loop) {
             var iter = loop.iteration();
             nodes[iter].save();
@@ -1019,15 +1120,15 @@ function MapRoute(main) {
             json.title = obj.name;
             // send data
             $.ajax({
-                datatype: main.values.TYPE_JSON,
-                type: main.values.TYPE_POST,
-                url: main.url + '/data/routes/',
+                datatype: main.static.TYPE_JSON,
+                type: main.static.TYPE_POST,
+                url: main.getUurl() + '/data/routes/',
                 data: json,
                 success: function(result) {
                     obj.setId(result.route._id);
                 }
             });
-            main.outMsg("Маршрут сохранен","green");
+            main.outMsg(TEXT[main.getLang()].routeSaved,"green");
         });
     };
 
@@ -1128,9 +1229,9 @@ function MapNode(main, pointA, pointB, resNode, total) {
         json.total = this.total;
         json.data = this.resNode;
         $.ajax({
-            datatype: main.values.TYPE_JSON,
-            type: main.values.TYPE_POST,
-            url: main.url + '/data/nodes/',
+            datatype: main.static.TYPE_JSON,
+            type: main.static.TYPE_POST,
+            url: main.getUrl() + '/data/nodes/',
             data: json,
             async: false,
             success: function(result) {
@@ -1157,7 +1258,7 @@ function MapPoint(main, position, icon, title) {
     this.marker = new google.maps.Marker({
         position: new google.maps.LatLng(Number(position.lat()).toFixed(4), Number(position.lng()).toFixed(4)),
         icon: icon,
-        map: main.map,
+        map: main.getMap(),
         title: title,
         draggable: false,
         visible: false
@@ -1186,7 +1287,7 @@ function MapPoint(main, position, icon, title) {
     this.setVisible = function(is) {
         if (!is) this.info.hide();
         else {
-            this.info.open(this.main.map, this.marker);
+            this.info.open(this.main.getMap(), this.marker);
             this.info.show();
         }
         this.visible = is;
@@ -1212,12 +1313,12 @@ function MapPoint(main, position, icon, title) {
         var obj = this;
         if (this.id !== -1) {
             $.ajax({
-                datatype: main.values.TYPE_JSON,
-                type: main.values.TYPE_GET,
-                url: main.url + '/arrival/' + this.id,
+                datatype: main.static.TYPE_JSON,
+                type: main.static.TYPE_GET,
+                url: main.getUrl() + '/arrival/' + this.id,
                 success: function(result) {
                     var content = "";
-                    var routeresult;
+                    var routeresult = null;
                     for (var i = 0; i < result.length; i++) {
                         if (result[i].status === "OK") {
                             // natural value (min)
@@ -1233,10 +1334,10 @@ function MapPoint(main, position, icon, title) {
                         }
                         // TBD
                         // need to add some other checks
-                        else routeresult = " Нет данных<br/>";
+                        else routeresult = TEXT[main.getLang()].noData + "<br/>";
                         content += ("№" + result[i].name + " - " + routeresult);
                     }
-                    if (result.length === 0) content += "Нет доступных маршрутов<br/>";
+                    if (result.length === 0) content += TEXT[main.getLang()].noAvialableRoutes + "<br/>";
                     obj.info.setContent(obj.basecontent + content);
                 }
             });
@@ -1280,7 +1381,7 @@ function MapPoint(main, position, icon, title) {
         google.maps.event.addListener(this.marker, 'dragend', function(event) {
             if (main.pointEditorOpened) {
                 main.pointLayer.current.save();
-                main.outMsg("Метка сохранена","green");
+                main.outMsg(TEXT[main.getLang()].pointSaved,"green");
             }
         });
         // TBD
@@ -1291,9 +1392,9 @@ function MapPoint(main, position, icon, title) {
     this.delete = function() {
         // async delete on server
         $.ajax({
-            datatype: main.values.TYPE_JSON,
-            type: main.values.TYPE_DELETE,
-            url: main.url + '/data/points/' + this.id,
+            datatype: main.static.TYPE_JSON,
+            type: main.static.TYPE_DELETE,
+            url: main.getUrl() + '/data/points/' + this.id,
             cache: false
         });
         this.marker.setMap(null);
@@ -1310,17 +1411,17 @@ function MapPoint(main, position, icon, title) {
         // object for sending
         var json = {};
         // fill properties
-        json.lat = $('#label_posx').text();
-        json.lng = $('#label_posy').text();
+        json.lat = main.getObjects().pointEditor.valueLat.text();
+        json.lng = main.getObjects().pointEditor.valueLng.text();
         /*if (this.id !== -1)*/
         json._id = this.id;
-        json.title = $('#label_name').val();
+        json.title = main.getObjects().pointEditor.valueTitle.val();
         // create new one
         if (this.id === -1) {
             $.ajax({
-                datatype: main.values.TYPE_JSON,
-                type: main.values.TYPE_POST,
-                url: main.url + '/data/points',
+                datatype: main.static.TYPE_JSON,
+                type: main.static.TYPE_POST,
+                url: main.getUrl() + '/data/points',
                 data: json,
                 async: false,
                 success: function(result) {
@@ -1332,9 +1433,9 @@ function MapPoint(main, position, icon, title) {
         // update existing
         else {
             $.ajax({
-                datatype: main.values.TYPE_JSON,
-                type: main.values.TYPE_PUT,
-                url: main.url + '/data/points/' + this.id,
+                datatype: main.static.TYPE_JSON,
+                type: main.static.TYPE_PUT,
+                url: main.getUrl() + '/data/points/' + this.id,
                 data: json,
                 async:false,
                 success: function(result) {
@@ -1363,8 +1464,8 @@ function MapTrans(main, id, id_route, position) {
     // icon
     this.marker = new google.maps.Marker({
         position: position,
-        icon: main.objects.ICON_TRANS(),
-        map: main.map,
+        icon: main.static.ICON_TRANS(),
+        map: main.getMap(),
         title: "",
         draggable: false,
         visible: false,
@@ -1390,7 +1491,7 @@ function RouteBuilder(main) {
     // add point to buffer
     this.add = function(point) {
         this.points.push(point);
-        point.marker.setIcon(this.main.objects.ICON_RED());
+        point.marker.setIcon(this.main.static.ICON_RED());
         var size = this.points.length;
         if (this.points.length > 1) {
             var node = new MapNode(this.main, this.points[size - 2], this.points[size - 1], -1, 0);
@@ -1401,7 +1502,7 @@ function RouteBuilder(main) {
 
     // set endpoint of route
     this.setEnd = function() {
-        if (this.points.length === 0) main.outMsg("Ничего не выбрано","red");
+        if (this.points.length === 0) main.outMsg(TEXT[main.getLang()].nothingSelected,"red");
         else {
             var infoB = this.route.infoB;
             // close prevoius endpoint info
@@ -1412,15 +1513,15 @@ function RouteBuilder(main) {
             // set new endpoint id
             this.route.idE = lastPoint.id;
             // show new endpoint info
-            this.route.infoB.open(this.main.map, lastPoint.marker);
+            this.route.infoB.open(this.main.getMap(), lastPoint.marker);
             // set info in box
-            $('#routeEndText').text(lastPoint.marker.title);
+            main.getObjects().routeEditor.end.text(lastPoint.marker.title);
         }
     };
 
     // set start point of route
     this.setStart = function() {
-        if (this.points.length === 0) main.outMsg("Ничего не выбрано","red");
+        if (this.points.length === 0) main.outMsg(TEXT[main.getLang()].nothingSelected,"red");
         else {
             var infoA = this.route.infoA;
             // close prevoius endpoint info
@@ -1431,8 +1532,8 @@ function RouteBuilder(main) {
             // set new endpoint id
             this.route.idS = lastPoint.id;
             // show new endpoint info
-            this.route.infoA.open(this.main.map, lastPoint.marker);// set info in box
-            $('#routeStartText').text(lastPoint.marker.title);
+            this.route.infoA.open(this.main.getMap(), lastPoint.marker);// set info in box
+            main.getObjects().routeEditor.start.text(lastPoint.marker.title);
         }
     };
 
@@ -1446,7 +1547,7 @@ function RouteBuilder(main) {
         var main = this.main;
         var obj = this;
         asyncLoop(this.points.length, function(loop) {
-            obj.points[loop.iteration()].marker.setIcon(main.objects.ICON_BLUE());
+            obj.points[loop.iteration()].marker.setIcon(main.static.ICON_BLUE());
             loop.next();
         }, function() {
             obj.points.length = 0;
@@ -1456,12 +1557,12 @@ function RouteBuilder(main) {
     // save new route
     this.save = function() {
         // check name
-        var name = $('#label_route_name').val();
-        if (name === "") this.main.outMsg("Имя не задано", "red");
-        else if (this.route.idS === -1) this.main.outMsg("Начало маршрута не задано", "red");
-        else if (this.route.idE === -1) this.main.outMsg("Конец маршрута не задан", "red");
+        var title = this.main.getObjects().routeEditor.valueTitle.val();
+        if (title === "") this.main.outMsg(TEXT[this.main.getLang()].nameNotChoosed, "red");
+        else if (this.route.idS === -1) this.main.outMsg(TEXT[this.main.getLang()].routeStartNotSelected, "red");
+        else if (this.route.idE === -1) this.main.outMsg(TEXT[this.main.getLang()].routeEndNotSelected, "red");
         else {
-            this.route.setName(name);
+            this.route.setName(title);
             // save each route
             this.route.save();
             // check if this is a new route, if not add it to route layer
@@ -1509,37 +1610,37 @@ function Guide(main,start,end,result,total) {
      */
 
     this.push = function(position){
+        var obj = this;
         if ((this.start) && (this.end)) return;
         // if position is the pos of A
         if (!this.start) {
             this.start = new google.maps.Marker({
                 position: position,
-                map: this.main.map,
-                icon: this.main.objects.ICON_A()
+                map: this.main.getMap(),
+                icon: this.main.static.ICON_A()
             });
             this.geocoder.geocode({'latLng': position}, function(results, status) {
                 if (status == google.maps.GeocoderStatus.OK) {
                     if (results[1]) {
-                        $("#guide_start").text(results[1].formatted_address.substr(0,30) + '...');
+                        // FEATURE - fetch address from result
+                        obj.main.getObjects().guideEditor.valueStart.text(results[1].formatted_address.substr(0,30) + '...');
                     }
                 }
             });
-            //$("#guide_start").text(Number().toFixed(4));
         }
         else {
             this.end = new google.maps.Marker({
                 position: position,
-                map: this.main.map,
-                icon: this.main.objects.ICON_B()
+                map: this.main.getMap(),
+                icon: this.main.static.ICON_B()
             });
             this.geocoder.geocode({'latLng': position}, function(results, status) {
                 if (status == google.maps.GeocoderStatus.OK) {
                     if (results[1]) {
-                        $("#guide_end").text(results[1].formatted_address.substr(0,30) + '...');
+                       obj.main.getObjects().guideEditor.valueEnd.text(results[1].formatted_address.substr(0,30) + '...');
                     }
                 }
             });
-            var obj = this;
             var request = {
                 origin: this.start.position,
                 destination: this.end.position,
@@ -1554,8 +1655,8 @@ function Guide(main,start,end,result,total) {
                     var ttl = 0;
                     for (var i = 0; i < myroute.legs.length; i++) ttl += myroute.legs[i].distance.value;
                     obj.total = ttl;
-                    $('#guide_length').text(ttl);
-                    obj.base.setMap(obj.main.map);
+                    obj.main.getObjects().guideEditor.valueLength.text(ttl);
+                    obj.base.setMap(obj.main.getMap());
                 }
             });
         }
@@ -1610,62 +1711,34 @@ function Guide(main,start,end,result,total) {
 
         var MA = new google.maps.Marker({
             position: posA,
-            map: this.main.map,
-            icon: this.main.objects.ICON_BLUE()
+            map: this.main.getMap(),
+            icon: this.main.static.ICON_BLUE()
         });
         var MB = new google.maps.Marker({
             position: posB,
-            map: this.main.map,
-            icon: this.main.objects.ICON_BLUE()
+            map: this.main.getMap(),
+            icon: this.main.static.ICON_BLUE()
         });
         var MC = new google.maps.Marker({
             position: posC,
-            map: this.main.map,
-            icon: this.main.objects.ICON_BLUE()
+            map: this.main.getMap(),
+            icon: this.main.static.ICON_BLUE()
         });
         var MD = new google.maps.Marker({
             position: posD,
-            map: this.main.map,
-            icon: this.main.objects.ICON_BLUE()
+            map: this.main.getMap(),
+            icon: this.main.static.ICON_BLUE()
         });
         this.markers.push(MA);
         this.markers.push(MB);
         this.markers.push(MC);
         this.markers.push(MD);
 
-        this.addExch(posA,'>> 12').open(this.main.map);
-        this.addExch(posB,'12 >>').open(this.main.map);
-        this.addExch(posC,'>> 37').open(this.main.map);
-        this.addExch(posD,'37 >>').open(this.main.map);
+        this.addExch(posA,'>> 12').open(this.main.getMap());
+        this.addExch(posB,'12 >>').open(this.main.getMap());
+        this.addExch(posC,'>> 37').open(this.main.getMap());
+        this.addExch(posD,'37 >>').open(this.main.getMap());
     }
-}
-
-// static objects class
-function Objects() {
-    this.ICON_BLUE = function() {
-        return new google.maps.MarkerImage('img/stop2.png', new google.maps.Size(16, 16), new google.maps.Point(0, 0), new google.maps.Point(8, 10));
-    };
-    this.ICON_RED = function() {
-        return new google.maps.MarkerImage('img/stop-m2.png', new google.maps.Size(16, 16), new google.maps.Point(0, 0), new google.maps.Point(8, 10));
-    };
-    this.ICON_TRANS = function() {
-        return new google.maps.MarkerImage('img/bus.png', new google.maps.Size(32, 37), new google.maps.Point(0, 0), new google.maps.Point(16, 33));
-    };
-    this.ICON_A = function() {
-        return new google.maps.MarkerImage('http://www.google.com/mapfiles/markerA.png', new google.maps.Size(36, 36), new google.maps.Point(0, 0), new google.maps.Point(9, 33));
-    }
-    this.ICON_B = function() {
-        return new google.maps.MarkerImage('http://www.google.com/mapfiles/markerB.png', new google.maps.Size(36, 36), new google.maps.Point(0, 0), new google.maps.Point(9, 33));
-    }
-}
-
-// const strings
-function Values() {
-    this.TYPE_POST = 'POST';
-    this.TYPE_JSON = 'JSON';
-    this.TYPE_GET = 'GET';
-    this.TYPE_DELETE = 'DELETE';
-    this.TYPE_PUT = 'PUT';
 }
 
 // asynchronus loop
