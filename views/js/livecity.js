@@ -162,15 +162,12 @@ $(document).ready(function() {
  * City Class
  */
 function Livecity(objects,settings) {
-    // UID [unused]
-    var __uid = null;
-    // objects
-    var __objects = objects;
-    // set settings
-    var __settings = settings;
-    // server url
-    var __url = 'http://localhost:3000';
-    // static objects
+
+    /*
+     * PUBLIC ATTRIBUTES
+     */
+
+    // static - static functions and values
     this.static = {
         ICON_BLUE: function() {
             return new google.maps.MarkerImage('img/stop2.png', new google.maps.Size(16, 16), new google.maps.Point(0, 0), new google.maps.Point(8, 10));
@@ -193,13 +190,25 @@ function Livecity(objects,settings) {
         TYPE_DELETE: 'DELETE',
         TYPE_PUT: 'PUT'
     };
-    // visible items [DEPRECATED]
-    this.view = []; //????
+
+    /*
+     *  PRIVATE ATTRIBUTES
+     */
+
+    // UID
+    var __uid = null;
+    // objects
+    var __objects = objects;
+    // set settings
+    var __settings = settings;
+    // server url
+    var __url = 'http://localhost:3000';
+
     // map
     var __map = new google.maps.Map(__objects.map,__settings);
 
     /*
-     * GETTTERS & SETTERS
+     * PUBLIC GETTERS & SETTERS
      */
 
     // GET uid
@@ -290,7 +299,7 @@ Livecity.prototype.init = function() {
         // point editor mode
         if (link.pointEditorOpened) {
             link.addPoint(event.latLng);
-            link.pointLayer.current.save();
+            link.pointLayer.getCurrent().save();
             link.outMsg(TEXT[link.getLang()].pointSaved,"green");
         }
         // guide editor mode
@@ -445,7 +454,7 @@ Livecity.prototype.onEditMarker = function() {
     this.pointLayer.setVisible(true);
     // deselect search bar
     this.searchBar.deselect();
-    // set current point
+    // set current point as NULL
     this.pointLayer.setCurrent();
     // show editor
     this.getObjects().pointEditor.base.show('500');
@@ -455,6 +464,7 @@ Livecity.prototype.onEditMarker = function() {
 
 // [P] onEditRoute - edit route button handler [DEPRECATED]
 Livecity.prototype.onEditRoute = function() {
+    // if pointEditor opened already - close it
     if (this.routeEditorOpened) {
         this.onCloseRouteEditor();
         return;
@@ -477,6 +487,7 @@ Livecity.prototype.onEditRoute = function() {
 
 // [P] onGuide - actions on open guide [DEPRECATED]
 Livecity.prototype.onGuide = function() {
+    // if guid opened already - close it
     if (this.guideOpened) {
         this.onCloseGuide();
         return;
@@ -536,6 +547,7 @@ Livecity.prototype.onCloseGuide = function() {
  * Notifier Class
  */
 function Notifier(parent) {
+    // link to 'box' Element
     var __box = parent.getObjects().alertbox;
     // GET alertbox
     this.getBox = function() {
@@ -549,6 +561,7 @@ Notifier.prototype.msg = function(text,color) {
     this.getBox().css("display", "block");
     this.getBox().css("background-color", color);
     this.getBox().text(text);
+    // show message for 3 seconds
     setTimeout(function() {
         link.getBox().css("display", "none");
     }, 3000);
@@ -801,7 +814,7 @@ function RouteLayer(main) {
     // nodes on layer
     this.nodes = [];
     // current route?
-    this.current = -1;
+    this.current = null;
     // visibility
     this.visible = false;
 
@@ -916,6 +929,7 @@ function RouteLayer(main) {
     // return true, if each point is part of visible route
     this.isPointOfVisibleRoute = function(id) {
         var is = false;
+        // FEATURE - use async.js
         for (var i = 0; i < this.routes.length; i++) if ((this.routes[i].isPointOf(id)) && (this.routes[i].visible)) is = true;
         return is;
     };
@@ -997,13 +1011,13 @@ function MapRoute(main) {
     // unique identifier
     this.id = -1;
     // start id
-    this.idS = -1;
+    this.start = -1;
     // end id
-    this.idE = -1;
+    this.end = -1;
     // start point info
-    this.infoA = -1;
+    this.infoA = null;
     // end point info
-    this.infoB = -1;
+    this.infoB = null;
     // visibility flag
     this.visible = false;
     // routeNodes
@@ -1024,11 +1038,11 @@ function MapRoute(main) {
         });
         // UPD
         if (is) {
-            if (this.infoA !== -1) this.infoA.open(this.main.getMap());
-            if (this.infoB !== -1) this.infoB.open(this.main.getMap());
+            if (this.infoA) this.infoA.open(this.main.getMap());
+            if (this.infoB) this.infoB.open(this.main.getMap());
         } else {
-            if (this.infoA !== -1) this.infoA.open(null);
-            if (this.infoB !== -1) this.infoB.open(null);
+            if (this.infoA) this.infoA.open(null);
+            if (this.infoB) this.infoB.open(null);
         }
         this.visible = is;
     };
@@ -1055,29 +1069,29 @@ function MapRoute(main) {
     };
 
     // start setter
-    this.setStart = function(position, title) {
-        this.a = position;
-        if (this.infoA !== -1) this.infoA.hide();
+    this.setStart = function(point) {
+        this.start = point.getId();
+        if (this.infoA) this.infoA.hide();
         this.infoA = new InfoBox({
-            content: '<div class="text"><center>' + title + '</center></div>',
+            content: '<div class="text"><center>' + point.getTitle() + '</center></div>',
             boxClass: "infoRoute",
             pixelOffset: new google.maps.Size(-50, -50),
             closeBoxURL: 'img/close_t.png'
         });
-        this.infoA.setPosition(position);
+        this.infoA.setPosition(point.getMarker().position);
     };
 
     // end setter
-    this.setEnd = function(position, title) {
-        this.b = position;
-        if (this.infoB !== -1) this.infoB.hide();
+    this.setEnd = function(point) {
+        this.end = point.getId();
+        if (this.infoB) this.infoB.hide();
         this.infoB = new InfoBox({
-            content: '<div class="text"><center>' + title + '</center></div>',
+            content: '<div class="text"><center>' + point.getTitle() + '</center></div>',
             boxClass: "infoRoute",
             pixelOffset: new google.maps.Size(-50, -50),
             closeBoxURL: 'img/close_t.png'
         });
-        this.infoB.setPosition(position);
+        this.infoB.setPosition(point.getMarker().position);
     };
 
     // init route
@@ -1121,8 +1135,8 @@ function MapRoute(main) {
             // fill properties
             var ids = [];
             for (var i = 0; i < obj.nodes.length; i++) ids.push(obj.nodes[i].id);
-            json.start = obj.idS;
-            json.end = obj.idE;
+            json.start = obj.start;
+            json.end = obj.end;
             json.nodes = ids;
             json.points = obj.points;
             json.total = total;
@@ -1131,7 +1145,7 @@ function MapRoute(main) {
             $.ajax({
                 datatype: main.static.TYPE_JSON,
                 type: main.static.TYPE_POST,
-                url: main.getUurl() + '/data/routes/',
+                url: main.getUrl() + '/data/routes/',
                 data: json,
                 success: function(result) {
                     obj.setId(result.route._id);
@@ -1178,8 +1192,8 @@ function MapNode(main, pointA, pointB, resNode, total) {
     this.init = function() {
         var obj = this;
         var request = {
-            origin: this.a.marker.position,
-            destination: this.b.marker.position,
+            origin: this.a.getMarker().position,
+            destination: this.b.getMarker().position,
             travelMode: google.maps.TravelMode.DRIVING,
             optimizeWaypoints: false
         };
@@ -1198,15 +1212,15 @@ function MapNode(main, pointA, pointB, resNode, total) {
     // setter visibility
     this.setVisible = function(is) {
         this.visible = is;
-        this.a.marker.setVisible(is);
-        this.b.marker.setVisible(is);
+        this.a.setVisible(is);
+        this.b.setVisible(is);
         if (!is) {
             this.base.setMap(null);
             // if info was opened
-            this.a.setVisible(false);
-            this.b.setVisible(false);
+            this.a.setInfoVisible(false);
+            this.b.setInfoVisible(false);
         }
-        else this.base.setMap(this.main.map);
+        else this.base.setMap(this.main.getMap());
     };
 
     // save this node
@@ -1218,8 +1232,8 @@ function MapNode(main, pointA, pointB, resNode, total) {
         // object for sending
         var json = {};
         // fill properties
-        json.a = this.a.id;
-        json.b = this.b.id;
+        json.a = this.a.getId();
+        json.b = this.b.getId();
         json.total = this.total;
         json.data = this.resNode;
         $.ajax({
@@ -1504,10 +1518,10 @@ function RouteBuilder(main) {
     // add point to buffer
     this.add = function(point) {
         this.points.push(point);
-        point.marker.setIcon(this.main.static.ICON_RED());
+        point.getMarker().setIcon(this.main.static.ICON_RED());
         var size = this.points.length;
         if (this.points.length > 1) {
-            var node = new MapNode(this.main, this.points[size - 2], this.points[size - 1], -1, 0);
+            var node = new MapNode(this.main, this.points[size - 2], this.points[size - 1], null, 0);
             this.route.add(node);
             node.setVisible(true);
         }
@@ -1517,18 +1531,17 @@ function RouteBuilder(main) {
     this.setEnd = function() {
         if (this.points.length === 0) main.outMsg(TEXT[main.getLang()].nothingSelected,"red");
         else {
+            // FEATURE
             var infoB = this.route.infoB;
-            // close prevoius endpoint info
-            if (infoB !== -1) infoB.open(null);
+            // close previous endpoint info
+            if (infoB) infoB.open(null);
             var lastPoint = this.points[this.points.length - 1];
             // set new endpoint
-            this.route.setEnd(lastPoint.marker.position, lastPoint.marker.title);
-            // set new endpoint id
-            this.route.idE = lastPoint.id;
+            this.route.setEnd(lastPoint);
             // show new endpoint info
-            this.route.infoB.open(this.main.getMap(), lastPoint.marker);
+            this.route.infoB.open(this.main.getMap(), lastPoint.getMarker());
             // set info in box
-            main.getObjects().routeEditor.end.text(lastPoint.marker.title);
+            main.getObjects().routeEditor.valueEnd.text(lastPoint.getTitle());
         }
     };
 
@@ -1538,15 +1551,13 @@ function RouteBuilder(main) {
         else {
             var infoA = this.route.infoA;
             // close prevoius endpoint info
-            if (infoA !== -1) infoA.open(null);
+            if (infoA) infoA.open(null);
             var lastPoint = this.points[this.points.length - 1];
             // set new endpoint
-            this.route.setStart(lastPoint.marker.position, lastPoint.marker.title);
-            // set new endpoint id
-            this.route.idS = lastPoint.id;
+            this.route.setStart(lastPoint);
             // show new endpoint info
-            this.route.infoA.open(this.main.getMap(), lastPoint.marker);// set info in box
-            main.getObjects().routeEditor.start.text(lastPoint.marker.title);
+            this.route.infoA.open(this.main.getMap(), lastPoint.getMarker());// set info in box
+            main.getObjects().routeEditor.valueStart.text(lastPoint.getTitle());
         }
     };
 
@@ -1560,7 +1571,7 @@ function RouteBuilder(main) {
         var main = this.main;
         var obj = this;
         asyncLoop(this.points.length, function(loop) {
-            obj.points[loop.iteration()].marker.setIcon(main.static.ICON_BLUE());
+            obj.points[loop.iteration()].getMarker().setIcon(main.static.ICON_BLUE());
             loop.next();
         }, function() {
             obj.points.length = 0;

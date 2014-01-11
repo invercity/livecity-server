@@ -148,7 +148,6 @@ app.post('/data/nodes', function(req,res) {
     });
 
     node.save(function(err) {
-        console.log(JSON.stringify(err));
         if (!err) {
             return res.send({ status: 'OK', node: node})
         }
