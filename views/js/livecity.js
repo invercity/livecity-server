@@ -193,7 +193,7 @@ function Livecity(objects,settings) {
         TYPE_DELETE: 'DELETE',
         TYPE_PUT: 'PUT'
     };
-    // visible items
+    // visible items [DEPRECATED]
     this.view = []; //????
     // map
     var __map = new google.maps.Map(__objects.map,__settings);
@@ -300,12 +300,13 @@ Livecity.prototype.init = function() {
     });
     // button click handler
     document.documentElement.onkeydown = function(e) {
-        // if escape
+        // if escape button pressed
         if (e.keyCode === 27) {
             if (link.pointEditorOpened) {
-                if (link.pointLayer.current === -1) link.onCloseMarkerEditor();
+                // if nothing selected
+                if (!link.pointLayer.getCurrent()) link.onCloseMarkerEditor();
                 else {
-                    link.pointLayer.setCurrent(-1);
+                    link.pointLayer.setCurrent();
                     link.clearEditor();
                 }
             }
@@ -338,7 +339,7 @@ Livecity.prototype.addPoint = function(position) {
     var title = "id" + (this.pointLayer.points.length);
     var point = new MapPoint(this, position, this.static.ICON_RED(), title);
     point.getMarker().setDraggable(true);
-    point.getMarker().setVisible(true);
+    point.setVisible(true);
     this.pointLayer.add(point);
     this.pointLayer.setCurrent(point);
     this.setEditPointData(position, title, true);
@@ -384,7 +385,6 @@ Livecity.prototype.auth = function() {
         this.getObjects().editGuide.css("visibility", "hidden");
         // F
         this.setUID(null);
-        if (this.routeBuilder) this.routeBuilder.end();
         if (this.routeEditorOpened) this.onCloseRouteEditor();
         if (this.pointEditorOpened) this.onCloseMarkerEditor();
         if (this.guideOpened) this.onCloseGuide();
@@ -410,25 +410,28 @@ Livecity.prototype.update = function() {
 
 // [P] onSavePoint - save point handler [DEPRECATED]
 Livecity.prototype.onSavePoint = function() {
-    if (this.pointLayer.current === -1) this.outMsg(TEXT[this.getLang()].noDataToSave,"red");
+    if (!this.pointLayer.getCurrent()) this.outMsg(TEXT[this.getLang()].noDataToSave,"red");
     else {
-        this.pointLayer.current.save();
+        this.pointLayer.getCurrent().save();
         this.outMsg(TEXT[this.getLang()].pointSaved,"green");
     }
-    //else this.outMsg("Произошла ошибка", "red");
 };
 
 // [P] onDeletePoint - delete point handler {DEPRECATED]
 Livecity.prototype.onDeletePoint = function() {
-    if (this.pointLayer.current === -1) this.outMsg(TEXT[this.getLang()].nothingSelected,"red");
+    if (!this.pointLayer.getCurrent()) this.outMsg(TEXT[this.getLang()].nothingSelected,"red");
     else {
-        this.pointLayer.current.remove();
+        this.pointLayer.getCurrent().remove();
         this.outMsg(TEXT[this.getLang()].pointRemoved,"green");
     }
 };
 
 // [P] onEditMarker - edit marker button handler [DEPRECATED]
 Livecity.prototype.onEditMarker = function() {
+    if (this.pointEditorOpened) {
+        this.onCloseMarkerEditor();
+        return;
+    }
     //close other editors
     if (this.routeEditorOpened) this.onCloseRouteEditor();
     if (this.guideOpened) this.onCloseGuide();
@@ -443,7 +446,7 @@ Livecity.prototype.onEditMarker = function() {
     // deselect search bar
     this.searchBar.deselect();
     // set current point
-    this.pointLayer.setCurrent(-1);
+    this.pointLayer.setCurrent();
     // show editor
     this.getObjects().pointEditor.base.show('500');
     // set the document flag
@@ -452,6 +455,10 @@ Livecity.prototype.onEditMarker = function() {
 
 // [P] onEditRoute - edit route button handler [DEPRECATED]
 Livecity.prototype.onEditRoute = function() {
+    if (this.routeEditorOpened) {
+        this.onCloseRouteEditor();
+        return;
+    }
     // close other editors
     if (this.pointEditorOpened) this.onCloseMarkerEditor();
     if (this.guideOpened) this.onCloseGuide();
@@ -470,7 +477,10 @@ Livecity.prototype.onEditRoute = function() {
 
 // [P] onGuide - actions on open guide [DEPRECATED]
 Livecity.prototype.onGuide = function() {
-    if (this.guideOpened) return;
+    if (this.guideOpened) {
+        this.onCloseGuide();
+        return;
+    }
     // close other editors
     if (this.pointEditorOpened) this.onCloseMarkerEditor();
     if (this.routeEditorOpened) this.onCloseRouteEditor();
@@ -496,8 +506,7 @@ Livecity.prototype.onCloseMarkerEditor = function() {
         draggableCursor: 'pointer'
     });
     // unset marker
-    // FEATURE - -1
-    this.pointLayer.setCurrent(-1);
+    this.pointLayer.setCurrent();
     // set the main document flag
     this.pointEditorOpened = false;
     this.pointLayer.setVisible(false);
@@ -672,7 +681,7 @@ function PointLayer(main) {
     // points on layer
     this.points = [];
     // current point
-    this.current = -1;
+    this.current = null;
     // visibility
     this.visible = false;
 
@@ -728,6 +737,7 @@ function PointLayer(main) {
             url: main.getUrl() + '/data/points',
             async: false,
             success: function(result) {
+                // FEATURE - add async.js
                 for (var i = 0; i < result.length; i++) {
                     var station = result[i];
                     var point = new MapPoint(main, new google.maps.LatLng(station.lat, station.lng),
@@ -742,15 +752,15 @@ function PointLayer(main) {
 
     // set point as current
     this.setCurrent = function(point) {
-        if (this.current !== -1) {
+        if (this.current) {
             this.current.getMarker().setIcon(main.static.ICON_BLUE());
             this.current.getMarker().setDraggable(false);
         }
         // unset point
-        if (point === -1) {
+        if (!point) {
             // FEATURE - ??????
             if (this.main.pointEditorOpened) this.main.clearEditor();
-            this.current = point;
+            this.current = null;
         } else {
             // set such point as current
             var pos = this.points.indexOf(point);
@@ -759,6 +769,10 @@ function PointLayer(main) {
                 point.getMarker().setIcon(main.static.ICON_RED());
             }
         }
+    };
+
+    this.getCurrent = function() {
+        return this.current;
     };
 
     // get point by point id [async]
@@ -1447,9 +1461,8 @@ MapPoint.prototype.remove = function() {
     });
     this.getMarker().setMap(null);
     // some code for info....
-    // FEATURE
     this.getParent().pointLayer.points.splice(this.getParent().pointLayer.points.indexOf(this), 1);
-    this.getParent().pointLayer.setCurrent(-1);
+    this.getParent().pointLayer.setCurrent();
 };
 
 // class for cars
