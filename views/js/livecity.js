@@ -337,9 +337,8 @@ Livecity.prototype.setEditPointData = function(position, title, focus) {
 Livecity.prototype.addPoint = function(position) {
     var title = "id" + (this.pointLayer.points.length);
     var point = new MapPoint(this, position, this.static.ICON_RED(), title);
-    point.marker.setDraggable(true);
-    point.marker.setVisible(true);
-    //point.setId(this.pointLayer.points.length);
+    point.getMarker().setDraggable(true);
+    point.getMarker().setVisible(true);
     this.pointLayer.add(point);
     this.pointLayer.setCurrent(point);
     this.setEditPointData(position, title, true);
@@ -596,7 +595,7 @@ SearchBar.prototype.init = function() {
             var r = [];
             var n = [];
             // if something selected
-            if (selected !== null) {
+            if (selected) {
                 // fill buffers with points/routes
                 for (var i = 0; i < selected.length; i++) {
                     var point = link.getParent().pointLayer.getPointById(selected[i]);
@@ -614,16 +613,16 @@ SearchBar.prototype.init = function() {
                 if ($(oldP).not(n).get().length === 1) {
                     var point = $(oldP).not(n).get()[0];
                     // check, if this point is not part of visible route
-                    if (!link.getParent().routeLayer.isPointOfVisibleRoute(point.id)) point.setBaseVisible(false);
+                    if (!link.getParent().routeLayer.isPointOfVisibleRoute(point.getId())) point.setVisible(false);
                     point.setVisible(false);
                 }
                 // if we need to show something new
                 else if ((n.length > 0) && (n.length !== oldP.length)) {
                     var point = $(n).not(oldP).get()[0];
                     if (point) {
-                        point.updateInfo();
+                        point.update();
+                        point.setInfoVisible(true);
                         point.setVisible(true);
-                        point.setBaseVisible(true);
                     }
                 }
             }
@@ -646,7 +645,6 @@ SearchBar.prototype.init = function() {
             link.setPoints(n.slice());
             link.setRoutes(r.slice());
         });
-
 };
 
 // [P] add - add item to search pane
@@ -684,30 +682,31 @@ function PointLayer(main) {
     this.setVisible = function(is) {
         this.visible = is;
         var points = this.points;
+        // FEATURE
         asyncLoop(this.points.length, function(loop) {
             var iter = loop.iteration();
-            if (!is) points[iter].setVisible(false);
-            points[iter].setBaseVisible(is);
+            if (!is) points[iter].setInfoVisible(false);
+            points[iter].setVisible(is);
             loop.next();
         });
     };
 
     // get array of visible points (info's)
-    this.getVisible = function() {
+    this.getVisibleInfo = function() {
         var result = [];
         for (var i = 0; i < this.points.length; i++) {
-            if (this.points[i].visible) {
-                result.push(this.points[i]);
+            if (this.points[i]) {
+                result.push(this.points[i].isInfoVisible());
             }
         }
         return result;
     };
     
     // get array of visible markers
-    this.getVisibleMarkers = function() {
+    this.getVisible = function() {
         var result = [];
         for (var i = 0; i < this.points.length; i++) {
-            if (this.points[i].marker.visible) {
+            if (this.points[i].isVisible()) {
                 result.push(this.points[i]);
             }
         }
@@ -735,7 +734,7 @@ function PointLayer(main) {
                         main.static.ICON_BLUE(), station.title);
                     point.setId(station._id);
                     layer.add(point);
-                    main.searchBar.add(0,point.id,point.marker.title);
+                    main.searchBar.add(0,point.getId(),point.getMarker().title);
                 }
             }
         });
@@ -744,11 +743,12 @@ function PointLayer(main) {
     // set point as current
     this.setCurrent = function(point) {
         if (this.current !== -1) {
-            this.current.marker.setIcon(main.static.ICON_BLUE());
-            this.current.marker.setDraggable(false);
+            this.current.getMarker().setIcon(main.static.ICON_BLUE());
+            this.current.getMarker().setDraggable(false);
         }
         // unset point
         if (point === -1) {
+            // FEATURE - ??????
             if (this.main.pointEditorOpened) this.main.clearEditor();
             this.current = point;
         } else {
@@ -756,7 +756,7 @@ function PointLayer(main) {
             var pos = this.points.indexOf(point);
             if (pos !== -1) {
                 this.current = point;
-                point.marker.setIcon(main.static.ICON_RED());
+                point.getMarker().setIcon(main.static.ICON_RED());
             }
         }
     };
@@ -764,14 +764,14 @@ function PointLayer(main) {
     // get point by point id [async]
     this.getPointById = function(id) {
         var points = this.points;
-        for (var i = 0; i < points.length; i++) if (points[i].id === id) return points[i];
+        for (var i = 0; i < points.length; i++) if (points[i].getId() === id) return points[i];
         return -1;
     };
 
     // get point by point id [async]
     this.getPointByName = function(name) {
         var points = this.points;
-        for (var i = 0; i < points.length; i++) if (points[i].marker.title === name) return points[i];
+        for (var i = 0; i < points.length; i++) if (points[i].getTitle() === name) return points[i];
         return -1;
     };
 }
@@ -891,9 +891,6 @@ function RouteLayer(main) {
                             r.idS = route.start;
                             r.setId(route._id);
                             obj.routes.push(r);
-                            // FEATURE - update with SearchBar.add
-                            //$(groups[1]).append('<option value="' + route._id + '" >' + route.title + '</option>');
-                            //main.searchBar.update();
                             main.searchBar.add(1,route._id,route.title);
                         }
                     }
@@ -1231,205 +1228,229 @@ function MapNode(main, pointA, pointB, resNode, total) {
 /*
  * MapPoint Class
  */
-function MapPoint(main, position, icon, title) {
+function MapPoint(parent, position, icon, title) {
     // link to main
-    this.main = main;
+    var __parent = parent;
+    // flag for info visibility
+    var __infoVisible = false;
     // flag for marker visibility
-    this.visible = false;
+    var __visible = false;
     // unique id
-    this.id = -1;
+    var __id = -1;
     // google.maps.Marker base
-    this.marker = new google.maps.Marker({
+    var __marker = new google.maps.Marker({
         position: new google.maps.LatLng(Number(position.lat()).toFixed(4), Number(position.lng()).toFixed(4)),
         icon: icon,
-        map: main.getMap(),
+        map: __parent.getMap(),
         title: title,
         draggable: false,
         visible: false
     });
 
-    this.basecontent = '<div class="text" id="info' + this.id + '"><center><b>' + this.marker.title + '</b></center></div>';
+    var __baseContent = '<div class="text" id="info' + __id + '"><center><b>' + __marker.title + '</b></center></div>';
     // infoBox base
-    this.info = new InfoBox({
-        content: this.basecontent,
+    var __info = new InfoBox({
+        content: __baseContent,
         boxClass: "infoBox",
         pixelOffset: new google.maps.Size(-150, -120)
     });
 
-    // title setter
+    // SET title
     this.setTitle = function(title) {
-        this.marker.setTitle(title);
+        __marker.setTitle(title);
         // FEATURE add some code for updating content
     };
 
-    // visible setter
+    // GET title
+    this.getTitle = function() {
+        return __marker.title;
+    };
+
+    // GET marker
+    this.getMarker = function() {
+        return __marker;
+    };
+
+    // GET baseContent
+    this.getBaseContent = function() {
+        return __baseContent;
+    };
+
+    // SET infoVisible
+    this.setInfoVisible = function(is) {
+        __infoVisible = is;
+        if (!is) __info.hide();
+        else {
+            __info.open(__parent.getMap(), __marker);
+            __info.show();
+        }
+    };
+
+    // GET infoVisible
+    this.isInfoVisible = function() {
+        return __infoVisible;
+    };
+
+    // GET visible
     this.setVisible = function(is) {
-        if (!is) this.info.hide();
-        else {
-            this.info.open(this.main.getMap(), this.marker);
-            this.info.show();
-        }
-        this.visible = is;
+        __visible = is;
+        __marker.setVisible(is);
+        if (!is) this.setInfoVisible(false);
     };
 
-    // visibility of marker
-    this.setBaseVisible = function(is) {
-        this.marker.setVisible(is);
-        if (!is) {
-            //this.setVisible(false);
-        }
-        //this.visible = is;
+    // GET visible
+    this.isVisible = function() {
+        return __visible;
     };
 
-    // set unique id
+    // SET id
     this.setId = function(id) {
-        this.id = id;
+        __id = id;
     };
 
-    // update constent of .info
-    this.updateInfo = function() {
-        var main = this.main;
-        var obj = this;
-        if (this.id !== -1) {
-            $.ajax({
-                datatype: main.static.TYPE_JSON,
-                type: main.static.TYPE_GET,
-                url: main.getUrl() + '/arrival/' + this.id,
-                success: function(result) {
-                    var content = "";
-                    var routeresult = null;
-                    for (var i = 0; i < result.length; i++) {
-                        if (result[i].status === "OK") {
-                            // natural value (min)
-                            var ctime = Number(result[i].time).toFixed(0);
-                            // real time (sec)
-                            var rtime = Number((result[i].time - ctime) * 60).toFixed(0);
-                            // absolute values
-                            if (rtime < 0) rtime *= -1;
-                            // if value in seconds < 10
-                            var p = "";
-                            if (rtime < 10) p = "0";
-                            routeresult = ctime + ":" + p + rtime + " мин. <br/>";
-                        }
-                        // TBD
-                        // need to add some other checks
-                        else routeresult = TEXT[main.getLang()].noData + "<br/>";
-                        content += ("№" + result[i].name + " - " + routeresult);
-                    }
-                    if (result.length === 0) content += TEXT[main.getLang()].noAvialableRoutes + "<br/>";
-                    obj.info.setContent(obj.basecontent + content);
-                }
-            });
+    // GET id
+    this.getId = function() {
+        return __id;
+    };
+
+    // GET parent
+    this.getParent = function() {
+        return __parent;
+    };
+
+    // GET info
+    this.getInfo = function() {
+        return __info;
+    };
+
+    var link = this;
+    // setting listeners
+    google.maps.event.addListener(__marker, 'click', function(event) {
+        // if we work in PointEditor
+        if (__parent.pointEditorOpened) {
+            __parent.setEditPointData(event.latLng, __marker.title, true);
+            __parent.pointLayer.setCurrent(link);
+            this.setDraggable(true);
+        // if we work in RouteEditor
+        } else if (__parent.routeEditorOpened) {
+            for (var i = 0; i < __parent.pointLayer.points.length; i++) {
+                if (__parent.pointLayer.points[i].getMarker() === this)
+                    __parent.routeBuilder.add(__parent.pointLayer.points[i]);
+            }
         }
-    };
-
-    // click listener setter
-    this.setClickListener = function() {
-        var obj = this;
-        var main = this.main;
-        // adding default handlers
-        google.maps.event.addListener(this.marker, 'click', function(event) {
-            if (main.pointEditorOpened) {
-                main.setEditPointData(event.latLng, this.title, true);
-                main.pointLayer.setCurrent(obj);
-                this.setDraggable(true);
-            } else if (main.routeEditorOpened) {
-                for (var i = 0; i < main.pointLayer.points.length; i++) {
-                    if (main.pointLayer.points[i].marker === this) main.routeBuilder.add(main.pointLayer.points[i]);
-                }
-            }
-            // base mode
-            else {
-                // hide info, which was opened before
-                //if (main.pointLayer.current !== -1) main.pointLayer.current.info.hide();
-                //main.pointLayer.current = obj;
-                if (obj.visible) obj.setVisible(false);
-                else {
-                    obj.updateInfo();
-                    obj.setVisible(true);
-                }
-                
-            }
-        });
-        google.maps.event.addListener(this.marker, 'drag', function(event) {
-            if (main.pointEditorOpened) {
-                var title = main.getObjects().pointEditor.valueTitle.val();
-                main.setEditPointData(event.latLng, title, false);
-            }
-        });
-        google.maps.event.addListener(this.marker, 'dragend', function() {
-            if (main.pointEditorOpened) {
-                main.pointLayer.current.save();
-                main.outMsg(TEXT[main.getLang()].pointSaved,"green");
-            }
-        });
-        // TBD
-        // it will be good feature to deselect item from searchbox when i click "close" button on its info
-    };
-
-    // delete point
-    this.remove = function() {
-        // async delete on server
-        $.ajax({
-            datatype: main.static.TYPE_JSON,
-            type: main.static.TYPE_DELETE,
-            url: main.getUrl() + '/data/points/' + this.id,
-            cache: false
-        });
-        this.marker.setMap(null);
-        // some code for info....
-        // TBD
-        this.main.pointLayer.points.splice(main.pointLayer.points.indexOf(this), 1);
-        this.main.pointLayer.setCurrent(-1);
-    };
-
-    // save point
-    this.save = function() {
-        // link to base class
-        var main = this.main;
-        // object for sending
-        var json = {};
-        // fill properties
-        json.lat = main.getObjects().pointEditor.valueLat.text();
-        json.lng = main.getObjects().pointEditor.valueLng.text();
-        /*if (this.id !== -1)*/
-        json._id = this.id;
-        json.title = main.getObjects().pointEditor.valueTitle.val();
-        // create new one
-        if (this.id === -1) {
-            $.ajax({
-                datatype: main.static.TYPE_JSON,
-                type: main.static.TYPE_POST,
-                url: main.getUrl() + '/data/points',
-                data: json,
-                async: false,
-                success: function(result) {
-                    main.pointLayer.current.setId(result.point._id);
-                    main.searchBar.add(0,result.point._id,json.title);
-                }
-            });
-        }
-        // update existing
+        // if we work in base mode
         else {
-            $.ajax({
-                datatype: main.static.TYPE_JSON,
-                type: main.static.TYPE_PUT,
-                url: main.getUrl() + '/data/points/' + this.id,
-                data: json,
-                async:false,
-                success: function(result) {
-                    // NEED DEBUG
-                }
-            });
+            if (link.isInfoVisible()) link.setInfoVisible(false);
+            else {
+                link.update();
+                link.setInfoVisible(true);
+            }
         }
-
-        /// TEST
-        main.pointLayer.current.setTitle(json.title);
-    };
-
-    // set default click listener
-    this.setClickListener();
+    });
+    google.maps.event.addListener(__marker, 'drag', function(event) {
+        if (main.pointEditorOpened) {
+            //FEATURE
+            var title = __parent.getObjects().pointEditor.valueTitle.val();
+            __parent.setEditPointData(event.latLng, title, false);
+        }
+    });
+    google.maps.event.addListener(__marker, 'dragend', function() {
+        if (__parent.pointEditorOpened) {
+            __parent.pointLayer.current.save();
+            __parent.outMsg(TEXT[__parent.getLang()].pointSaved,"green");
+        }
+    });
 }
+
+// [P] update - update point data
+MapPoint.prototype.update = function() {
+    var link = this;
+    if (this.getId() !== -1) {
+        $.ajax({
+            datatype: this.getParent().static.TYPE_JSON,
+            type: this.getParent().static.TYPE_GET,
+            url: this.getParent().getUrl() + '/arrival/' + this.getId(),
+            success: function(result) {
+                var content = "";
+                var routeResult = null;
+                for (var i = 0; i < result.length; i++) {
+                    if (result[i].status === "OK") {
+                        // natural value (min)
+                        var ctime = Number(result[i].time).toFixed(0);
+                        // real time (sec)
+                        var rtime = Number((result[i].time - ctime) * 60).toFixed(0);
+                        // absolute values
+                        if (rtime < 0) rtime *= -1;
+                        // if value in seconds < 10
+                        var p = "";
+                        if (rtime < 10) p = "0";
+                        routeResult = ctime + ":" + p + rtime + " мин. <br/>";
+                    }
+                    // TBD
+                    // need to add some other checks
+                    else routeResult = TEXT[link.getParent().getLang()].noData + "<br/>";
+                    content += ("№" + result[i].name + " - " + routeResult);
+                }
+                if (result.length === 0) content += TEXT[link.getParent().getLang()].noAvialableRoutes + "<br/>";
+                link.getInfo().setContent(link.getBaseContent() + content);
+            }
+        });
+    }
+};
+
+// [P] save  - save point
+MapPoint.prototype.save = function() {
+    // link to base class
+    var link = this;
+    // object for sending
+    var json = {};
+    // fill properties
+    json.lat = this.getParent().getObjects().pointEditor.valueLat.text();
+    json.lng = this.getParent().getObjects().pointEditor.valueLng.text();
+    json._id = this.getId();
+    json.title = this.getParent().getObjects().pointEditor.valueTitle.val();
+    // create new one
+    if (this.getId() === -1) {
+        $.ajax({
+            datatype: this.getParent().static.TYPE_JSON,
+            type: this.getParent().static.TYPE_POST,
+            url: this.getParent().getUrl() + '/data/points',
+            data: json,
+            async: false,
+            success: function(result) {
+                link.getParent().pointLayer.current.setId(result.point._id);
+                link.getParent().searchBar.add(0,result.point._id,json.title);
+            }
+        });
+    }
+    // update existing
+    else {
+        $.ajax({
+            datatype: this.getParent().static.TYPE_JSON,
+            type: this.getParent().static.TYPE_PUT,
+            url: this.getParent().getUrl() + '/data/points/' + this.getId(),
+            data: json
+        });
+    }
+    /// TEST
+    this.getParent().pointLayer.current.setTitle(json.title);
+};
+
+// delete point
+MapPoint.prototype.remove = function() {
+    // async delete on server
+    $.ajax({
+        datatype: this.getParent().static.TYPE_JSON,
+        type: this.getParent().static.TYPE_DELETE,
+        url: this.getParent().getUrl() + '/data/points/' + this.getId(),
+        cache: false
+    });
+    this.getMarker().setMap(null);
+    // some code for info....
+    // FEATURE
+    this.getParent().pointLayer.points.splice(this.getParent().pointLayer.points.indexOf(this), 1);
+    this.getParent().pointLayer.setCurrent(-1);
+};
 
 // class for cars
 function MapTrans(main, id, id_route, position) {
