@@ -156,6 +156,13 @@ $(document).ready(function() {
     objects.guideEditor.create.click(function() {city.guide.popAll();});
     // demo handler (temporary)
     objects.guideEditor.demo.click(function(){city.guide.demo();});
+    // search bar init
+    objects.searchBar.chosen.chosen({
+        no_results_text: TEXT[city.getLang()]
+        // FEATURE
+    }).change(function(e) {
+          city.searchBar.init($(this).val());
+    });
 });
 
 /*
@@ -600,9 +607,6 @@ function SearchBar(parent) {
         $.each(__parent.pointLayer.points,function(indx,item) {
             __link.add(0,item.getId(),item.getTitle());
         });
-        //__parent.pointLayer.points.each(function(item){
-        //    __link.add(0,item.getId(),item.getTitle());
-        //});
     };
 
     // deselect selected items
@@ -620,62 +624,57 @@ function SearchBar(parent) {
         __parent.getObjects().searchBar.chosen.trigger("liszt:updated");
     };
 
-    // init
-    __parent.getObjects().searchBar.chosen.chosen({
-        no_results_text: TEXT[__parent.getLang()]
-        // FEATURE
-    }).change(function(e) {
-            // check if this is not base mode
-            if ((__parent.pointEditorOpened) ||
-                (__parent.routeEditorOpened) ||
-                (__parent.guideOpened)) {
-                link.deselect();
-                __parent.outMsg(TEXT[__parent.getLang()].thisActionIsNotAllowed,"red");
+    this.init = function(sel) {
+        // check if this is not base mode
+        if ((__parent.pointEditorOpened) ||
+            (__parent.routeEditorOpened) ||
+            (__parent.guideOpened)) {
+            link.deselect();
+            __parent.outMsg(TEXT[__parent.getLang()].thisActionIsNotAllowed,"red");
+        }
+        // if null
+        if (!sel) sel = [];
+        // there was something new selected
+        if (sel.length > __chosed.length) {
+            // get new element
+            var newElem = $(sel).not(__chosed).get(0);
+            // push to choosed items
+            __chosed.push(newElem);
+            // get type
+            // this is new route, which we need to show
+            if (__points.indexOf(newElem) === -1) {
+                var newRoute = __parent.routeLayer.getRouteById(newElem);
+                newRoute.setVisible(true);
+                __parent.transLayer.setVisibleByRoute(newElem,true);
             }
-            var sel = $(this).val();
-            // if null
-            if (!sel) sel = [];
-            // there was something new selected
-            if (sel.length > __chosed.length) {
-                // get new element
-                var newElem = $(sel).not(__chosed).get(0);
-                // push to choosed items
-                __chosed.push(newElem);
-                // get type
-                // this is new route, which we need to show
-                if (__points.indexOf(newElem) === -1) {
-                    var newRoute = __parent.routeLayer.getRouteById(newElem);
-                    newRoute.setVisible(true);
-                    __parent.transLayer.setVisibleByRoute(newElem,true);
-                }
-                else {
-                    var newPoint = __parent.pointLayer.getPointById(newElem);
-                    newPoint.update();
-                    newPoint.setVisible(true);
-                    newPoint.setInfoVisible(true);
-                }
-            }
-            // there was something we need to hide
             else {
-                //get old element we need to hide
-                var oldElem = $(__chosed).not(sel).get(0);
-                // pop it from choosed items
-                __chosed.splice(__chosed.indexOf(oldElem),1);
-                // get type
-                // this is old route we need to hide
-                if (__points.indexOf(oldElem) === -1) {
-                    var oldRoute = __parent.routeLayer.getRouteById(oldElem);
-                    oldRoute.setVisible(false);
-                    // add logic for displaying points
-                    __parent.transLayer.setVisibleByRoute(oldElem,false);
-                }
-                else {
-                    var oldPoint = __parent.pointLayer.getPointById(oldElem);
-                    oldPoint.setInfoVisible(false);
-                    oldPoint.setVisible(false);
-                }
+                var newPoint = __parent.pointLayer.getPointById(newElem);
+                newPoint.update();
+                newPoint.setVisible(true);
+                newPoint.setInfoVisible(true);
             }
-    });
+        }
+        // there was something we need to hide
+        else {
+            //get old element we need to hide
+            var oldElem = $(__chosed).not(sel).get(0);
+            // pop it from choosed items
+            __chosed.splice(__chosed.indexOf(oldElem),1);
+            // get type
+            // this is old route we need to hide
+            if (__points.indexOf(oldElem) === -1) {
+                var oldRoute = __parent.routeLayer.getRouteById(oldElem);
+                oldRoute.setVisible(false);
+                // add logic for displaying points
+                __parent.transLayer.setVisibleByRoute(oldElem,false);
+            }
+            else {
+                var oldPoint = __parent.pointLayer.getPointById(oldElem);
+                oldPoint.setInfoVisible(false);
+                oldPoint.setVisible(false);
+            }
+        }
+    };
 }
 
 // marker layer
@@ -782,6 +781,7 @@ function PointLayer(main) {
         }
     };
 
+    // get current point from layer
     this.getCurrent = function() {
         return this.current;
     };
