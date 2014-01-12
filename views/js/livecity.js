@@ -352,6 +352,7 @@ Livecity.prototype.addPoint = function(position) {
     this.pointLayer.add(point);
     this.pointLayer.setCurrent(point);
     this.setEditPointData(position, title, true);
+    this.searchBar.update();
     return point;
 };
 
@@ -419,18 +420,22 @@ Livecity.prototype.update = function() {
 
 // [P] onSavePoint - save point handler [DEPRECATED]
 Livecity.prototype.onSavePoint = function() {
-    if (!this.pointLayer.getCurrent()) this.outMsg(TEXT[this.getLang()].noDataToSave,"red");
+    var current = this.pointLayer.getCurrent();
+    if (!current) this.outMsg(TEXT[this.getLang()].noDataToSave,"red");
     else {
-        this.pointLayer.getCurrent().save();
+        current.save();
+        this.searchBar.update();
         this.outMsg(TEXT[this.getLang()].pointSaved,"green");
     }
 };
 
 // [P] onDeletePoint - delete point handler {DEPRECATED]
 Livecity.prototype.onDeletePoint = function() {
-    if (!this.pointLayer.getCurrent()) this.outMsg(TEXT[this.getLang()].nothingSelected,"red");
+    var current = this.pointLayer.getCurrent();
+    if (!current) this.outMsg(TEXT[this.getLang()].nothingSelected,"red");
     else {
-        this.pointLayer.getCurrent().remove();
+        this.pointLayer.remove(current);
+        this.searchBar.update();
         this.outMsg(TEXT[this.getLang()].pointRemoved,"green");
     }
 };
@@ -570,122 +575,108 @@ Notifier.prototype.msg = function(text,color) {
 /*
  * SearchBar Class
  */
-function SearchBar(main) {
-    var __parent = main;
-    // array for points, opened before
-    var __oldP = [];
-    // array for routes, opened before
-    var __oldR = [];
-    // GET parent
-    this.getParent = function() {
-        return __parent;
-    };
-    this.getPoints = function() {
-        return __oldP;
-    };
-    this.setPoints = function(pts) {
-        __oldP = pts;
-    };
-    this.getRoutes = function() {
-        return __oldR;
-    };
-    this.setRoutes = function(rts) {
-        __oldR = rts;
-    };
-    this.init();
-}
+function SearchBar(parent) {
+    // link to parent object
+    var __parent = parent;
+    // points to select
+    var __points = [];
+    // routes to select
+    var __routes = [];
+    // chosed ID's
+    var __chosed = [];
+    // link to this
+    var __link = this;
 
-// init function
-SearchBar.prototype.init = function() {
-    var link = this;
-    this.getParent().getObjects().searchBar.chosen.chosen({
-        no_results_text: TEXT[link.getParent().getLang()]
+    // clear - clear all values for selecting
+    this.clear = function() {
+        var groups = __parent.getObjects().searchBar.groups;
+        $(groups[0]).html('');
+        $(groups[1]).html('');
+    }
+
+    // update values for select
+    this.update = function() {
+        this.clear();
+        $.each(__parent.pointLayer.points,function(indx,item) {
+            __link.add(0,item.getId(),item.getTitle());
+        });
+        //__parent.pointLayer.points.each(function(item){
+        //    __link.add(0,item.getId(),item.getTitle());
+        //});
+    };
+
+    // deselect selected items
+    this.deselect = function() {
+        __parent.getObjects().searchBar.option.prop('selected', false);
+        __parent.getObjects().searchBar.chosen.trigger("liszt:updated");
+    };
+
+    // add value for selecting
+    this.add = function(type, id, title) {
+        if (type === 0) __points.push(id);
+        else __routes.push(id);
+        var groups = __parent.getObjects().searchBar.groups;
+        $(groups[type]).append('<option value="' + id + '" >' + title + '</option>');
+        __parent.getObjects().searchBar.chosen.trigger("liszt:updated");
+    };
+
+    // init
+    __parent.getObjects().searchBar.chosen.chosen({
+        no_results_text: TEXT[__parent.getLang()]
         // FEATURE
     }).change(function(e) {
             // check if this is not base mode
-            if ((link.getParent().pointEditorOpened) ||
-                (link.getParent().routeEditorOpened) ||
-                (link.getParent().guideOpened)) {
-                    link.deselect();
-                    lnk.getParent().outMsg(TEXT[link.getParent().getLang()].thisActionIsNotAllowed,"red");
+            if ((__parent.pointEditorOpened) ||
+                (__parent.routeEditorOpened) ||
+                (__parent.guideOpened)) {
+                link.deselect();
+                __parent.outMsg(TEXT[__parent.getLang()].thisActionIsNotAllowed,"red");
             }
-            // get copy of previous selected points/routes
-            var oldP = link.getPoints().slice();
-            var oldR = link.getRoutes().slice();
-            var selected = $(this).val();
-            // buffers for selected values
-            var r = [];
-            var n = [];
-            // if something selected
-            if (selected) {
-                // fill buffers with points/routes
-                for (var i = 0; i < selected.length; i++) {
-                    var point = link.getParent().pointLayer.getPointById(selected[i]);
-                    if (point === -1) {
-                        var route = link.getParent().routeLayer.getRouteById(selected[i]);
-                        r.push(route);
-                    } else {
-                        n.push(point);
-                    }
+            var sel = $(this).val();
+            // if null
+            if (!sel) sel = [];
+            // there was something new selected
+            if (sel.length > __chosed.length) {
+                // get new element
+                var newElem = $(sel).not(__chosed).get(0);
+                // push to choosed items
+                __chosed.push(newElem);
+                // get type
+                // this is new route, which we need to show
+                if (__points.indexOf(newElem) === -1) {
+                    var newRoute = __parent.routeLayer.getRouteById(newElem);
+                    newRoute.setVisible(true);
+                    __parent.transLayer.setVisibleByRoute(newElem,true);
                 }
-            }
-            // if there is any points selected
-            if (n.length > -1) {
-                // if we need to hide something
-                if ($(oldP).not(n).get().length === 1) {
-                    var point = $(oldP).not(n).get()[0];
-                    // check, if this point is not part of visible route
-                    if (!link.getParent().routeLayer.isPointOfVisibleRoute(point.getId())) point.setVisible(false);
-                    point.setVisible(false);
-                }
-                // if we need to show something new
-                else if ((n.length > 0) && (n.length !== oldP.length)) {
-                    var point = $(n).not(oldP).get()[0];
-                    if (point) {
-                        point.update();
-                        point.setInfoVisible(true);
-                        point.setVisible(true);
-                    }
+                else {
+                    var newPoint = __parent.pointLayer.getPointById(newElem);
+                    newPoint.update();
+                    newPoint.setVisible(true);
+                    newPoint.setInfoVisible(true);
                 }
             }
-            // if there is any rotes selected
-            if (r.length > -1) {
-                // if we need to hide route
-                if ($(oldR).not(r).get().length === 1) {
-                    $(oldR).not(r).get()[0].setVisible(false);
-                    link.getParent().transLayer.setVisibleByRoute($(oldR).not(r).get()[0].id, false);
-                    // set visible selected points
-                    for (var x = 0; x < n.length; x++) if (!n[x].marker.visible) n[x].marker.setVisible(true);
+            // there was something we need to hide
+            else {
+                //get old element we need to hide
+                var oldElem = $(__chosed).not(sel).get(0);
+                // pop it from choosed items
+                __chosed.splice(__chosed.indexOf(oldElem),1);
+                // get type
+                // this is old route we need to hide
+                if (__points.indexOf(oldElem) === -1) {
+                    var oldRoute = __parent.routeLayer.getRouteById(oldElem);
+                    oldRoute.setVisible(false);
+                    // add logic for displaying points
+                    __parent.transLayer.setVisibleByRoute(oldElem,false);
                 }
-                // if we need to show new route
-                else if ((r.length > 0) && (oldR.length !== r.length)) {
-                    $(r).not(oldR).get()[0].setVisible(true);
-                    link.getParent().transLayer.setVisibleByRoute($(r).not(oldR).get()[0].id, true);
+                else {
+                    var oldPoint = __parent.pointLayer.getPointById(oldElem);
+                    oldPoint.setInfoVisible(false);
+                    oldPoint.setVisible(false);
                 }
             }
-            // set currently selected points/routes as previous
-            link.setPoints(n.slice());
-            link.setRoutes(r.slice());
-        });
-};
-
-// [P] add - add item to search pane
-SearchBar.prototype.add = function (group,id,name) {
-    var groups = this.getParent().getObjects().searchBar.groups;
-    $(groups[group]).append('<option value="' + id + '" >' + name + '</option>');
-    this.update();
-};
-
-// [P] update - update items in searchbar
-SearchBar.prototype.update = function() {
-    this.getParent().getObjects().searchBar.chosen.trigger("liszt:updated");
-};
-
-// deselect all items
-SearchBar.prototype.deselect = function() {
-    this.getParent().getObjects().searchBar.option.prop('selected', false);
-    this.update();
-};
+    });
+}
 
 // marker layer
 function PointLayer(main) {
@@ -738,6 +729,13 @@ function PointLayer(main) {
     // add point to layer
     this.add = function(point) {
         this.points.push(point);
+    };
+
+    this.remove = function(point) {
+        var index = this.points.indexOf(point);
+        if (index === -1) return;
+        this.points[index].remove();
+        this.points.splice(index,1);
     };
 
     // load markers to map
@@ -848,6 +846,13 @@ function RouteLayer(main) {
     this.add = function(route) {
         this.routes.push(route);
     };
+
+    this.remove = function(route) {
+        var index = this.routes.indexOf(route);
+        if (index === -1) return;
+        this.routes[index].remove();
+        this.routes.splice(index,1);
+    }
 
     // current setter
     this.setCurrent = function(route) {
@@ -1446,8 +1451,6 @@ MapPoint.prototype.save = function() {
             data: json,
             async: false,
             success: function(result) {
-                link.getParent().pointLayer.current.setId(result.point._id);
-                link.getParent().searchBar.add(0,result.point._id,json.title);
             }
         });
     }
