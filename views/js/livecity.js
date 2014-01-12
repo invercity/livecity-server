@@ -52,6 +52,7 @@ TEXT = {
 $(document).ready(function() {
     // links to page objects
     var objects = {
+        body : $('body'),
         alertbox: $('#alertbox'),
         map: document.getElementById('map_canvas'),
         auth : $('#auth'),
@@ -162,6 +163,10 @@ $(document).ready(function() {
         // FEATURE
     }).change(function(e) {
           city.searchBar.init($(this).val());
+    });
+    // keydown handler
+    objects.body.on('keydown',function(e) {
+        if (e.keyCode === 27) city.onEscape();
     });
 });
 
@@ -315,27 +320,30 @@ Livecity.prototype.init = function() {
         }
     });
     // button click handler
-    document.documentElement.onkeydown = function(e) {
-        // if escape button pressed
-        if (e.keyCode === 27) {
-            if (link.pointEditorOpened) {
-                // if nothing selected
-                if (!link.pointLayer.getCurrent()) link.onCloseMarkerEditor();
-                else {
-                    link.pointLayer.setCurrent();
-                    link.clearEditor();
-                }
-            }
-            if (link.routeEditorOpened) link.onCloseRouteEditor();
-            if (link.guideOpened) link.onCloseGuide();
-        }
-    };
+   // document.documentElement.onkeydown = function(e) {
+
+   // };
     this.update();
 };
 
 // [P] outMsg - show notification message
 Livecity.prototype.outMsg = function(text,color) {
     this.notifier.msg(text,color);
+};
+
+// [P] onEscape - Escape button handler
+Livecity.prototype.onEscape = function() {
+    // if escape button pressed
+    if (this.pointEditorOpened) {
+        // if nothing selected
+        if (!this.pointLayer.getCurrent()) this.onCloseMarkerEditor();
+        else {
+            this.pointLayer.setCurrent();
+            this.clearEditor();
+        }
+    }
+    if (this.routeEditorOpened) this.onCloseRouteEditor();
+    if (this.guideOpened) this.onCloseGuide();
 };
 
 // [P] setEditPointData - set edits for editing marker
