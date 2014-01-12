@@ -94,7 +94,9 @@ $(document).ready(function() {
         searchBar: {
             base: $('#main-search'),
             chosen: $('.chosen'),
-            option: $('option'),
+            option: function() {
+                return $('option');
+            },
             groups: $('optgroup')
         }
     };
@@ -319,10 +321,6 @@ Livecity.prototype.init = function() {
             link.guide.push(event.latLng);
         }
     });
-    // button click handler
-   // document.documentElement.onkeydown = function(e) {
-
-   // };
     this.update();
 };
 
@@ -619,7 +617,7 @@ function SearchBar(parent) {
 
     // deselect selected items
     this.deselect = function() {
-        __parent.getObjects().searchBar.option.prop('selected', false);
+        __parent.getObjects().searchBar.option().prop('selected',false);
         __parent.getObjects().searchBar.chosen.trigger("liszt:updated");
     };
 
@@ -855,6 +853,7 @@ function RouteLayer(main) {
         this.routes.push(route);
     };
 
+    // remove route from layer
     this.remove = function(route) {
         var index = this.routes.indexOf(route);
         if (index === -1) return;
