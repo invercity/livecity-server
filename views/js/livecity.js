@@ -699,13 +699,9 @@ function PointLayer(main) {
     // visibility setter
     this.setVisible = function(is) {
         this.visible = is;
-        var points = this.points;
-        // FEATURE
-        asyncLoop(this.points.length, function(loop) {
-            var iter = loop.iteration();
-            if (!is) points[iter].setInfoVisible(false);
-            points[iter].setVisible(is);
-            loop.next();
+        $.each(this.points, function(index,item) {
+            if (!is) item.setInfoVisible(false);
+            item.setVisible(is);
         });
     };
 
@@ -827,11 +823,8 @@ function RouteLayer(main) {
     // visibility [async]
     this.setVisible = function(is) {
         this.visible = is;
-        var routes = this.routes;
-        // FEATURE - replace asyncloop with async.js
-        asyncLoop(this.routes.length, function(loop) {
-            routes[loop.iteration()].setVisible(is);
-            loop.next();
+        $.each(this.routes, function(index,item) {
+            item.setVisible(is);
         });
     };
 
@@ -993,17 +986,13 @@ function TransLayer(main) {
 
     // set visibility by route id
     this.setVisibleByRoute = function(id, is) {
-        var t = this.trans;
-        var r = this.routes;
-        // FEATURE - replace with async.js
-        asyncLoop(t.length, function(loop) {
-            var iter = loop.iteration();
-            if (t[iter].id_route === id) {
-                t[iter].setVisible(is);
-                if (is) r.push(id);
-                else r.splice(r.indexOf(id), 1);
+        var routes = this.routes;
+        $.each(this.trans, function(index,item) {
+            if (item.id_route === id) {
+                item.setVisible(is);
+                if (is) routes.push(id);
+                else routes.splice(routes.indexOf(id), 1);
             }
-            loop.next();
         });
     };
 
@@ -1044,9 +1033,8 @@ function MapRoute(main) {
     this.setVisible = function(is) {
         var nodes = this.nodes;
         // FEATURE - replace with async.js
-        asyncLoop(nodes.length, function(loop) {
-            nodes[loop.iteration()].setVisible(is);
-            loop.next();
+        $.each(nodes, function(index,item) {
+            item.setVisible(is);
         });
         // UPD
         if (is) {
@@ -1108,18 +1096,14 @@ function MapRoute(main) {
 
     // init route
     this.init = function(ids) {
-        var main = this.main;
-        var obj = this;
-        // FEATURE - replace with async.js
-        asyncLoop(ids.length, function(loop) {
-            var iter = loop.iteration();
-            for (var j = 0; j < main.routeLayer.nodes.length; j++) {
+        var link = this;
+        $.each(ids, function(lndex,item) {
+            for (var j = 0; j < link.main.routeLayer.nodes.length; j++) {
                 // TEST
-                if (main.routeLayer.nodes[j].id == ids[iter]) {
-                    obj.add(main.routeLayer.nodes[j]);
+                if (link.main.routeLayer.nodes[j].id == item) {
+                    link.add(link.main.routeLayer.nodes[j]);
                 }
             }
-            loop.next();
         });
     };
 
