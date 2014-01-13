@@ -84,7 +84,6 @@ $(document).ready(function() {
             close: $('#close_button_guide'),
             save: $('#guide_save'),
             create: $('#guide_new'),
-            demo: $('#guide_demo'),
             valueStart: $('#guide_start'),
             valueEnd: $('#guide_end'),
             valueLength: $('#guide_length'),
@@ -163,7 +162,7 @@ $(document).ready(function() {
     objects.searchBar.chosen.chosen({
         no_results_text: TEXT[city.getLang()]
         // FEATURE
-    }).change(function(e) {
+    }).change(function() {
           city.searchBar.init($(this).val());
     });
     // keydown handler
@@ -302,12 +301,14 @@ function Livecity(objects,settings) {
 
 // [P] init - init map [DEPRECATED]
 Livecity.prototype.init = function() {
-    // load points on map
-    this.pointLayer.load();
-    // load nodes/routes on map
-    this.routeLayer.load();
     // link to main document
     var link = this;
+    // load points on map
+    this.pointLayer.load(function() {
+        link.routeLayer.load(function(){
+            link.searchBar.update();
+        });
+    });
     // map click handler
     google.maps.event.addListener(this.getMap(), 'click', function(event) {
         // point editor mode
@@ -605,7 +606,7 @@ function SearchBar(parent) {
         var groups = __parent.getObjects().searchBar.groups;
         $(groups[0]).html('');
         $(groups[1]).html('');
-    }
+    };
 
     // update values for select
     this.update = function() {
@@ -613,6 +614,9 @@ function SearchBar(parent) {
         $.each(__parent.pointLayer.points,function(indx,item) {
             __link.add(0,item.getId(),item.getTitle());
         });
+        $.each(__parent.routeLayer.routes,function(indx,item) {
+            __link.add(1,item.id,item.name);
+        })
     };
 
     // deselect selected items
@@ -732,6 +736,7 @@ function PointLayer(main) {
         this.points.push(point);
     };
 
+    // remove point from layer
     this.remove = function(point) {
         var index = this.points.indexOf(point);
         if (index === -1) return;
@@ -739,25 +744,24 @@ function PointLayer(main) {
         this.points.splice(index,1);
     };
 
-    // load markers to map
-    this.load = function() {
+    // load markers to map [ASYNC]
+    this.load = function(callback) {
         var main = this.main;
         var layer = this;
         $.ajax({
             datatype: main.static.TYPE_JSON,
             type: main.static.TYPE_GET,
             url: main.getUrl() + '/data/points',
-            async: false,
             success: function(result) {
-                // FEATURE - add async.js
-                for (var i = 0; i < result.length; i++) {
-                    var station = result[i];
-                    var point = new MapPoint(main, new google.maps.LatLng(station.lat, station.lng),
-                        main.static.ICON_BLUE(), station.title);
-                    point.setId(station._id);
+                async.each(result,function(item,callback) {
+                    var point = new MapPoint(main, new google.maps.LatLng(item.lat, item.lng),
+                        main.static.ICON_BLUE(), item.title);
+                    point.setId(item._id);
                     layer.add(point);
-                    main.searchBar.add(0,point.getId(),point.getMarker().title);
-                }
+                    callback();
+                },function(err) {
+                    if (callback) callback(err);
+                });
             }
         });
     };
@@ -852,7 +856,7 @@ function RouteLayer(main) {
         if (index === -1) return;
         this.routes[index].remove();
         this.routes.splice(index,1);
-    }
+    };
 
     // current setter
     this.setCurrent = function(route) {
@@ -873,8 +877,8 @@ function RouteLayer(main) {
         return route;
     };
 
-    // load layer from server
-    this.load = function() {
+    // load layer from server [ASYNC]
+    this.load = function(callback) {
         var main = this.main;
         var obj = this;
         // at first - getting nodes
@@ -886,13 +890,9 @@ function RouteLayer(main) {
             success: function(result) {
                 for (var i = 0; i < result.length; i++) {
                     var node = result[i];
-                    var idA = -1;
-                    var idB = -1;
-                    for (var j = 0; j < main.pointLayer.points.length; j++) {
-                        if (main.pointLayer.points[j].id === node.a) idA = main.pointLayer.points[j];
-                        if (main.pointLayer.points[j].id === node.b) idB = main.pointLayer.points[j];
-                    }
-                    var n = new MapNode(main, idA, idB, node.data, node.total);
+                    var a = main.pointLayer.getPointById(node.a);
+                    var b = main.pointLayer.getPointById(node.b);
+                    var n = new MapNode(main, a, b, node.data, node.total);
                     n.setId(node._id);
                     main.routeLayer.nodes.push(n);
                 }
@@ -903,28 +903,20 @@ function RouteLayer(main) {
                     url: main.getUrl() + '/data/routes',
                     async: false,
                     success: function(result) {
-                        for (var i = 0; i < result.length; i++) {
-                            var route = result[i];
-                            var end = {};
-                            var start = {};
-                            var nodes = route.nodes;
-                            for (var j = 0; j < main.pointLayer.points.length; j++) {
-                                if (main.pointLayer.points[j].id === route.end) end = main.pointLayer.points[j];
-                                if (main.pointLayer.points[j].id === route.start) start = main.pointLayer.points[j];
-                            }
-                            var r = new MapRoute(main);
-                            r.setName(route.title);
-                            r.init(nodes);
-                            // set route end
-                            r.setEnd(end.marker.position, end.marker.title);
-                            r.idE = route.end;
-                            // set route start
-                            r.setStart(start.marker.position,start.marker.title);
-                            r.idS = route.start;
-                            r.setId(route._id);
-                            obj.routes.push(r);
-                            main.searchBar.add(1,route._id,route.title);
-                        }
+                        async.each(result,function(item,callback) {
+                            var start = main.pointLayer.getPointById(item.start);
+                            var end = main.pointLayer.getPointById(item.end);
+                            var route = new MapRoute(main);
+                            route.setName(item.title);
+                            route.init(item.nodes);
+                            route.setStart(start);
+                            route.setEnd(end);
+                            route.setId(item._id);
+                            obj.routes.push(route);
+                            callback();
+                        },function(err) {
+                            if (callback) callback(err);
+                        })
                     }
                 });
             }
@@ -1114,29 +1106,29 @@ function MapRoute(main) {
         var nodes = this.nodes;
         // save new nodes at first
         var globalNodes = this.main.routeLayer.nodes;
-        // async.js
-        asyncLoop(nodes.length, function(loop) {
-            var iter = loop.iteration();
-            nodes[iter].save();
-            var indx = globalNodes.indexOf(nodes[iter]);
-            if (indx === -1) globalNodes.push(nodes[iter]);
-            nodes[iter] = globalNodes[globalNodes.indexOf(nodes[iter])];
-            loop.next();
-            // callback
-        }, function() {
-            var json = {};
-            // calculate total distance
+        async.each(nodes,function(item,callback) {
+            item.save();
+            var index = globalNodes.indexOf(item);
+            if (index === -1) globalNodes.push(item);
+            nodes[nodes.indexOf(item)] = globalNodes[globalNodes.indexOf(item)];
+            callback();
+        },function(){
+            // get node id's and total length
             var total = 0;
-            for (var x = 0; x < obj.nodes.length; x++) total += obj.nodes[x].total;
-            // fill properties
             var ids = [];
-            for (var i = 0; i < obj.nodes.length; i++) ids.push(obj.nodes[i].id);
-            json.start = obj.start;
-            json.end = obj.end;
-            json.nodes = ids;
-            json.points = obj.points;
-            json.total = total;
-            json.title = obj.name;
+            for (var x = 0; x < obj.nodes.length; x++) {
+                total += obj.nodes[x].total;
+                ids.push(obj.nodes[x].id);
+            }
+            // fill properties
+            var json = {
+                start: obj.start,
+                end: obj.end,
+                nodes: ids,
+                points: obj.points,
+                total: total,
+                title: obj.name
+            };
             // send data
             $.ajax({
                 datatype: main.static.TYPE_JSON,
@@ -1147,15 +1139,13 @@ function MapRoute(main) {
                     obj.setId(result.route._id);
                 }
             });
-            main.outMsg(TEXT[main.getLang()].routeSaved,"green");
         });
     };
 
     // return true if this point in this route
     this.isPointOf = function(id) {
         var index = this.points.indexOf(id);
-        if (index !== -1) return true;
-        return false;
+        return index !== -1;
     };
 }
 
@@ -1424,8 +1414,6 @@ MapPoint.prototype.update = function() {
 
 // [P] save  - save point
 MapPoint.prototype.save = function() {
-    // link to base class
-    var link = this;
     // object for sending
     var json = {};
     // fill properties
@@ -1564,12 +1552,12 @@ function RouteBuilder(main) {
     this.leavePoints = function() {
         var main = this.main;
         var obj = this;
-        asyncLoop(this.points.length, function(loop) {
-            obj.points[loop.iteration()].getMarker().setIcon(main.static.ICON_BLUE());
-            loop.next();
-        }, function() {
+        async.each(this.points,function(item,callback) {
+            item.getMarker().setIcon(main.static.ICON_BLUE());
+            callback();
+        },function() {
             obj.points.length = 0;
-        });
+        })
     };
 
     // save new route
@@ -1591,6 +1579,7 @@ function RouteBuilder(main) {
             else this.main.routeLayer.routes[indx] = this.route;
             // add this route to search box
             this.main.searchBar.add(1,this.route.id,this.route.name);
+            this.main.outMsg(TEXT[this.main.getLang()].routeSaved,"green");
         }
     };
 
@@ -1689,39 +1678,6 @@ function Guide(main,start,end,result,total) {
         }
         this.main.clearEditor();
     };
-}
-
-// asynchronus loop
-function asyncLoop(iterations, func, callback) {
-    var index = 0;
-    var done = false;
-    var loop = {
-        next: function() {
-            if (done) {
-                return;
-            }
-
-            if (index < iterations) {
-                index++;
-                func(loop);
-
-            } else {
-                done = true;
-                if (callback) callback();
-            }
-        },
-
-        iteration: function() {
-            return index - 1;
-        },
-
-        break: function() {
-            done = true;
-            callback();
-        }
-    };
-    loop.next();
-    return loop;
 }
 
 function stringifyNode(name, value) {
