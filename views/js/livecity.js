@@ -1614,15 +1614,12 @@ function Guide(main,start,end,result,total) {
     this.start = null;
     this.end = null;
     this.result = null;
-    this.end = null;
-    this.infoBoxes = [];
+
     if (start) this.start = start;
     if (end) this.end = end;
     if (result) this.result = result;
     if (total) this.total = total;
-    // TMP
-    this.demoOpened = false;
-    this.markers = [];
+
     /*
      * Methods
      */
@@ -1690,73 +1687,8 @@ function Guide(main,start,end,result,total) {
             this.end = null;
             this.base.setMap(null);
         }
-
-        // TMP
-        if (this.demoOpened) {
-            for (var a=0;a<this.infoBoxes.length;a++) this.infoBoxes[a].open(null);
-            for (var a=0;a<this.markers.length;a++) this.markers[a].setMap(null);
-            this.markers = [];
-            this.infoBoxes = [];
-            this.demoOpened = false;
-        }
         this.main.clearEditor();
     };
-
-    this.addExch = function(position,title) {
-        var a = new InfoBox({
-            content: '<div class="text"><center><b>' + title + '</b></center></div>',
-            boxClass: "infoRoute",
-            pixelOffset: new google.maps.Size(-50, -50),
-            closeBoxURL: 'img/close_t.png'
-        });
-        a.setPosition(position);
-        this.infoBoxes.push(a);
-        return a;
-    };
-
-    this.demo = function() {
-        this.popAll();
-        this.demoOpened = true;
-        var posA = new google.maps.LatLng(51.4986,31.3029);
-        var posB = new google.maps.LatLng(51.4945,31.2958);
-        var posC = new google.maps.LatLng(51.4949,31.2946);
-        var posD = new google.maps.LatLng(51.5008,31.2856);
-
-        var start = new google.maps.LatLng(51.5020,31.3087);
-        var end = new google.maps.LatLng(51.5015,31.2848);
-        this.push(start);
-        this.push(end);
-
-        var MA = new google.maps.Marker({
-            position: posA,
-            map: this.main.getMap(),
-            icon: this.main.static.ICON_BLUE()
-        });
-        var MB = new google.maps.Marker({
-            position: posB,
-            map: this.main.getMap(),
-            icon: this.main.static.ICON_BLUE()
-        });
-        var MC = new google.maps.Marker({
-            position: posC,
-            map: this.main.getMap(),
-            icon: this.main.static.ICON_BLUE()
-        });
-        var MD = new google.maps.Marker({
-            position: posD,
-            map: this.main.getMap(),
-            icon: this.main.static.ICON_BLUE()
-        });
-        this.markers.push(MA);
-        this.markers.push(MB);
-        this.markers.push(MC);
-        this.markers.push(MD);
-
-        this.addExch(posA,'>> 12').open(this.main.getMap());
-        this.addExch(posB,'12 >>').open(this.main.getMap());
-        this.addExch(posC,'>> 37').open(this.main.getMap());
-        this.addExch(posD,'37 >>').open(this.main.getMap());
-    }
 }
 
 // asynchronus loop
