@@ -114,7 +114,8 @@ $(document).ready(function() {
             style: google.maps.NavigationControlStyle.SMALL
         },
         mapTypeId: google.maps.MapTypeId.ROADMAP,
-        lang: 'RU'
+        lang: 'RU',
+        url: 'http://localhost:3000'
     };
     // create new city
     city = new Livecity(objects,settings);
@@ -123,7 +124,7 @@ $(document).ready(function() {
     // set update function with interval
     setInterval('city.update()',5000);
     // Edit stations click handler
-    objects.editPoints.click(function() { city.onEditMarker(); });
+    objects.editPoints.click(function() { city.onEditPoint(); });
     // edit route handler
     objects.editRoutes.click(function () { city.onEditRoute();});
     // guide handler
@@ -131,7 +132,7 @@ $(document).ready(function() {
     // Close edit panel handler
     objects.pointEditor.save.click(function () {city.onSavePoint();});
     // Cancel edit point click handler
-    objects.pointEditor.close.click(function () {city.onCloseMarkerEditor();});
+    objects.pointEditor.close.click(function () {city.onClosePointEditor();});
     // Cancel edit route click handler
     objects.routeEditor.close.click(function () {city.onCloseRouteEditor();});
     // Cancel guide
@@ -156,8 +157,6 @@ $(document).ready(function() {
     });
     // new guide handler
     objects.guideEditor.create.click(function() {city.guide.popAll();});
-    // demo handler (temporary)
-    objects.guideEditor.demo.click(function(){city.guide.demo();});
     // search bar init
     objects.searchBar.chosen.chosen({
         no_results_text: TEXT[city.getLang()]
@@ -167,12 +166,15 @@ $(document).ready(function() {
     });
     // keydown handler
     objects.body.on('keydown',function(e) {
+        // escape handler
         if (e.keyCode === 27) city.onEscape();
     });
 });
 
 /*
  * City Class
+ * @objects - link to HTML objects
+ * @settings -
  */
 function Livecity(objects,settings) {
 
@@ -214,9 +216,6 @@ function Livecity(objects,settings) {
     var __objects = objects;
     // set settings
     var __settings = settings;
-    // server url
-    var __url = 'http://localhost:3000';
-
     // map
     var __map = new google.maps.Map(__objects.map,__settings);
 
@@ -268,14 +267,13 @@ function Livecity(objects,settings) {
     this.setLang = function(lng) {
         __settings.lang = lng;
     };
+    // GET map
     this.getMap = function() {
         return __map;
     };
-    this.getStatic = function() {
-        return __static;
-    };
+    // GET url
     this.getUrl = function() {
-        return __url;
+        return __settings.url;
     };
     // notifier
     this.notifier = new Notifier(this);
@@ -332,10 +330,10 @@ Livecity.prototype.outMsg = function(text,color) {
 
 // [P] onEscape - Escape button handler
 Livecity.prototype.onEscape = function() {
-    // if escape button pressed
+    // point editor mode
     if (this.pointEditorOpened) {
         // if nothing selected
-        if (!this.pointLayer.getCurrent()) this.onCloseMarkerEditor();
+        if (!this.pointLayer.getCurrent()) this.onClosePointEditor();
         else {
             this.pointLayer.setCurrent();
             this.clearEditor();
@@ -349,18 +347,18 @@ Livecity.prototype.onEscape = function() {
 Livecity.prototype.setEditPointData = function(position, title, focus) {
     var lat = position.lat();
     var lng = position.lng();
-    // FEATURE - add option Round?
+    // UPD - add option Round?
     this.getObjects().pointEditor.valueLat.text(Number(lat).toFixed(4));
     this.getObjects().pointEditor.valueLng.text(Number(lng).toFixed(4));
     this.getObjects().pointEditor.valueTitle.val(title);
-    // FEATURE
+    // UPD
     if (focus) this.getObjects().pointEditor.valueTitle.focus();
 };
 
 // [P] addPoint - add new point on map
 Livecity.prototype.addPoint = function(position) {
     var title = "id" + (this.pointLayer.points.length);
-    var point = new MapPoint(this, position, this.static.ICON_RED(), title);
+    var point = new MapPoint(this, null, position, this.static.ICON_RED(), title);
     point.getMarker().setDraggable(true);
     point.setVisible(true);
     this.pointLayer.add(point);
@@ -410,7 +408,7 @@ Livecity.prototype.auth = function() {
         // F
         this.setUID(null);
         if (this.routeEditorOpened) this.onCloseRouteEditor();
-        if (this.pointEditorOpened) this.onCloseMarkerEditor();
+        if (this.pointEditorOpened) this.onClosePointEditor();
         if (this.guideOpened) this.onCloseGuide();
         this.outMsg(TEXT[this.getLang().sessionEnd],"green");
         // login
@@ -454,10 +452,10 @@ Livecity.prototype.onDeletePoint = function() {
     }
 };
 
-// [P] onEditMarker - edit marker button handler [DEPRECATED]
-Livecity.prototype.onEditMarker = function() {
+// [P] onEditPoint - edit marker button handler [DEPRECATED]
+Livecity.prototype.onEditPoint = function() {
     if (this.pointEditorOpened) {
-        this.onCloseMarkerEditor();
+        this.onClosePointEditor();
         return;
     }
     //close other editors
@@ -489,7 +487,7 @@ Livecity.prototype.onEditRoute = function() {
         return;
     }
     // close other editors
-    if (this.pointEditorOpened) this.onCloseMarkerEditor();
+    if (this.pointEditorOpened) this.onClosePointEditor();
     if (this.guideOpened) this.onCloseGuide();
     // disable searchbar
     this.searchBar.deselect();
@@ -512,7 +510,7 @@ Livecity.prototype.onGuide = function() {
         return;
     }
     // close other editors
-    if (this.pointEditorOpened) this.onCloseMarkerEditor();
+    if (this.pointEditorOpened) this.onClosePointEditor();
     if (this.routeEditorOpened) this.onCloseRouteEditor();
     // show guide
     this.getObjects().guideEditor.base.show('500');
@@ -528,8 +526,8 @@ Livecity.prototype.onGuide = function() {
     this.outMsg(TEXT[this.getLang()].selectFirstEndPointOnMap,'green');
 };
 
-// [P] onCloseMarkerEditor - actions for closing editor [DEPRECATED]
-Livecity.prototype.onCloseMarkerEditor = function() {
+// [P] onClosePointEditor - actions for closing editor
+Livecity.prototype.onClosePointEditor = function() {
     this.getObjects().pointEditor.base.hide('500');
     // change cursor to default
     this.getMap().setOptions({
@@ -542,7 +540,7 @@ Livecity.prototype.onCloseMarkerEditor = function() {
     this.pointLayer.setVisible(false);
 };
 
-// [P] onCloseRouteEditor - actions for closing editor [DEPRECATED]
+// [P] onCloseRouteEditor - actions for closing editor
 Livecity.prototype.onCloseRouteEditor = function() {
     this.getObjects().routeEditor.base.hide('500');
     this.routeEditorOpened = false;
@@ -551,7 +549,7 @@ Livecity.prototype.onCloseRouteEditor = function() {
     this.clearEditor();
 };
 
-// [P] onCloseGuide - actions for closing guide [DEPRECATED]
+// [P] onCloseGuide - actions for closing guide
 Livecity.prototype.onCloseGuide = function() {
     this.getObjects().guideEditor.base.hide('500');
     this.guideOpened = false;
@@ -568,22 +566,39 @@ Livecity.prototype.onCloseGuide = function() {
 function Notifier(parent) {
     // link to 'box' Element
     var __box = parent.getObjects().alertbox;
+    // message stack
+    var __stack = [];
     // GET alertbox
     this.getBox = function() {
         return __box;
+    };
+
+    this.push = function() {
+        __stack.push({});
+    };
+
+    this.pop = function() {
+        __stack.pop();
+    };
+
+    this.empty = function() {
+        return __stack.length === 0;
     }
 }
 
 // [P] msg - show message with selected text
-Notifier.prototype.msg = function(text,color) {
+Notifier.prototype.msg = function(text, color, sec) {
     var link = this;
+    var duration = (sec) ? sec*1000 : 3000;
+    this.push();
     this.getBox().css("display", "block");
     this.getBox().css("background-color", color);
     this.getBox().text(text);
     // show message for 3 seconds
     setTimeout(function() {
-        link.getBox().css("display", "none");
-    }, 3000);
+        link.pop();
+        if (link.empty()) link.getBox().css("display", "none");
+    }, duration);
 };
 
 /*
@@ -606,17 +621,18 @@ function SearchBar(parent) {
         var groups = __parent.getObjects().searchBar.groups;
         $(groups[0]).html('');
         $(groups[1]).html('');
-    };
+    }
 
     // update values for select
     this.update = function() {
         this.clear();
         $.each(__parent.pointLayer.points,function(indx,item) {
+            //console.log(JSON.stringify(item));
             __link.add(0,item.getId(),item.getTitle());
         });
         $.each(__parent.routeLayer.routes,function(indx,item) {
-            __link.add(1,item.id,item.name);
-        })
+            __link.add(1,item.getId(),item.getTitle());
+        });
     };
 
     // deselect selected items
@@ -633,21 +649,21 @@ function SearchBar(parent) {
         $(groups[type]).append('<option value="' + id + '" >' + title + '</option>');
         __parent.getObjects().searchBar.chosen.trigger("liszt:updated");
     };
-
+    // init SearchBar handler
     this.init = function(sel) {
         // check if this is not base mode
         if ((__parent.pointEditorOpened) ||
             (__parent.routeEditorOpened) ||
             (__parent.guideOpened)) {
-            link.deselect();
-            __parent.outMsg(TEXT[__parent.getLang()].thisActionIsNotAllowed,"red");
+                this.deselect();
+                __parent.outMsg(TEXT[__parent.getLang()].thisActionIsNotAllowed,"red");
         }
         // if null
-        if (!sel) sel = [];
+        var selected = (sel) ? sel : [];
         // there was something new selected
-        if (sel.length > __chosed.length) {
+        if (selected.length > __chosed.length) {
             // get new element
-            var newElem = $(sel).not(__chosed).get(0);
+            var newElem = $(selected).not(__chosed).get(0);
             // push to choosed items
             __chosed.push(newElem);
             // get type
@@ -657,6 +673,7 @@ function SearchBar(parent) {
                 newRoute.setVisible(true);
                 __parent.transLayer.setVisibleByRoute(newElem,true);
             }
+            // this is new point we need to show
             else {
                 var newPoint = __parent.pointLayer.getPointById(newElem);
                 newPoint.update();
@@ -667,7 +684,7 @@ function SearchBar(parent) {
         // there was something we need to hide
         else {
             //get old element we need to hide
-            var oldElem = $(__chosed).not(sel).get(0);
+            var oldElem = $(__chosed).not(selected).get(0);
             // pop it from choosed items
             __chosed.splice(__chosed.indexOf(oldElem),1);
             // get type
@@ -678,6 +695,7 @@ function SearchBar(parent) {
                 // add logic for displaying points
                 __parent.transLayer.setVisibleByRoute(oldElem,false);
             }
+            // this is old point we need to hide
             else {
                 var oldPoint = __parent.pointLayer.getPointById(oldElem);
                 oldPoint.setInfoVisible(false);
@@ -700,12 +718,15 @@ function PointLayer(main) {
 
     // ----------- Methods -------------- //
 
-    // visibility setter
-    this.setVisible = function(is) {
+    // visibility setter [ASYNC]
+    this.setVisible = function(is, callback) {
         this.visible = is;
-        $.each(this.points, function(index,item) {
+        async.each(this.points, function(item, callback) {
             if (!is) item.setInfoVisible(false);
             item.setVisible(is);
+            callback();
+        },function(err) {
+            if (callback) callback(err);
         });
     };
 
@@ -740,7 +761,8 @@ function PointLayer(main) {
     this.remove = function(point) {
         var index = this.points.indexOf(point);
         if (index === -1) return;
-        this.points[index].remove();
+        if (point === this.getCurrent()) this.setCurrent();
+        point.remove();
         this.points.splice(index,1);
     };
 
@@ -754,9 +776,8 @@ function PointLayer(main) {
             url: main.getUrl() + '/data/points',
             success: function(result) {
                 async.each(result,function(item,callback) {
-                    var point = new MapPoint(main, new google.maps.LatLng(item.lat, item.lng),
+                    var point = new MapPoint(main, item._id, new google.maps.LatLng(item.lat, item.lng),
                         main.static.ICON_BLUE(), item.title);
-                    point.setId(item._id);
                     layer.add(point);
                     callback();
                 },function(err) {
@@ -773,11 +794,8 @@ function PointLayer(main) {
             this.current.getMarker().setDraggable(false);
         }
         // unset point
-        if (!point) {
-            // FEATURE - ??????
-            if (this.main.pointEditorOpened) this.main.clearEditor();
-            this.current = null;
-        } else {
+        if (!point) this.current = null;
+        else {
             // set such point as current
             var pos = this.points.indexOf(point);
             if (pos !== -1) {
@@ -817,25 +835,28 @@ function RouteLayer(main) {
     this.routes = [];
     // nodes on layer
     this.nodes = [];
-    // current route?
+    // current route
     this.current = null;
     // visibility
     this.visible = false;
 
     // ----------- Methods -------------- //
 
-    // visibility [async]
-    this.setVisible = function(is) {
+    // SET visible [ASYNC]
+    this.setVisible = function(is, callback) {
         this.visible = is;
-        $.each(this.routes, function(index,item) {
+        async.each(this.routes, function(item, callback) {
             item.setVisible(is);
+            callback();
+        },function(err){
+            if (callback) callback(err);
         });
     };
 
     // get visible routes
     this.getVisible = function() {
         var result = [];
-        for (var i = 0; i < this.routes.length; i++) if (this.routes[i].visible) result.push(this.routes[i]);
+        for (var i = 0; i < this.routes.length; i++) if (this.routes[i].isVisible()) result.push(this.routes[i]);
         return result;
     };
 
@@ -843,6 +864,7 @@ function RouteLayer(main) {
     this.getVisibleId = function() {
         var result = [];
         for (var i = 0; i < this.routes.length; i++) if (this.routes[i].visible) result.push(this.routes[i].id);
+        return result;
     };
 
     // add point to layer
@@ -863,17 +885,17 @@ function RouteLayer(main) {
         // TBD
     };
 
-    // get route by name
-    this.getRouteByName = function(name) {
+    // get route by title
+    this.getRouteByTitle = function(title) {
         var route = -1;
-        for (var i = 0; i < this.routes.length; i++) if (this.routes[i].name == name) route = this.routes[i];
+        for (var i = 0; i < this.routes.length; i++) if (this.routes[i].getTitle() == title) route = this.routes[i];
         return route;
     };
 
-    //get route by id
+    // get route by id
     this.getRouteById = function(id) {
         var route = -1;
-        for (var i = 0; i < this.routes.length; i++) if (this.routes[i].id === id) route = this.routes[i];
+        for (var i = 0; i < this.routes.length; i++) if (this.routes[i].getId() === id) route = this.routes[i];
         return route;
     };
 
@@ -888,12 +910,16 @@ function RouteLayer(main) {
             url: main.getUrl() + '/data/nodes',
             async: false,
             success: function(result) {
+                // UPD - async
+                // create nodes and add it to RouteLayer
                 for (var i = 0; i < result.length; i++) {
                     var node = result[i];
-                    var a = main.pointLayer.getPointById(node.a);
-                    var b = main.pointLayer.getPointById(node.b);
-                    var n = new MapNode(main, a, b, node.data, node.total);
-                    n.setId(node._id);
+                    // get start point of node by its id
+                    var nodeStart = main.pointLayer.getPointById(node.start);
+                    // get end point of node by its id
+                    var nodeEnd = main.pointLayer.getPointById(node.end);
+                    var n = new MapNode(main, node._id, nodeStart, nodeEnd, node.data, node.total);
+                    // add node to layer
                     main.routeLayer.nodes.push(n);
                 }
                 // next step - getting routes
@@ -904,16 +930,18 @@ function RouteLayer(main) {
                     async: false,
                     success: function(result) {
                         async.each(result,function(item,callback) {
+                            // get start point of route by id
                             var start = main.pointLayer.getPointById(item.start);
+                            // get end point of route by id
                             var end = main.pointLayer.getPointById(item.end);
-                            var route = new MapRoute(main);
-                            route.setName(item.title);
-                            route.init(item.nodes);
-                            route.setStart(start);
-                            route.setEnd(end);
-                            route.setId(item._id);
-                            obj.routes.push(route);
-                            callback();
+                            var route = new MapRoute(main, item._id, start, end, item.title, item.total);
+                            // init nodes and points by its node id
+                            route.init(item.nodes, function () {
+                                // add route to layer
+                                obj.routes.push(route);
+                                callback();
+                            });
+
                         },function(err) {
                             if (callback) callback(err);
                         })
@@ -927,7 +955,7 @@ function RouteLayer(main) {
     this.isPointOfVisibleRoute = function(id) {
         var is = false;
         // FEATURE - use async.js
-        for (var i = 0; i < this.routes.length; i++) if ((this.routes[i].isPointOf(id)) && (this.routes[i].visible)) is = true;
+        for (var i = 0; i < this.routes.length; i++) if ((this.routes[i].isPointOf(id)) && (this.routes[i].isVisible())) is = true;
         return is;
     };
 }
@@ -993,256 +1021,394 @@ function TransLayer(main) {
         this.clear();
         this.load();
         // TBD
-        // FEATURE
     };
 }
 
 // class for route
-function MapRoute(main) {
-    // set main
-    this.main = main;
+function MapRoute(parent, id, start, end, title, total) {
+    // set parent
+    var __parent = parent;
     // unique identifier
-    this.id = -1;
-    // start id
-    this.start = -1;
-    // end id
-    this.end = -1;
+    var __id = (id) ? id : null;
+    // start point id
+    var __start = (start) ? start.getId() : null;
+    // end point id
+    var __end = (end) ? end.getId() : null;
     // start point info
-    this.infoA = null;
+    var __infoStart = (start) ? new InfoBox({
+        content: '<div class="text"><center>' + start.getTitle() + '</center></div>',
+        boxClass: "infoRoute",
+        pixelOffset: new google.maps.Size(-50, -50),
+        closeBoxURL: 'img/close_t.png',
+        position: start.getMarker().position
+    }) : null;
     // end point info
-    this.infoB = null;
+    var __infoEnd = (end) ? new InfoBox({
+        content: '<div class="text"><center>' + end.getTitle() + '</center></div>',
+        boxClass: "infoRoute",
+        pixelOffset: new google.maps.Size(-50, -50),
+        closeBoxURL: 'img/close_t.png',
+        position: end.getMarker().position
+    }) : null;
     // visibility flag
-    this.visible = false;
+    var __visible = false;
     // routeNodes
-    this.nodes = [];
+    var __nodes = [];
     // point ID's
-    this.points = [];
+    var __points = [];
     // total distance
-    this.total = 0;
+    var __total = (total) ? total : 0;
     // name
-    this.name = "";
-    // async set visible
-    this.setVisible = function(is) {
-        var nodes = this.nodes;
-        // FEATURE - replace with async.js
-        $.each(nodes, function(index,item) {
+    var __title = (title) ? title : null;
+
+    // SET visible [ASYNC]
+    this.setVisible = function(is,callback) {
+        async.each(__nodes,function(item,callback) {
             item.setVisible(is);
-        });
-        // UPD
-        if (is) {
-            if (this.infoA) this.infoA.open(this.main.getMap());
-            if (this.infoB) this.infoB.open(this.main.getMap());
-        } else {
-            if (this.infoA) this.infoA.open(null);
-            if (this.infoB) this.infoB.open(null);
-        }
-        this.visible = is;
-    };
-
-    // set unique id
-    this.setId = function(id) {
-        this.id = id;
-    };
-
-    // set name
-    this.setName = function(name) {
-        this.name = name;
-    };
-
-    // add node to route
-    this.add = function(node) {
-        // if route is empty already, first we must add start point of first node
-        if (this.nodes.length === 0) this.points.push(node.a.id);
-        // add end of each node to array
-        this.points.push(node.b.id);
-        // check id,if id == -1 this node is builder node
-        if (node.id !== -1) this.nodes.push(this.main.routeLayer.nodes[this.main.routeLayer.nodes.indexOf(node)]);
-        else this.nodes.push(node);
-    };
-
-    // start setter
-    this.setStart = function(point) {
-        this.start = point.getId();
-        if (this.infoA) this.infoA.hide();
-        this.infoA = new InfoBox({
-            content: '<div class="text"><center>' + point.getTitle() + '</center></div>',
-            boxClass: "infoRoute",
-            pixelOffset: new google.maps.Size(-50, -50),
-            closeBoxURL: 'img/close_t.png'
-        });
-        this.infoA.setPosition(point.getMarker().position);
-    };
-
-    // end setter
-    this.setEnd = function(point) {
-        this.end = point.getId();
-        if (this.infoB) this.infoB.hide();
-        this.infoB = new InfoBox({
-            content: '<div class="text"><center>' + point.getTitle() + '</center></div>',
-            boxClass: "infoRoute",
-            pixelOffset: new google.maps.Size(-50, -50),
-            closeBoxURL: 'img/close_t.png'
-        });
-        this.infoB.setPosition(point.getMarker().position);
-    };
-
-    // init route
-    this.init = function(ids) {
-        var link = this;
-        $.each(ids, function(lndex,item) {
-            for (var j = 0; j < link.main.routeLayer.nodes.length; j++) {
-                // TEST
-                if (link.main.routeLayer.nodes[j].id == item) {
-                    link.add(link.main.routeLayer.nodes[j]);
-                }
-            }
-        });
-    };
-
-    // save route
-    this.save = function() {
-        var main = this.main;
-        var obj = this;
-        var nodes = this.nodes;
-        // save new nodes at first
-        var globalNodes = this.main.routeLayer.nodes;
-        async.each(nodes,function(item,callback) {
-            item.save();
-            var index = globalNodes.indexOf(item);
-            if (index === -1) globalNodes.push(item);
-            nodes[nodes.indexOf(item)] = globalNodes[globalNodes.indexOf(item)];
             callback();
-        },function(){
-            // get node id's and total length
-            var total = 0;
-            var ids = [];
-            for (var x = 0; x < obj.nodes.length; x++) {
-                total += obj.nodes[x].total;
-                ids.push(obj.nodes[x].id);
+        },function(err) {
+            if (is) {
+                if (__infoStart) __infoStart.open(__parent.getMap());
+                if (__infoEnd) __infoEnd.open(__parent.getMap());
+            } else {
+                if (__infoStart) __infoStart.open(null);
+                if (__infoEnd) __infoEnd.open(null);
             }
-            // fill properties
-            var json = {
-                start: obj.start,
-                end: obj.end,
-                nodes: ids,
-                points: obj.points,
-                total: total,
-                title: obj.name
-            };
-            // send data
-            $.ajax({
-                datatype: main.static.TYPE_JSON,
-                type: main.static.TYPE_POST,
-                url: main.getUrl() + '/data/routes/',
-                data: json,
-                success: function(result) {
-                    obj.setId(result.route._id);
-                }
-            });
+            __visible = is;
+            if (callback) callback(err);
         });
+    };
+
+    // GET visible
+    this.isVisible = function() {
+        return __visible;
+    };
+
+    // SET id
+    this.setId = function(id) {
+        __id = id;
+    };
+
+    // GET id
+    this.getId = function() {
+        return __id;
+    };
+
+    // SET title
+    this.setTitle = function(title) {
+        __title = title;
+    };
+
+    // GET title
+    this.getTitle = function() {
+        return __title;
+    };
+
+    // GET parent
+    this.getParent = function() {
+        return __parent;
+    };
+
+    // GET nodes
+    this.getNodes = function() {
+        return __nodes;
+    };
+
+    // GET points
+    this.getPoints = function() {
+        return __points;
+    };
+
+    // GET total
+    this.getTotal = function() {
+        return __total;
+    };
+
+    // SET start
+    this.setStart = function(point) {
+        __start = point.getId();
+        // if infoStart opened already - close it
+        if (__infoStart) __infoStart.hide();
+        __infoStart = new InfoBox({
+            content: '<div class="text"><center>' + point.getTitle() + '</center></div>',
+            boxClass: "infoRoute",
+            pixelOffset: new google.maps.Size(-50, -50),
+            closeBoxURL: 'img/close_t.png',
+            position: point.getMarker().position
+        });
+    };
+
+    // GET start
+    this.getStart = function() {
+        return __start;
+    };
+
+    // SET end
+    this.setEnd = function(point) {
+        __end = point.getId();
+        if (__infoEnd) __infoEnd.hide();
+        __infoEnd = new InfoBox({
+            content: '<div class="text"><center>' + point.getTitle() + '</center></div>',
+            boxClass: "infoRoute",
+            pixelOffset: new google.maps.Size(-50, -50),
+            closeBoxURL: 'img/close_t.png',
+            position: point.getMarker().position
+        });
+    };
+
+    // GET end
+    this.getEnd = function() {
+        return __end;
+    };
+
+    // GET infoEnd
+    this.getInfoEnd = function() {
+        return __infoEnd;
+    };
+
+    this.getInfoStart = function() {
+        return __infoStart;
     };
 
     // return true if this point in this route
     this.isPointOf = function(id) {
-        var index = this.points.indexOf(id);
-        return index !== -1;
+        return __points.indexOf(id) !== -1;
     };
 }
 
-//class for nodes
-function MapNode(main, pointA, pointB, resNode, total) {
-    this.main = main;
+// add node to route
+MapRoute.prototype.add = function(node) {
+    // if route is empty already, first we must add start point of first node
+    if (this.getNodes().length === 0) this.getPoints().push(node.getStart().getId());
+    // add end of each node to array
+    this.getPoints().push(node.getEnd().getId());
+    // check id,if id == -1 this node is builder node
+    // UPDATE
+    if (node.getId()) this.getNodes().push(this.getParent().routeLayer.nodes[this.getParent().routeLayer.nodes.indexOf(node)]);
+    else this.getNodes().push(node);
+};
+
+// [P] init route [ASYNC]
+MapRoute.prototype.init = function(ids,callback) {
+    // link to this
+    var link = this;
+    async.each(ids, function(item,callback) {
+        async.each(link.getParent().routeLayer.nodes, function(node,call) {
+
+            if (node.getId() === item) link.add(node);
+            call();
+        },function(err) {
+            callback(err);
+        });
+    },function(err) {
+        if (callback) callback(err);
+    });
+};
+
+// [P] save route [ASYNC]
+MapRoute.prototype.save = function(callback) {
+    // link to this
+    var link = this;
+    // UPD
+    if (!this.getId()) {
+        var globalNodes = this.getParent().routeLayer.nodes;
+        // save new nodes at first
+        async.each(link.getNodes(),function(item,callback) {
+            item.save(function() {
+                var index = globalNodes.indexOf(item);
+                if (index === -1) globalNodes.push(item);
+                // refresh link [UPD]
+                link.getNodes()[link.getNodes().indexOf(item)] = globalNodes[globalNodes.indexOf(item)];
+                callback();
+            });
+        },function(){
+            // get node id's and total length
+            var total = 0;
+            var ids = [];
+            // get total distance, and array of node ID's
+            async.each(link.getNodes(),function(item,callback){
+                total += item.getTotal();
+                ids.push(item.getId());
+                callback();
+            },function(err) {
+                // save route
+                $.ajax({
+                    datatype: link.getParent().static.TYPE_JSON,
+                    type: link.getParent().static.TYPE_POST,
+                    url: link.getParent().getUrl() + '/data/routes/',
+                    data: {
+                        start: link.getStart(),
+                        end: link.getEnd(),
+                        nodes: ids,
+                        points: link.getPoints(),
+                        total: total,
+                        title: link.getTitle()
+                    },
+                    success: function(result) {
+                        link.setId(result.route._id);
+                        if (callback) callback(err);
+                    }
+                });
+            });
+        });
+    }
+};
+
+// [P] remove - remove route [ASYNC]
+MapRoute.prototype.remove = function(callback) {
+    // TBA
+};
+
+/*
+ * MapNode Class
+ */
+function MapNode(parent, id, start, end, data, total) {
+    // link to parent
+    var __parent = parent;
     // visible flag
-    this.visible = false;
+    var __visible = false;
     // total distance
-    this.total = total;
+    var __total = (total) ? total : 0;
     // unique identifier for node
-    this.id = -1;
+    var __id = (id) ? id : null;
     // point A
-    this.a = pointA;
+    var __start = (start) ? start : null;
     // point b
-    this.b = pointB;
+    var __end = (end) ? end : null;
     // node base class
-    this.base = new google.maps.DirectionsRenderer({
+    var __base = new google.maps.DirectionsRenderer({
         suppressMarkers: true,
         preserveViewport: true
     });
     // node result
-    this.resNode = resNode;
-    // setter unique id
+    var __data = (data) ? data : null;
+
+    // SET id
     this.setId = function(id) {
-        this.id = id;
+        __id = id;
     };
 
-    // initialize node
-    this.init = function() {
-        var obj = this;
-        var request = {
-            origin: this.a.getMarker().position,
-            destination: this.b.getMarker().position,
-            travelMode: google.maps.TravelMode.DRIVING,
-            optimizeWaypoints: false
-        };
-        this.main.routeLayer.directionsService.route(request, function(result, status) {
-            if (status === google.maps.DirectionsStatus.OK) {
-                obj.resNode = JSON.stringify(result, stringifyNode);
-                obj.base.setDirections(result);
-                var myroute = result.routes[0];
-                var ttl = 0;
-                for (var i = 0; i < myroute.legs.length; i++) ttl += myroute.legs[i].distance.value;
-                obj.total = ttl;
-            }
-        });
+    // GET id
+    this.getId = function() {
+        return __id;
     };
 
     // setter visibility
     this.setVisible = function(is) {
-        this.visible = is;
-        this.a.setVisible(is);
-        this.b.setVisible(is);
+        __visible = is;
+        __start.setVisible(is);
+        __end.setVisible(is);
         if (!is) {
-            this.base.setMap(null);
+            __base.setMap(null);
             // if info was opened
-            this.a.setInfoVisible(false);
-            this.b.setInfoVisible(false);
+            __start.setInfoVisible(false);
+            __end.setInfoVisible(false);
         }
-        else this.base.setMap(this.main.getMap());
+        else __base.setMap(__parent.getMap());
     };
 
-    // save this node
-    this.save = function() {
-        // check if this node is unsaved
-        if (this.id !== -1) return;
-        // link to this
-        var obj = this;
-        // object for sending
-        var json = {};
-        // fill properties
-        json.a = this.a.getId();
-        json.b = this.b.getId();
-        json.total = this.total;
-        json.data = this.resNode;
-        $.ajax({
-            datatype: main.static.TYPE_JSON,
-            type: main.static.TYPE_POST,
-            url: main.getUrl() + '/data/nodes/',
-            data: json,
-            async: false,
-            success: function(result) {
-                // REPLACE
-                obj.setId(result.node._id);
-            }
-        });
+    // GET visible
+    this.isVisible = function() {
+        return __visible;
     };
 
-    if (!this.resNode) this.init();
-    else this.base.setDirections(JSON.parse(this.resNode, parseNode));
+    // GET total
+    this.getTotal = function() {
+        return __total;
+    };
+
+    this.getStart = function() {
+        return __start;
+    };
+
+    this.getEnd = function() {
+        return __end;
+    };
+
+    // SET total
+    this.setTotal = function(ttl) {
+        __total = ttl;
+    };
+
+    // GET parent
+    this.getParent = function() {
+        return __parent;
+    };
+
+    // SET data
+    this.setData = function(data) {
+        __data = data;
+    };
+
+    // GET data
+    this.getData = function() {
+        return __data;
+    };
+
+    // GET base
+    this.getBase = function() {
+        return __base;
+    };
+
+    // UPD
+    if (!__data) this.init();
+    else __base.setDirections(JSON.parse(__data, parseNode));
 }
+
+// [P] init - init node using GService [ASYNC]
+MapNode.prototype.init = function(callback) {
+    var link = this;
+    var request = {
+        origin: this.getStart().getPosition(),
+        destination: this.getEnd().getPosition(),
+        travelMode: google.maps.TravelMode.DRIVING,
+        optimizeWaypoints: false
+    };
+    this.getParent().routeLayer.directionsService.route(request, function(result, status) {
+        if (status === google.maps.DirectionsStatus.OK) {
+            link.setData(JSON.stringify(result, stringifyNode));
+            link.getBase().setDirections(result);
+            var myroute = result.routes[0];
+            var ttl = 0;
+            for (var i = 0; i < myroute.legs.length; i++) ttl += myroute.legs[i].distance.value;
+            link.setTotal(ttl);
+        }
+        if (callback) callback(result);
+    });
+};
+
+// [P] save - save this node [ASYNC]
+MapNode.prototype.save = function(callback) {
+    // check if this node is unsaved
+    // UPD - add update logic
+    if (this.getId()) return;
+    // link to this
+    var link = this;
+    $.ajax({
+        datatype: this.getParent().static.TYPE_JSON,
+        type: this.getParent().static.TYPE_POST,
+        url: this.getParent().getUrl() + '/data/nodes/',
+        data: {
+            start: this.getStart().getId(),
+            end: this.getEnd().getId(),
+            total: this.getTotal(),
+            data: this.getData()
+        },
+        success: function(result) {
+            link.setId(result.node._id);
+            if (callback) callback(result);
+        }
+    });
+};
+
+MapNode.prototype.remove = function(callback) {
+    // TBA
+};
 
 /*
  * MapPoint Class
  */
-function MapPoint(parent, position, icon, title) {
+function MapPoint(parent, id, position, icon, title) {
     // link to main
     var __parent = parent;
     // flag for info visibility
@@ -1250,7 +1416,7 @@ function MapPoint(parent, position, icon, title) {
     // flag for marker visibility
     var __visible = false;
     // unique id
-    var __id = -1;
+    var __id = (id) ? id : null;
     // google.maps.Marker base
     var __marker = new google.maps.Marker({
         position: new google.maps.LatLng(Number(position.lat()).toFixed(4), Number(position.lng()).toFixed(4)),
@@ -1272,7 +1438,7 @@ function MapPoint(parent, position, icon, title) {
     // SET title
     this.setTitle = function(title) {
         __marker.setTitle(title);
-        // FEATURE add some code for updating content
+        //UPD add some code for updating content
     };
 
     // GET title
@@ -1283,6 +1449,11 @@ function MapPoint(parent, position, icon, title) {
     // GET marker
     this.getMarker = function() {
         return __marker;
+    };
+
+    // GET marker.position
+    this.getPosition = function() {
+        return __marker.position;
     };
 
     // GET baseContent
@@ -1347,6 +1518,7 @@ function MapPoint(parent, position, icon, title) {
             this.setDraggable(true);
         // if we work in RouteEditor
         } else if (__parent.routeEditorOpened) {
+            // UPD - async.js
             for (var i = 0; i < __parent.pointLayer.points.length; i++) {
                 if (__parent.pointLayer.points[i].getMarker() === this)
                     __parent.routeBuilder.add(__parent.pointLayer.points[i]);
@@ -1376,60 +1548,58 @@ function MapPoint(parent, position, icon, title) {
     });
 }
 
-// [P] update - update point data
-MapPoint.prototype.update = function() {
+// [P] update - update point data [ASYNC]
+MapPoint.prototype.update = function(callback) {
     var link = this;
-    if (this.getId() !== -1) {
+    // UPD
+    if (this.getId()) {
         $.ajax({
             datatype: this.getParent().static.TYPE_JSON,
             type: this.getParent().static.TYPE_GET,
             url: this.getParent().getUrl() + '/arrival/' + this.getId(),
             success: function(result) {
-                var content = "";
+                var content = '';
                 var routeResult = null;
-                for (var i = 0; i < result.length; i++) {
-                    if (result[i].status === "OK") {
-                        // natural value (min)
-                        var ctime = Number(result[i].time).toFixed(0);
-                        // real time (sec)
-                        var rtime = Number((result[i].time - ctime) * 60).toFixed(0);
-                        // absolute values
-                        if (rtime < 0) rtime *= -1;
-                        // if value in seconds < 10
-                        var p = "";
-                        if (rtime < 10) p = "0";
-                        routeResult = ctime + ":" + p + rtime + " мин. <br/>";
+                async.each(result, function(item,callback){
+                    if (item.status === 'OK') {
+                        var min = Number(item.time).toFixed(0);
+                        var sec = Number((item.time - min) * 60).toFixed(0);
+                        // TEMPORARY
+                        if (sec < 0) sec *= -1;
+                        var zero = (sec < 10) ? '0' : '0';
+                        routeResult = min + ':' + zero + ' мин. <br/>';
                     }
-                    // TBD
-                    // need to add some other checks
                     else routeResult = TEXT[link.getParent().getLang()].noData + "<br/>";
-                    content += ("№" + result[i].name + " - " + routeResult);
-                }
-                if (result.length === 0) content += TEXT[link.getParent().getLang()].noAvialableRoutes + "<br/>";
-                link.getInfo().setContent(link.getBaseContent() + content);
+                    content += ("№" + item.name + " - " + routeResult);
+                    callback();
+                },function(err) {
+                    if (result.length === 0) content += TEXT[link.getParent().getLang()].noAvialableRoutes + "<br/>";
+                    link.getInfo().setContent(link.getBaseContent() + content);
+                    if (callback) callback(err);
+                });
             }
         });
     }
 };
 
-// [P] save  - save point
-MapPoint.prototype.save = function() {
-    // object for sending
-    var json = {};
-    // fill properties
-    json.lat = this.getParent().getObjects().pointEditor.valueLat.text();
-    json.lng = this.getParent().getObjects().pointEditor.valueLng.text();
-    json._id = this.getId();
-    json.title = this.getParent().getObjects().pointEditor.valueTitle.val();
+// [P] save  - save point [ASYNC]
+MapPoint.prototype.save = function(callback) {
+    var link = this;
     // create new one
-    if (this.getId() === -1) {
+    if (!this.getId()) {
         $.ajax({
             datatype: this.getParent().static.TYPE_JSON,
             type: this.getParent().static.TYPE_POST,
             url: this.getParent().getUrl() + '/data/points',
-            data: json,
-            async: false,
+            data: {
+                lat : this.getParent().getObjects().pointEditor.valueLat.text(),
+                lng : this.getParent().getObjects().pointEditor.valueLng.text(),
+                _id : this.getId(),
+                title : this.getParent().getObjects().pointEditor.valueTitle.val()
+            },
             success: function(result) {
+                link.setId(result.point._id);
+                if (callback) callback(result);
             }
         });
     }
@@ -1439,26 +1609,34 @@ MapPoint.prototype.save = function() {
             datatype: this.getParent().static.TYPE_JSON,
             type: this.getParent().static.TYPE_PUT,
             url: this.getParent().getUrl() + '/data/points/' + this.getId(),
-            data: json
+            data: {
+                lat : this.getParent().getObjects().pointEditor.valueLat.text(),
+                lng : this.getParent().getObjects().pointEditor.valueLng.text(),
+                _id : this.getId(),
+                title : this.getParent().getObjects().pointEditor.valueTitle.val()
+            },
+            success: function(result) {
+                if (callback) callback(result);
+            }
         });
     }
-    /// TEST
-    this.getParent().pointLayer.current.setTitle(json.title);
 };
 
-// delete point
-MapPoint.prototype.remove = function() {
+// [P] delete - delete point [ASYNC]
+MapPoint.prototype.remove = function(callback) {
+    var link = this;
     // async delete on server
     $.ajax({
         datatype: this.getParent().static.TYPE_JSON,
         type: this.getParent().static.TYPE_DELETE,
         url: this.getParent().getUrl() + '/data/points/' + this.getId(),
-        cache: false
+        cache: false,
+        success: function(result) {
+            link.getMarker().setMap(null);
+            if (callback) callback(result);
+        }
     });
-    this.getMarker().setMap(null);
-    // some code for info....
-    this.getParent().pointLayer.points.splice(this.getParent().pointLayer.points.indexOf(this), 1);
-    this.getParent().pointLayer.setCurrent();
+
 };
 
 // class for cars
@@ -1503,7 +1681,7 @@ function RouteBuilder(main) {
         point.getMarker().setIcon(this.main.static.ICON_RED());
         var size = this.points.length;
         if (this.points.length > 1) {
-            var node = new MapNode(this.main, this.points[size - 2], this.points[size - 1], null, 0);
+            var node = new MapNode(this.main, null, this.points[size - 2], this.points[size - 1], null, 0);
             this.route.add(node);
             node.setVisible(true);
         }
@@ -1514,16 +1692,16 @@ function RouteBuilder(main) {
         if (this.points.length === 0) main.outMsg(TEXT[main.getLang()].nothingSelected,"red");
         else {
             // FEATURE
-            var infoB = this.route.infoB;
+            var end = this.route.getInfoEnd();
             // close previous endpoint info
-            if (infoB) infoB.open(null);
+            if (end) end.open(null);
             var lastPoint = this.points[this.points.length - 1];
             // set new endpoint
             this.route.setEnd(lastPoint);
             // show new endpoint info
-            this.route.infoB.open(this.main.getMap(), lastPoint.getMarker());
+            this.route.getInfoEnd().open(this.main.getMap(), lastPoint.getMarker());
             // set info in box
-            main.getObjects().routeEditor.valueEnd.text(lastPoint.getTitle());
+            this.main.getObjects().routeEditor.valueEnd.text(lastPoint.getTitle());
         }
     };
 
@@ -1531,15 +1709,16 @@ function RouteBuilder(main) {
     this.setStart = function() {
         if (this.points.length === 0) main.outMsg(TEXT[main.getLang()].nothingSelected,"red");
         else {
-            var infoA = this.route.infoA;
+            var start = this.route.getInfoStart();
             // close prevoius endpoint info
-            if (infoA) infoA.open(null);
+            if (start) start.open(null);
             var lastPoint = this.points[this.points.length - 1];
             // set new endpoint
             this.route.setStart(lastPoint);
             // show new endpoint info
-            this.route.infoA.open(this.main.getMap(), lastPoint.getMarker());// set info in box
-            main.getObjects().routeEditor.valueStart.text(lastPoint.getTitle());
+            this.route.getInfoStart().open(this.main.getMap(), lastPoint.getMarker());
+            // set info in box
+            this.main.getObjects().routeEditor.valueStart.text(lastPoint.getTitle());
         }
     };
 
@@ -1560,26 +1739,31 @@ function RouteBuilder(main) {
         })
     };
 
-    // save new route
-    this.save = function() {
+    // save new route [ASYNC]
+    this.save = function(callback) {
+        // link to this
+        var link = this;
         // check name
         var title = this.main.getObjects().routeEditor.valueTitle.val();
-        if (title === "") this.main.outMsg(TEXT[this.main.getLang()].nameNotChoosed, "red");
-        else if (this.route.idS === -1) this.main.outMsg(TEXT[this.main.getLang()].routeStartNotSelected, "red");
-        else if (this.route.idE === -1) this.main.outMsg(TEXT[this.main.getLang()].routeEndNotSelected, "red");
+        if (title === '') this.main.outMsg(TEXT[this.main.getLang()].nameNotChoosed, "red");
+        else if (!this.route.getStart()) this.main.outMsg(TEXT[this.main.getLang()].routeStartNotSelected, "red");
+        else if (!this.route.getEnd()) this.main.outMsg(TEXT[this.main.getLang()].routeEndNotSelected, "red");
         else {
-            this.route.setName(title);
+            this.route.setTitle(title);
             // save each route
-            this.route.save();
-            // check if this is a new route, if not add it to route layer
-            var indx = this.main.routeLayer.routes.indexOf(this.route);
-            if (indx === -1) {
-                this.main.routeLayer.routes.push(this.route);
-            }
-            else this.main.routeLayer.routes[indx] = this.route;
-            // add this route to search box
-            this.main.searchBar.add(1,this.route.id,this.route.name);
-            this.main.outMsg(TEXT[this.main.getLang()].routeSaved,"green");
+            this.route.save(function(err) {
+                // check if this is a new route, if not add it to route layer
+                var indx = link.main.routeLayer.routes.indexOf(link.route);
+                if (indx === -1) {
+                    link.main.routeLayer.add(link.route);
+                }
+                // UPD
+                else link.main.routeLayer.routes[indx] = link.route;
+                // update searchBar
+                link.main.searchBar.update();
+                link.main.outMsg(TEXT[link.main.getLang()].routeSaved,"green");
+                if (callback) callback(err);
+            });
         }
     };
 
@@ -1593,6 +1777,9 @@ function RouteBuilder(main) {
     };
 }
 
+/*
+ * Guide Class
+ */
 function Guide(main,start,end,result,total) {
     this.main = main;
     this.base = new google.maps.DirectionsRenderer({
@@ -1600,14 +1787,10 @@ function Guide(main,start,end,result,total) {
         preserveViewport: true
     });
     this.geocoder = new google.maps.Geocoder();
-    this.start = null;
-    this.end = null;
-    this.result = null;
-
-    if (start) this.start = start;
-    if (end) this.end = end;
-    if (result) this.result = result;
-    if (total) this.total = total;
+    this.start = (start) ? start : null;
+    this.end = (end) ? end : null;
+    this.result = (result) ? result : null;
+    this.total = (total) ? total : 0;
 
     /*
      * Methods

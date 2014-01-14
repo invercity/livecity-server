@@ -93,7 +93,6 @@ app.put('/data/points/:id', function(req,res) {
             if (!err) {
                 return res.send({ status: 'OK', point: point});
             }
-
             else {
                 res.statusCode = 500;
                 return res.send({error : 'Server error'});
@@ -142,8 +141,8 @@ app.get('/data/nodes', function(req,res) {
 app.post('/data/nodes', function(req,res) {
     var node = new Node({
         data: req.body.data,
-        a: req.body.a,
-        b: req.body.b,
+        start: req.body.start,
+        end: req.body.end,
         total: req.body.total
     });
 
@@ -183,6 +182,9 @@ app.put('/data/nodes/:id', function(req,res) {
             return res.send({ error : 'Not found'});
         }
         node.data = req.body.data;
+        node.start = req.body.start;
+        node.end = req.body.end;
+        node.total = req.body.total;
         return node.save(function (err) {
             if (!err) {
                 return res.send({ status: 'OK', node: node});
@@ -277,9 +279,11 @@ app.put('/data/routes/:id', function(req,res) {
             res.statusCode = 404;
             return res.send({ error : 'Not found'});
         }
-        route.start = req.body.star;
+        route.start = req.body.start;
         route.end = req.body.end;
         route.nodes = req.body.nodes;
+        route.points = req.body.points;
+        route.total = req.body.total;
         route.title = req.body.title;
         return route.save(function (err) {
             if (!err) {
