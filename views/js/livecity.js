@@ -174,7 +174,7 @@ $(document).ready(function() {
 /*
  * City Class
  * @objects - link to HTML objects
- * @settings -
+ * @settings - settings for livecity-
  */
 function Livecity(objects,settings) {
 
@@ -692,6 +692,15 @@ function SearchBar(parent) {
             if (__points.indexOf(oldElem) === -1) {
                 var oldRoute = __parent.routeLayer.getRouteById(oldElem);
                 oldRoute.setVisible(false);
+                var points = oldRoute.getPoints();
+                async.each(points, function(point, callback) {
+                    if (__chosed.indexOf(point) !== -1) {
+                        var p = parent.pointLayer.getPointById(point);
+                        p.setVisible(true);
+                        p.setInfoVisible(true);
+                    };
+                    callback();
+                },function() {});
                 // add logic for displaying points
                 __parent.transLayer.setVisibleByRoute(oldElem,false);
             }
