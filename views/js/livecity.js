@@ -311,9 +311,12 @@ Livecity.prototype.init = function() {
     google.maps.event.addListener(this.getMap(), 'click', function(event) {
         // point editor mode
         if (link.pointEditorOpened) {
-            link.addPoint(event.latLng);
-            link.pointLayer.getCurrent().save();
-            link.outMsg(TEXT[link.getLang()].pointSaved,"green");
+            var point = link.addPoint(event.latLng);
+            point.save(function() {
+                link.pointLayer.setCurrent(point);
+                link.searchBar.update();
+                link.outMsg(TEXT[link.getLang()].pointSaved,"green");
+            });
         }
         // guide editor mode
         if (link.guideOpened) {
@@ -361,10 +364,7 @@ Livecity.prototype.addPoint = function(position) {
     var point = new MapPoint(this, null, position, this.static.ICON_RED(), title);
     point.getMarker().setDraggable(true);
     point.setVisible(true);
-    this.pointLayer.add(point);
-    this.pointLayer.setCurrent(point);
     this.setEditPointData(position, title, true);
-    this.searchBar.update();
     return point;
 };
 
@@ -432,23 +432,28 @@ Livecity.prototype.update = function() {
 
 // [P] onSavePoint - save point handler [DEPRECATED]
 Livecity.prototype.onSavePoint = function() {
+    var link = this;
     var current = this.pointLayer.getCurrent();
     if (!current) this.outMsg(TEXT[this.getLang()].noDataToSave,"red");
     else {
-        current.save();
-        this.searchBar.update();
-        this.outMsg(TEXT[this.getLang()].pointSaved,"green");
+        current.save(function () {
+            link.searchBar.update();
+            link.outMsg(TEXT[link.getLang()].pointSaved,"green");
+        });
     }
 };
 
 // [P] onDeletePoint - delete point handler {DEPRECATED]
 Livecity.prototype.onDeletePoint = function() {
+    var link = this;
     var current = this.pointLayer.getCurrent();
     if (!current) this.outMsg(TEXT[this.getLang()].nothingSelected,"red");
     else {
-        this.pointLayer.remove(current);
-        this.searchBar.update();
-        this.outMsg(TEXT[this.getLang()].pointRemoved,"green");
+        this.pointLayer.remove(current, function () {
+            link.searchBar.update();
+            link.clearEditor();
+            link.outMsg(TEXT[link.getLang()].pointRemoved,"green");
+        });
     }
 };
 
@@ -769,12 +774,15 @@ function PointLayer(main) {
     };
 
     // remove point from layer
-    this.remove = function(point) {
+    this.remove = function(point, callback) {
+        var link = this;
         var index = this.points.indexOf(point);
         if (index === -1) return;
         if (point === this.getCurrent()) this.setCurrent();
-        point.remove();
-        this.points.splice(index,1);
+        point.remove(function () {
+            link.points.splice(index,1);
+            if (callback) callback();
+        });
     };
 
     // load markers to map [ASYNC]
@@ -1449,7 +1457,7 @@ function MapPoint(parent, id, position, icon, title) {
     // SET title
     this.setTitle = function(title) {
         __marker.setTitle(title);
-        //UPD add some code for updating content
+        __baseContent = '<div class="text" id="info' + __id + '"><center><b>' + title + '</b></center></div>';
     };
 
     // GET title
@@ -1610,6 +1618,7 @@ MapPoint.prototype.save = function(callback) {
             },
             success: function(result) {
                 link.setId(result.point._id);
+                link.setTitle(result.point.title);
                 if (callback) callback(result);
             }
         });
@@ -1627,6 +1636,7 @@ MapPoint.prototype.save = function(callback) {
                 title : this.getParent().getObjects().pointEditor.valueTitle.val()
             },
             success: function(result) {
+                link.setTitle(result.point.title);
                 if (callback) callback(result);
             }
         });
