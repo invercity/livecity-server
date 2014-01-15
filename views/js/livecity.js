@@ -639,6 +639,7 @@ function SearchBar(parent) {
     this.deselect = function() {
         __parent.getObjects().searchBar.option().prop('selected',false);
         __parent.getObjects().searchBar.chosen.trigger("liszt:updated");
+        __chosed = [];
     };
 
     // add value for selecting
@@ -692,8 +693,9 @@ function SearchBar(parent) {
             if (__points.indexOf(oldElem) === -1) {
                 var oldRoute = __parent.routeLayer.getRouteById(oldElem);
                 oldRoute.setVisible(false);
-                var points = oldRoute.getPoints();
-                async.each(points, function(point, callback) {
+                // TEMPORARY
+                // check if we hide one of chosed points
+                async.each(oldRoute.getPoints(), function(point, callback) {
                     if (__chosed.indexOf(point) !== -1) {
                         var p = parent.pointLayer.getPointById(point);
                         p.setVisible(true);
@@ -708,7 +710,7 @@ function SearchBar(parent) {
             else {
                 var oldPoint = __parent.pointLayer.getPointById(oldElem);
                 oldPoint.setInfoVisible(false);
-                oldPoint.setVisible(false);
+                if (!__parent.routeLayer.isPointOfVisibleRoute(oldPoint.getId())) oldPoint.setVisible(false);
             }
         }
     };
