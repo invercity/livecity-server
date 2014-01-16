@@ -313,6 +313,7 @@ Livecity.prototype.init = function() {
         if (link.pointEditorOpened) {
             var point = link.addPoint(event.latLng);
             point.save(function() {
+                link.pointLayer.add(point);
                 link.pointLayer.setCurrent(point);
                 link.searchBar.update();
                 link.outMsg(TEXT[link.getLang()].pointSaved,"green");
@@ -410,7 +411,7 @@ Livecity.prototype.auth = function() {
         if (this.routeEditorOpened) this.onCloseRouteEditor();
         if (this.pointEditorOpened) this.onClosePointEditor();
         if (this.guideOpened) this.onCloseGuide();
-        this.outMsg(TEXT[this.getLang().sessionEnd],"green");
+        this.outMsg(TEXT[this.getLang()].sessionEnd,"green");
         // login
     } else {
         this.getObjects().auth.css("background", "url('img/lock.png') right no-repeat");
