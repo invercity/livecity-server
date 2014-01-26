@@ -1,11 +1,31 @@
-livecity
-========
+# livecity  
+Interactive system for monitoring city traffic  
+Current stable version: ```0.1```;  
+Current beta version: ```none```  .
 
-Interactive system for monitoring city traffic
+## Quick guide
+### Installing livecity (Linux users)
 
-current version: 0.1-beta
+1. Download source, and go to the source folder:  
+```cd livecity```
+2. Install required software (```mongoDB```, ```nodejs```, ```npm```):  
+```sudo apt-get install mongodb nodejs npm```
+3. Install dependencies:  
+```npm install```
+4. Configure application  
+``` nano config.json```
 
-preparing for release 0.1.1
+### Installing livecity (Windows users)
+
+Currently manual for installing livecity on Windows is not ready  
+In future releases installing scripts will be added
+
+### Running
+
+To run livecity, just fire in terminal:  
+```npm start```  
+
+
 
 
 
