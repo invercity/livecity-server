@@ -2,7 +2,6 @@
  * Created by invercity on 12/16/13.
  */
 var express = require('express');
-var path = require('path');
 var app = express();
 var config = require('./lib/config');
 
@@ -50,7 +49,6 @@ app.post('/data/points', function(req,res) {
         lng: req.body.lng,
         title: req.body.title
     });
-    console.log(JSON.stringify(point));
     point.save(function(err) {
         if (!err) {
             return res.send({status: 'OK', point:point})
