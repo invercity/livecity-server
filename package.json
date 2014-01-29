@@ -23,7 +23,8 @@
         "mongoose": "*",
         "ejs"     : "*",
         "path"    : "*",
-        "nconf"   : "*"
+        "nconf"   : "*",
+        "async"   : "*"
     },
     "analyze": false,
     "engines": {

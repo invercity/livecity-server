@@ -8,6 +8,8 @@ var config = require('./lib/config');
 var Point = require('./lib/db').Point;
 var Node = require('./lib/db').Node;
 var Route = require('./lib/db').Route;
+var Service = require('./lib/service').Service;
+var service = new Service();
 
 var _DEBUG = config.get('debug');
 
@@ -47,13 +49,16 @@ app.post('/data/points', function(req,res) {
     var point = new Point({
         lat: req.body.lat,
         lng: req.body.lng,
-        title: req.body.title
+        title: req.body.title,
+        points: []
     });
     point.save(function(err) {
         if (!err) {
+            console.log('ok')
             return res.send({status: 'OK', point:point})
         }
         else {
+            console.log('error')
             res.statusCode = 500;
             return res.send({error : 'Server error'});
             if (_DEBUG) console.log(err);
@@ -244,7 +249,9 @@ app.post('/data/routes', function(req,res) {
 
     route.save(function(err) {
         if (!err) {
-            return res.send({ status: 'OK', route: route})
+            // update points of each route
+            service.addRouteToPoints(route.points, route._id);
+            return res.send({ status: 'OK', route: route});
         }
         else {
             res.statusCode = 500;
