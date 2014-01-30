@@ -1216,8 +1216,7 @@ MapRoute.prototype.init = function(ids,callback) {
     var link = this;
     async.each(ids, function(item,callback) {
         async.each(link.getParent().routeLayer.nodes, function(node,call) {
-
-            if (node.getId() === item) link.add(node);
+            if (node.getId() === item.node) link.add(node);
             call();
         },function(err) {
             callback(err);
@@ -1250,7 +1249,7 @@ MapRoute.prototype.save = function(callback) {
             // get total distance, and array of node ID's
             async.each(link.getNodes(),function(item,callback){
                 total += item.getTotal();
-                ids.push(item.getId());
+                ids.push({node: item.getId(), total: item.getTotal()});
                 callback();
             },function(err) {
                 // save route
