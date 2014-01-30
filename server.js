@@ -8,8 +8,10 @@ var config = require('./lib/config');
 var Point = require('./lib/db').Point;
 var Node = require('./lib/db').Node;
 var Route = require('./lib/db').Route;
+var Transport = require('./lib/db').Transport;
 var Service = require('./lib/service').Service;
-var service = new Service();
+// create service layer
+var service = new Service(Point, Node, Route, Transport);
 
 var _DEBUG = config.get('debug');
 
@@ -55,7 +57,7 @@ app.post('/data/points', function(req,res) {
     point.save(function(err) {
         if (!err) {
             console.log('ok')
-            return res.send({status: 'OK', point:point})
+            return res.send({point:point})
         }
         else {
             console.log('error')
@@ -70,10 +72,10 @@ app.get('/data/points/:id', function(req,res) {
     return Point.findById(req.params.id, function(err, point) {
         if (!point) {
             res.statusCode = 404;
-            return res.send({ error : 'Not found'});
+            return res.send({error : 'Not found'});
         }
         if (!err) {
-            return res.send({ status: 'OK', point: point});
+            return res.send({point: point});
         }
         else {
             res.statusCode = 500;
@@ -94,7 +96,7 @@ app.put('/data/points/:id', function(req,res) {
         point.lng = req.body.lng;
         return point.save(function (err) {
             if (!err) {
-                return res.send({ status: 'OK', point: point});
+                return res.send({point: point});
             }
             else {
                 res.statusCode = 500;
@@ -113,7 +115,7 @@ app.delete('/data/points/:id', function(req, res) {
         }
         return point.remove(function(err){
             if (!err) {
-                return res.send({status : 'OK'});
+                return res.send({});
             }
             else {
                 res.statusCode = 500;
@@ -151,7 +153,7 @@ app.post('/data/nodes', function(req,res) {
 
     node.save(function(err) {
         if (!err) {
-            return res.send({ status: 'OK', node: node})
+            return res.send({node: node})
         }
         else {
             res.statusCode = 500;
@@ -168,7 +170,7 @@ app.get('/data/nodes/:id', function(req,res) {
             return res.send({ error : 'Not found'});
         }
         if (!err) {
-            return res.send({ status: 'OK', node: node});
+            return res.send({node: node});
         }
         else {
             res.statusCode = 500;
@@ -190,7 +192,7 @@ app.put('/data/nodes/:id', function(req,res) {
         node.total = req.body.total;
         return node.save(function (err) {
             if (!err) {
-                return res.send({ status: 'OK', node: node});
+                return res.send({node: node});
             }
             else {
                 res.statusCode = 500;
@@ -209,7 +211,7 @@ app.delete('/data/nodes/:id', function(req, res) {
         }
         return node.remove(function(err){
             if (!err) {
-                return res.send({status : 'OK'});
+                return res.send({});
             }
             else {
                 res.statusCode = 500;
@@ -251,7 +253,7 @@ app.post('/data/routes', function(req,res) {
         if (!err) {
             // update points of each route
             service.addRouteToPoints(route.points, route._id);
-            return res.send({ status: 'OK', route: route});
+            return res.send({route: route});
         }
         else {
             res.statusCode = 500;
@@ -268,7 +270,7 @@ app.get('/data/routes/:id', function(req,res) {
             return res.send({ error : 'Not found'});
         }
         if (!err) {
-            return res.send({ status: 'OK', route: route});
+            return res.send({route: route});
         }
         else {
             res.statusCode = 500;
@@ -290,9 +292,10 @@ app.put('/data/routes/:id', function(req,res) {
         route.points = req.body.points;
         route.total = req.body.total;
         route.title = req.body.title;
+        // FEATURE - add point updating
         return route.save(function (err) {
             if (!err) {
-                return res.send({ status: 'OK', route: route});
+                return res.send({route: route});
             }
             else {
                 res.statusCode = 500;
@@ -311,7 +314,8 @@ app.delete('/data/routes/:id', function(req, res) {
         }
         return route.remove(function(err){
             if (!err) {
-                return res.send({status : 'OK'});
+                service.removeRouteFromPoints(route.points, route._id);
+                return res.send({});
             }
             else {
                 res.statusCode = 500;
