@@ -665,58 +665,60 @@ function SearchBar(parent) {
                 this.deselect();
                 __parent.outMsg(TEXT[__parent.getLang()].thisActionIsNotAllowed,"red");
         }
-        // if null
-        var selected = (sel) ? sel : [];
-        // there was something new selected
-        if (selected.length > __chosed.length) {
-            // get new element
-            var newElem = $(selected).not(__chosed).get(0);
-            // push to choosed items
-            __chosed.push(newElem);
-            // get type
-            // this is new route, which we need to show
-            if (__points.indexOf(newElem) === -1) {
-                var newRoute = __parent.routeLayer.getRouteById(newElem);
-                newRoute.setVisible(true);
-                __parent.transLayer.setVisibleByRoute(newElem,true);
-            }
-            // this is new point we need to show
-            else {
-                var newPoint = __parent.pointLayer.getPointById(newElem);
-                newPoint.update();
-                newPoint.setVisible(true);
-                newPoint.setInfoVisible(true);
-            }
-        }
-        // there was something we need to hide
         else {
-            //get old element we need to hide
-            var oldElem = $(__chosed).not(selected).get(0);
-            // pop it from choosed items
-            __chosed.splice(__chosed.indexOf(oldElem),1);
-            // get type
-            // this is old route we need to hide
-            if (__points.indexOf(oldElem) === -1) {
-                var oldRoute = __parent.routeLayer.getRouteById(oldElem);
-                oldRoute.setVisible(false);
-                // TEMPORARY
-                // check if we hide one of chosed points
-                async.each(oldRoute.getPoints(), function(point, callback) {
-                    if (__chosed.indexOf(point) !== -1) {
-                        var p = parent.pointLayer.getPointById(point);
-                        p.setVisible(true);
-                        p.setInfoVisible(true);
-                    };
-                    callback();
-                },function() {});
-                // add logic for displaying points
-                __parent.transLayer.setVisibleByRoute(oldElem,false);
+            // if null
+            var selected = (sel) ? sel : [];
+            // there was something new selected
+            if (selected.length > __chosed.length) {
+                // get new element
+                var newElem = $(selected).not(__chosed).get(0);
+                // push to choosed items
+                __chosed.push(newElem);
+                // get type
+                // this is new route, which we need to show
+                if (__points.indexOf(newElem) === -1) {
+                    var newRoute = __parent.routeLayer.getRouteById(newElem);
+                    newRoute.setVisible(true);
+                    __parent.transLayer.setVisibleByRoute(newElem,true);
+                }
+                // this is new point we need to show
+                else {
+                    var newPoint = __parent.pointLayer.getPointById(newElem);
+                    newPoint.update();
+                    newPoint.setVisible(true);
+                    newPoint.setInfoVisible(true);
+                }
             }
-            // this is old point we need to hide
+            // there was something we need to hide
             else {
-                var oldPoint = __parent.pointLayer.getPointById(oldElem);
-                oldPoint.setInfoVisible(false);
-                if (!__parent.routeLayer.isPointOfVisibleRoute(oldPoint.getId())) oldPoint.setVisible(false);
+                //get old element we need to hide
+                var oldElem = $(__chosed).not(selected).get(0);
+                // pop it from choosed items
+                __chosed.splice(__chosed.indexOf(oldElem),1);
+                // get type
+                // this is old route we need to hide
+                if (__points.indexOf(oldElem) === -1) {
+                    var oldRoute = __parent.routeLayer.getRouteById(oldElem);
+                    oldRoute.setVisible(false);
+                    // TEMPORARY
+                    // check if we hide one of chosed points
+                    async.each(oldRoute.getPoints(), function(point, callback) {
+                        if (__chosed.indexOf(point) !== -1) {
+                            var p = parent.pointLayer.getPointById(point);
+                            p.setVisible(true);
+                            p.setInfoVisible(true);
+                        };
+                        callback();
+                    },function() {});
+                    // add logic for displaying points
+                    __parent.transLayer.setVisibleByRoute(oldElem,false);
+                }
+                // this is old point we need to hide
+                else {
+                    var oldPoint = __parent.pointLayer.getPointById(oldElem);
+                    oldPoint.setInfoVisible(false);
+                    if (!__parent.routeLayer.isPointOfVisibleRoute(oldPoint.getId())) oldPoint.setVisible(false);
+                }
             }
         }
     };
