@@ -428,7 +428,7 @@ Livecity.prototype.auth = function() {
 
 // [P] update - update trans layer on a map
 Livecity.prototype.update = function() {
-    this.transLayer.update();
+    //this.transLayer.update();
 };
 
 // [P] onSavePoint - save point handler [DEPRECATED]
@@ -1581,7 +1581,7 @@ MapPoint.prototype.update = function(callback) {
             success: function(result) {
                 var content = '';
                 var routeResult = null;
-                async.each(result, function(item,callback){
+                async.each(result.routes, function(item,callback){
                     if (item.status === 'OK') {
                         var min = Number(item.time).toFixed(0);
                         var sec = Number((item.time - min) * 60).toFixed(0);
@@ -1591,10 +1591,10 @@ MapPoint.prototype.update = function(callback) {
                         routeResult = min + ':' + zero + ' мин. <br/>';
                     }
                     else routeResult = TEXT[link.getParent().getLang()].noData + "<br/>";
-                    content += ("№" + item.name + " - " + routeResult);
+                    content += ("№" + item.title + " - " + routeResult);
                     callback();
                 },function(err) {
-                    if (result.length === 0) content += TEXT[link.getParent().getLang()].noAvialableRoutes + "<br/>";
+                    if (result.routes.length === 0) content += TEXT[link.getParent().getLang()].noAvialableRoutes + "<br/>";
                     link.getInfo().setContent(link.getBaseContent() + content);
                     if (callback) callback(err);
                 });

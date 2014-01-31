@@ -333,20 +333,9 @@ app.get('/data/transport', function(req,res) {
 // SERVICES
 
 app.get('/arrival/:id', function(req,res) {
-    var res1 = {
-        status: 'OK',
-        name: '16',
-        time: 21
-    };
-    var res2 = {
-        status: 'OK',
-        name: '7',
-        time: 8
-    }
-    var res0 = [];
-    res0.push(res1);
-    res0.push(res2);
-    res.send(res0);
+    service.getPointInfo(req.params.id, function(result) {
+        return res.send(result);
+    });
 });
 
 
