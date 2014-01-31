@@ -1826,6 +1826,7 @@ function Guide(main,start,end,result,total) {
         if (!this.start) {
             this.start = new google.maps.Marker({
                 position: position,
+                draggable: true,
                 map: this.main.getMap(),
                 icon: this.main.static.ICON_A()
             });
@@ -1842,6 +1843,7 @@ function Guide(main,start,end,result,total) {
             this.end = new google.maps.Marker({
                 position: position,
                 map: this.main.getMap(),
+                draggable: true,
                 icon: this.main.static.ICON_B()
             });
             this.geocoder.geocode({'latLng': position}, function(results, status) {
