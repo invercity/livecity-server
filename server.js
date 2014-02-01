@@ -36,6 +36,7 @@ app.get('/', function (req, res) {
  */
 
 app.get('/data/points', function(req,res) {
+    res.header("Access-Control-Allow-Origin", "*");
     return Point.find(function(err, points) {
         if (!err) {
             return res.send(points);
@@ -49,6 +50,7 @@ app.get('/data/points', function(req,res) {
 });
 
 app.post('/data/points', function(req,res) {
+    res.header("Access-Control-Allow-Origin", "*");
     var point = new Point({
         lat: req.body.lat,
         lng: req.body.lng,
@@ -68,6 +70,7 @@ app.post('/data/points', function(req,res) {
 });
 
 app.get('/data/points/:id', function(req,res) {
+    res.header("Access-Control-Allow-Origin", "*");
     return Point.findById(req.params.id, function(err, point) {
         if (!point) {
             res.statusCode = 404;
@@ -85,6 +88,7 @@ app.get('/data/points/:id', function(req,res) {
 });
 
 app.put('/data/points/:id', function(req,res) {
+    res.header("Access-Control-Allow-Origin", "*");
     return Point.findById(req.params.id, function(err, point) {
         if (!point) {
             res.statusCode = 404;
@@ -107,6 +111,7 @@ app.put('/data/points/:id', function(req,res) {
 });
 
 app.delete('/data/points/:id', function(req, res) {
+    res.header("Access-Control-Allow-Origin", "*");
     return Point.findById(req.params.id, function(err, point) {
         if (!point) {
             res.statusCode = 404;
@@ -130,6 +135,7 @@ app.delete('/data/points/:id', function(req, res) {
  */
 
 app.get('/data/nodes', function(req,res) {
+    res.header("Access-Control-Allow-Origin", "*");
     return Node.find(function(err, nodes) {
         if (!err) {
             return res.send(nodes);
@@ -143,6 +149,7 @@ app.get('/data/nodes', function(req,res) {
 });
 
 app.post('/data/nodes', function(req,res) {
+    res.header("Access-Control-Allow-Origin", "*");
     var node = new Node({
         data: req.body.data,
         start: req.body.start,
@@ -163,6 +170,7 @@ app.post('/data/nodes', function(req,res) {
 });
 
 app.get('/data/nodes/:id', function(req,res) {
+    res.header("Access-Control-Allow-Origin", "*");
     return Node.findById(req.params.id, function(err, node) {
         if (!node) {
             res.statusCode = 404;
@@ -180,6 +188,7 @@ app.get('/data/nodes/:id', function(req,res) {
 });
 
 app.put('/data/nodes/:id', function(req,res) {
+    res.header("Access-Control-Allow-Origin", "*");
     return Node.findById(req.params.id, function(err, node) {
         if (!node) {
             res.statusCode = 404;
@@ -203,6 +212,7 @@ app.put('/data/nodes/:id', function(req,res) {
 });
 
 app.delete('/data/nodes/:id', function(req, res) {
+    res.header("Access-Control-Allow-Origin", "*");
     return Node.findById(req.params.id, function(err, node) {
         if (!node) {
             res.statusCode = 404;
@@ -226,6 +236,7 @@ app.delete('/data/nodes/:id', function(req, res) {
  */
 
 app.get('/data/routes', function(req,res) {
+    res.header("Access-Control-Allow-Origin", "*");
     return Route.find(function(err, routes) {
         if (!err) {
             return res.send(routes);
@@ -239,6 +250,7 @@ app.get('/data/routes', function(req,res) {
 });
 
 app.post('/data/routes', function(req,res) {
+    res.header("Access-Control-Allow-Origin", "*");
     var route = new Route({
         start: req.body.start,
         end : req.body.end,
@@ -262,6 +274,7 @@ app.post('/data/routes', function(req,res) {
 });
 
 app.get('/data/routes/:id', function(req,res) {
+    res.header("Access-Control-Allow-Origin", "*");
     return Route.findById(req.params.id, function(err, route) {
         if (!route) {
             res.statusCode = 404;
@@ -279,6 +292,7 @@ app.get('/data/routes/:id', function(req,res) {
 });
 
 app.put('/data/routes/:id', function(req,res) {
+    res.header("Access-Control-Allow-Origin", "*");
     return Route.findById(req.params.id, function(err, route) {
         if (!route) {
             res.statusCode = 404;
@@ -309,6 +323,7 @@ app.put('/data/routes/:id', function(req,res) {
 });
 
 app.delete('/data/routes/:id', function(req, res) {
+    res.header("Access-Control-Allow-Origin", "*");
     return Route.findById(req.params.id, function(err, route) {
         if (!route) {
             res.statusCode = 404;
@@ -333,6 +348,7 @@ app.delete('/data/routes/:id', function(req, res) {
  */
 
 app.get('/data/transport', function(req,res) {
+    res.header("Access-Control-Allow-Origin", "*");
     return Transport.find(function(err, trans) {
         if (!err) {
             return res.send(trans);
@@ -348,12 +364,14 @@ app.get('/data/transport', function(req,res) {
 // SERVICES
 
 app.get('/arrival/:id', function(req,res) {
+    res.header("Access-Control-Allow-Origin", "*");
     service.getPointInfo(req.params.id, function(result) {
         return res.send(result);
     });
 });
 
 app.get('/app/version', function(req, res) {
+    res.header("Access-Control-Allow-Origin", "*");
     return res.send(pjson.version);
 });
 

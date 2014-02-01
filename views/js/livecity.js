@@ -117,7 +117,7 @@ $(document).ready(function() {
         },
         mapTypeId: google.maps.MapTypeId.ROADMAP,
         lang: 'RU',
-        url: 'http://localhost:3000'
+        url: 'http://178.54.56.121:3000'
     };
     // create new city
     city = new Livecity(objects,settings);
@@ -1599,6 +1599,9 @@ MapPoint.prototype.update = function(callback) {
                         TEXT[link.getParent().getLang()].minute + '<br/>');
                     // if NOTRANS - there is trans for this route
                     if (item.status === 'NOTRANS') content += (head + TEXT[link.getParent().getLang()].noData + "<br/>");
+                    // another checks....
+
+                    //
                     callback();
                 },function(err) {
                     if (result.routes.length === 0) content += TEXT[link.getParent().getLang()].noAvialableRoutes + "<br/>";
