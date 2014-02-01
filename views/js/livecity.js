@@ -58,7 +58,7 @@ $(document).ready(function() {
         alertbox: $('#alertbox'),
         map: document.getElementById('map_canvas'),
         auth : $('#auth'),
-        constrol: $('#control'),
+        control: $('#control'),
         editPoints: $('#edit_points'),
         editRoutes: $('#edit_routes'),
         editGuide: $('#edit_guide'),
@@ -142,7 +142,7 @@ $(document).ready(function() {
     // remove button click
     objects.pointEditor.remove.click(function () {city.onDeletePoint();});
     // back to city center
-    objects.constrol.click(function (){city.setCenter();});
+    objects.control.click(function (){city.setCenter();});
     // save route handler
     objects.routeEditor.save.click(function() { city.routeBuilder.save();});
     // set route start handler
@@ -151,7 +151,7 @@ $(document).ready(function() {
     objects.routeEditor.end.click(function() {city.routeBuilder.setEnd();});
     // auth button handler
     objects.auth.click(function() {city.auth();});
-    // guide chkbox
+    // guide checkbox
     objects.guideEditor.valueIfPlacesShowed.change(function() {
         // check 'checked' property
         if (objects.guideEditor.valueIfPlacesShowed.prop('checked')) city.pointLayer.setVisible(true);
@@ -161,16 +161,22 @@ $(document).ready(function() {
     objects.guideEditor.create.click(function() {city.guide.popAll();});
     // search bar init
     objects.searchBar.chosen.chosen({
-        no_results_text: TEXT[city.getLang()]
-        // FEATURE
+            no_results_text: TEXT[city.getLang()]
     }).change(function() {
-          city.searchBar.init($(this).val());
+            city.searchBar.init($(this).val());
     });
     // keydown handler
     objects.body.on('keydown',function(e) {
         // escape handler
         if (e.keyCode === 27) city.onEscape();
     });
+    /*
+     * TEXT SET
+     */
+    $.get(city.getUrl() + '/app/version', function(version) {
+        objects.control.html('livecity<div class="small"> ' + version + '</div> ');
+    });
+
 });
 
 /*

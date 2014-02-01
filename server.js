@@ -4,6 +4,7 @@
 var express = require('express');
 var app = express();
 var config = require('./lib/config');
+var pjson = require('./package.json');
 
 var Point = require('./lib/db').Point;
 var Node = require('./lib/db').Node;
@@ -13,7 +14,7 @@ var Service = require('./lib/service').Service;
 // create service layer
 var service = new Service(Point, Node, Route, Transport);
 
-var _DEBUG = config.get('debug');
+var __DEBUG = config.get('debug');
 
 app.configure(function() {
     app.use(express.favicon());
@@ -40,9 +41,9 @@ app.get('/data/points', function(req,res) {
             return res.send(points);
         }
         else {
+            if (__DEBUG) console.log(err);
             res.statusCode = 500;
-            return res.send({error: 'Server error'})
-            if (_DEBUG) console.log(err);
+            return res.send({error: 'Server error'});
         }
     });
 });
@@ -56,14 +57,12 @@ app.post('/data/points', function(req,res) {
     });
     point.save(function(err) {
         if (!err) {
-            console.log('ok')
             return res.send({point:point})
         }
         else {
-            console.log('error')
+            if (__DEBUG) console.log(err);
             res.statusCode = 500;
             return res.send({error : 'Server error'});
-            if (_DEBUG) console.log(err);
         }
     })
 });
@@ -78,9 +77,9 @@ app.get('/data/points/:id', function(req,res) {
             return res.send({point: point});
         }
         else {
+            if (__DEBUG) console.log(err);
             res.statusCode = 500;
             return res.send({error : 'Server error'});
-            if (_DEBUG) console.log(err);
         }
     })
 });
@@ -99,9 +98,9 @@ app.put('/data/points/:id', function(req,res) {
                 return res.send({point: point});
             }
             else {
+                if (__DEBUG) console.log(err);
                 res.statusCode = 500;
                 return res.send({error : 'Server error'});
-                if (_DEBUG) console.log(err);
             }
         })
     });
@@ -118,9 +117,9 @@ app.delete('/data/points/:id', function(req, res) {
                 return res.send({});
             }
             else {
+                if (__DEBUG) console.log(err);
                 res.statusCode = 500;
                 return res.send({error : 'Server error'});
-                if (_DEBUG) console.log(err);
             }
         })
     });
@@ -136,9 +135,9 @@ app.get('/data/nodes', function(req,res) {
             return res.send(nodes);
         }
         else {
+            if (__DEBUG) console.log(err);
             res.statusCode = 500;
-            return res.send({error: 'Server error'})
-            if (_DEBUG) console.log(err);
+            return res.send({error: 'Server error'});
         }
     });
 });
@@ -156,9 +155,9 @@ app.post('/data/nodes', function(req,res) {
             return res.send({node: node})
         }
         else {
+            if (__DEBUG) console.log(err);
             res.statusCode = 500;
             return res.send({error : 'Server error'});
-            if (_DEBUG) console.log(err);
         }
     })
 });
@@ -173,9 +172,9 @@ app.get('/data/nodes/:id', function(req,res) {
             return res.send({node: node});
         }
         else {
+            if (__DEBUG) console.log(err);
             res.statusCode = 500;
             return res.send({error : 'Server error'});
-            if (_DEBUG) console.log(err);
         }
     })
 });
@@ -195,9 +194,9 @@ app.put('/data/nodes/:id', function(req,res) {
                 return res.send({node: node});
             }
             else {
+                if (__DEBUG) console.log(err);
                 res.statusCode = 500;
                 return res.send({error : 'Server error'});
-                if (_DEBUG) console.log(err);
             }
         })
     });
@@ -214,9 +213,9 @@ app.delete('/data/nodes/:id', function(req, res) {
                 return res.send({});
             }
             else {
+                if (__DEBUG) console.log(err);
                 res.statusCode = 500;
                 return res.send({error : 'Server error'});
-                if (_DEBUG) console.log(err);
             }
         })
     });
@@ -232,9 +231,9 @@ app.get('/data/routes', function(req,res) {
             return res.send(routes);
         }
         else {
+            if (__DEBUG) console.log(err);
             res.statusCode = 500;
-            return res.send({error: 'Server error'})
-            if (_DEBUG) console.log(err);
+            return res.send({error: 'Server error'});
         }
     });
 });
@@ -248,7 +247,6 @@ app.post('/data/routes', function(req,res) {
         total: req.body.total,
         title: req.body.title
     });
-
     route.save(function(err) {
         if (!err) {
             // update points of each route
@@ -256,9 +254,9 @@ app.post('/data/routes', function(req,res) {
             return res.send({route: route});
         }
         else {
+            if (__DEBUG) console.log(err);
             res.statusCode = 500;
             return res.send({error : 'Server error'});
-            if (_DEBUG) console.log(err);
         }
     })
 });
@@ -273,9 +271,9 @@ app.get('/data/routes/:id', function(req,res) {
             return res.send({route: route});
         }
         else {
+            if (__DEBUG) console.log(err);
             res.statusCode = 500;
             return res.send({error : 'Server error'});
-            if (_DEBUG) console.log(err);
         }
     })
 });
@@ -286,21 +284,25 @@ app.put('/data/routes/:id', function(req,res) {
             res.statusCode = 404;
             return res.send({ error : 'Not found'});
         }
+        // save prev points of this route
+        var points = route.points;
         route.start = req.body.start;
         route.end = req.body.end;
         route.nodes = req.body.nodes;
         route.points = req.body.points;
         route.total = req.body.total;
         route.title = req.body.title;
-        // FEATURE - add point updating
         return route.save(function (err) {
             if (!err) {
+                // remove route from OLD points, and add to NEW
+                service.removeRouteFromPoints(route._id, points);
+                service.addRouteToPoints(route._id, route.points);
                 return res.send({route: route});
             }
             else {
+                if (__DEBUG) console.log(err);
                 res.statusCode = 500;
                 return res.send({error : 'Server error'});
-                if (_DEBUG) console.log(err);
             }
         })
     });
@@ -318,16 +320,29 @@ app.delete('/data/routes/:id', function(req, res) {
                 return res.send({});
             }
             else {
+                if (__DEBUG) console.log(err);
                 res.statusCode = 500;
                 return res.send({error : 'Server error'});
-                if (_DEBUG) console.log(err);
             }
         })
     });
 });
 
+/*
+ * Transport CRUD
+ */
+
 app.get('/data/transport', function(req,res) {
-    res.send([]);
+    return Transport.find(function(err, trans) {
+        if (!err) {
+            return res.send(trans);
+        }
+        else {
+            if (__DEBUG) console.log(err);
+            res.statusCode = 500;
+            return res.send({error: 'Server error'});
+        }
+    });
 });
 
 // SERVICES
@@ -336,6 +351,10 @@ app.get('/arrival/:id', function(req,res) {
     service.getPointInfo(req.params.id, function(result) {
         return res.send(result);
     });
+});
+
+app.get('/app/version', function(req, res) {
+    return res.send(pjson.version);
 });
 
 
