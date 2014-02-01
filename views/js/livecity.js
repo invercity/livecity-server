@@ -24,7 +24,8 @@ TEXT = {
         sessionEnd: 'Текущая сессия завершена',
         authSucc: 'Вы успешно авторизированы',
         login: 'Вход',
-        exit: 'Выход'
+        exit: 'Выход',
+        minute: 'мин.'
     },
     ENG: {
         backToDefaultPlace: 'You have back to default place',
@@ -44,7 +45,8 @@ TEXT = {
         sessionEnd: 'Current session finished',
         authSucc: 'You have been authorized successfully',
         login: 'Login',
-        exit: 'Exit'
+        exit: 'Exit',
+        minute: 'min.'
     }
 };
 
@@ -174,7 +176,7 @@ $(document).ready(function() {
 /*
  * City Class
  * @objects - link to HTML objects
- * @settings - settings for livecity-
+ * @settings - settings for livecity
  */
 function Livecity(objects,settings) {
 
@@ -1581,16 +1583,14 @@ MapPoint.prototype.update = function(callback) {
             success: function(result) {
                 var content = '';
                 var routeResult = null;
+                // check each route
                 async.each(result.routes, function(item,callback){
-                    if (item.status === 'OK') {
-                        var min = Number(item.time).toFixed(0);
-                        var sec = Number((item.time - min) * 60).toFixed(0);
-                        // TEMPORARY
-                        if (sec < 0) sec *= -1;
-                        var zero = (sec < 10) ? '0' : '0';
-                        routeResult = min + ':' + zero + ' мин. <br/>';
-                    }
-                    else routeResult = TEXT[link.getParent().getLang()].noData + "<br/>";
+                    // check route status
+                    // if OK - there are trans on route
+                    if (item.status === 'OK') routeResult = item.time + '' +
+                        TEXT[link.getParent().getLang()].minute + '<br/>';
+                    // if NOTRANS - there is trans for this route
+                    if (item.staus === 'NOTRANS') routeResult = TEXT[link.getParent().getLang()].noData + "<br/>";
                     content += ("№" + item.title + " - " + routeResult);
                     callback();
                 },function(err) {
