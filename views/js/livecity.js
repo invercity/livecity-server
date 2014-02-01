@@ -174,7 +174,7 @@ $(document).ready(function() {
      * TEXT SET
      */
     $.get(city.getUrl() + '/app/version', function(version) {
-        objects.control.html('livecity<div class="small"> ' + version + '</div> ');
+        objects.control.html('livecity<div class="small"><sup> ' + version + '</sup></div> ');
     });
 
 });
