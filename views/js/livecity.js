@@ -1591,13 +1591,14 @@ MapPoint.prototype.update = function(callback) {
                 var routeResult = null;
                 // check each route
                 async.each(result.routes, function(item,callback){
+                    // template for route
+                    var head = '№' + item.title + ' - ';
                     // check route status
                     // if OK - there are trans on route
-                    if (item.status === 'OK') routeResult = item.time + '' +
-                        TEXT[link.getParent().getLang()].minute + '<br/>';
+                    if (item.status === 'OK') content += (head + item.time +
+                        TEXT[link.getParent().getLang()].minute + '<br/>');
                     // if NOTRANS - there is trans for this route
-                    if (item.staus === 'NOTRANS') routeResult = TEXT[link.getParent().getLang()].noData + "<br/>";
-                    content += ("№" + item.title + " - " + routeResult);
+                    if (item.status === 'NOTRANS') content += (head + TEXT[link.getParent().getLang()].noData + "<br/>");
                     callback();
                 },function(err) {
                     if (result.routes.length === 0) content += TEXT[link.getParent().getLang()].noAvialableRoutes + "<br/>";
