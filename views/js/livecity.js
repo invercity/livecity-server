@@ -1557,7 +1557,7 @@ function MapPoint(parent, id, position, icon, title) {
         }
     });
     google.maps.event.addListener(__marker, 'drag', function(event) {
-        if (main.pointEditorOpened) {
+        if (__parent.pointEditorOpened) {
             //FEATURE
             var title = __parent.getObjects().pointEditor.valueTitle.val();
             __parent.setEditPointData(event.latLng, title, false);
