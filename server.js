@@ -435,7 +435,7 @@ app.post('/work', function (req, res) {
     // if end act
     else if ('end' === req.query.act) {
         if (req.body._id) {
-            Transport.find(req.body.id, function (err, trans) {
+            Transport.findById(req.body._id, function (err, trans) {
                 if ((!err) && (trans)) {
                     trans.remove(function(err) {
                         if (!err) {
@@ -448,7 +448,17 @@ app.post('/work', function (req, res) {
                         }
                     })
                 }
+                else {
+                    if (__DEBUG) console.log(err);
+                    res.statusCode = 500;
+                    res.send({error : 'Server error'});
+                }
             });
+        }
+        else {
+            if (__DEBUG) console.log(err);
+            res.statusCode = 500;
+            res.send({error : '_id not selected in header'});
         }
     }
     // if report act

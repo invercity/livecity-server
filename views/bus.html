@@ -5,10 +5,13 @@ and open the template in the editor.
 <!DOCTYPE html>
 <html>
     <head>
-        <title> 16 route bus test</title>
+        <title> Testing Client RESTful Service</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <script type="text/javascript" src="./js/jquery-1.9.1.min.js"></script>
-        <script type="text/javascript" src="http://maps.google.com/maps/api/js?key=AIzaSyCtoc2CLiq0QkGfdVKuyxJPhMfvSvNriRo&sensor=false&language=uk"></script> 
+        <script type="text/javascript" src="http://maps.google.com/maps/api/js?key=AIzaSyCtoc2CLiq0QkGfdVKuyxJPhMfvSvNriRo&sensor=false&language=uk"></script>
+
+        <link rel="shortcut icon" href="img/favicon.ico" type="image/gif">
+
         <style type="text/css">
             html { height: 100% }
             body { height: 100%; margin: 0px; padding: 0px }
@@ -16,15 +19,25 @@ and open the template in the editor.
         </style>
     </head>
     <body onload="map()">
+        <!-- START/END BUTTON -->
+        <div style="position: absolute; height: 20px; width: 50px; z-index: 1000; right: 0">
+            <button id="act" onclick="act()"> End </button>
+        </div>
+        <!-- MAP -->
         <div id="map_canvas">
             &nbsp;
         </div>
         <script type="text/javascript">
-            var id = -1;
-            var _id = -1;
-            var station_id = -1;
+            var pos = new google.maps.LatLng(51.4982000,31.2893500);
+            // act flag, if flag === 0, act = 'exit', if flag === 1, act = 'enter'
+            var action = 0;
+            // route id
+            var route = null;
+            // transport id
+            var _id = null;
+            // create map, and marker [CAR]
             function map() {
-                var pos = new google.maps.LatLng(51.4982000,31.2893500);
+
                 var settings = {
                     zoom: 15,
                     center: pos,
@@ -48,6 +61,26 @@ and open the template in the editor.
                 google.maps.event.addListener(marker, 'dragend', function(event) {
                     upd(event.latLng);
                 });
+                init();
+            };
+            // update marker [CAR] data on drag
+            function upd (pos) {
+                $.ajax({
+                    datatype: 'JSON',
+                    type: 'POST',
+                    url: 'http://178.54.56.121:3000/work?act=report',
+                    data: {
+                        _id:_id,
+                        route: route,
+                        lat: pos.lat(),
+                        lng: pos.lng()
+                    },
+                    success: function(result) {
+                    }
+                });
+            }
+            // init app
+            function init() {
                 $.ajax({
                     datatype: 'json',
                     type: 'POST',
@@ -57,33 +90,34 @@ and open the template in the editor.
                         lng: pos.lng()
                     },
                     success: function(result) {
-                        id = result.routes[0]._id;
+                        route = result.routes[0]._id;
                         _id = result.trans._id;
-                        alert(_id);
+                        action = 0;
+                        $('#act').text('Exit');
                     }
-                })
-            };
-               function upd (pos) {
-                   var json = {};
-                    var data = {};
-                    // fill properties
-                    data.type = "SEND_TRANS";
-                    json.a = pos.lat();
-                    json.b = pos.lng();
-                    json.id_route = id;
-                    json._id = _id;
-                    json.id_station = station_id;
-                    data.data = json;
+                });
+            }
+            // init or end act
+            function act() {
+                // end act
+                if (action === 0) {
                     $.ajax({
-                        datatype: 'json',
+                        datatype: 'JSON',
                         type: 'POST',
-                        url: 'http://178.54.56.121:8880/',
-                        data: JSON.stringify(data),
+                        url: 'http://178.54.56.121:3000/work?act=end',
+                        data: {
+                            _id: _id
+                        },
                         success: function(result) {
-                            station_id = result.id_station;
+                            _id = null;
+                            route = null;
+                            action = 1;
+                            $('#act').text('Init');
                         }
-                    });
-               }
+                    })
+                }
+                else if (action === 1) init();
+            }
         </script>
     </body>
 </html>

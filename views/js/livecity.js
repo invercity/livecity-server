@@ -1255,7 +1255,7 @@ MapRoute.prototype.save = function(callback) {
             var total = 0;
             var ids = [];
             // get total distance, and array of node ID's
-            async.each(link.getNodes(),function(item,callback){
+            async.eachSeries(link.getNodes(),function(item,callback){
                 total += item.getTotal();
                 ids.push({node: item.getId(), total: item.getTotal()});
                 callback();
