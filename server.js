@@ -17,7 +17,7 @@ var service = new Service(Point, Node, Route, Transport);
 var __DEBUG = config.get('debug');
 
 // adding CORS support...
-var allowCrossDomain = function(req, res, next) {
+var cors = function(req, res, next) {
     // allowed domains (F - add options)
     res.header('Access-Control-Allow-Origin', '*');
     // allowed methods
@@ -28,7 +28,7 @@ var allowCrossDomain = function(req, res, next) {
 };
 
 app.configure(function() {
-    app.use(allowCrossDomain);
+    app.use(cors);
     app.use(express.favicon());
     app.use(express.compress());
     app.use(express.bodyParser());
@@ -41,6 +41,10 @@ app.configure(function() {
 
 app.get('/', function (req, res) {
     res.render('index.html');
+});
+
+app.get('/test', function(req, res) {
+    res.render('bus.html');
 });
 
 /*
@@ -367,6 +371,86 @@ app.get('/arrival/:id', function(req,res) {
 
 app.get('/app/version', function(req, res) {
     return res.send(pjson.version);
+});
+
+/*
+ * Mobile app work REST service
+ *
+ * options:
+ *  ?act=init
+ *
+ * Request format:
+ *  lat (Number) - latitude (taken from GPS receiver)
+ *  lng (Number) - longitude (taken from GPS receiver)
+ *  options (Object) - other options (not avialable now)
+ * Response format:
+ *  error (String) [optionally] - shows the error message
+ *  trans {
+ *      lat (Number),
+ *      lng (Number),
+ *      _id (ObjectId) - unique trans ID
+ *  }
+ *  routes [{
+ *      _id (ObjectId), - unique route ID
+ *      title - route title
+ *  }]
+ */
+app.post('/work', function (req, res) {
+    // check act type
+    // if init act
+    if ('init' === req.query.act) {
+        // create new trans
+        var trans = new Transport({
+            lat: req.body.lat,
+            lng: req.body.lng
+        });
+        // save it to db
+        trans.save(function(err) {
+            if (!err) {
+                // get all routes
+                Route.find(function (err, routes) {
+                    // create result object
+                    var result = {
+                        trans: trans
+                    };
+                    // check error
+                    if (!err) {
+                        result.routes = routes;
+                    }
+                    // if error, result.routes will be empty array
+                    else {
+                        if (__DEBUG) console.log(err);
+                        result.routes = [];
+                    }
+                    res.send(result);
+                })
+            }
+            else {
+                if (__DEBUG) console.log(err);
+                res.statusCode = 500;
+                res.send({error : 'Server error'});
+            }
+        });
+    }
+    // if end act
+    if ('end' === req.query.act) {
+        if (req.body._id) {
+            Transport.find(req.body.id, function (err, trans) {
+                if ((!err) && (trans)) {
+                    trans.remove(function(err) {
+                        if (!err) {
+                            res.send({});
+                        }
+                        else {
+                            if (__DEBUG) console.log(err);
+                            res.statusCode = 500;
+                            res.send({error : 'Server error'});
+                        }
+                    })
+                }
+            });
+        }
+    };
 });
 
 
