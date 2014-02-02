@@ -433,7 +433,7 @@ app.post('/work', function (req, res) {
         });
     }
     // if end act
-    if ('end' === req.query.act) {
+    else if ('end' === req.query.act) {
         if (req.body._id) {
             Transport.find(req.body.id, function (err, trans) {
                 if ((!err) && (trans)) {
@@ -450,7 +450,13 @@ app.post('/work', function (req, res) {
                 }
             });
         }
-    };
+    }
+    // if report act
+    else if ('report' === req.query.act) {
+        service.updateTransportData(req.body._id,req.body.route, req.body.lat, req.body.lng, function(result){
+            res.send(result);
+        });
+    }
 });
 
 
