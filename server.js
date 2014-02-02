@@ -11,13 +11,15 @@ var Node = require('./lib/db').Node;
 var Route = require('./lib/db').Route;
 var Transport = require('./lib/db').Transport;
 var Service = require('./lib/service').Service;
+// Temporary markers handler
+var Temp = require('./lib/db').Temp;
 // create service layer
 var service = new Service(Point, Node, Route, Transport);
 
 var __DEBUG = config.get('debug');
 
 // adding CORS support...
-var cors = function(req, res, next) {
+var CORS = function(req, res, next) {
     // allowed domains (F - add options)
     res.header('Access-Control-Allow-Origin', '*');
     // allowed methods
@@ -28,7 +30,7 @@ var cors = function(req, res, next) {
 };
 
 app.configure(function() {
-    app.use(cors);
+    app.use(CORS);
     app.use(express.favicon());
     app.use(express.compress());
     app.use(express.bodyParser());
@@ -43,8 +45,12 @@ app.get('/', function (req, res) {
     res.render('index.html');
 });
 
-app.get('/test', function(req, res) {
+app.get('/client', function(req, res) {
     res.render('bus.html');
+});
+
+app.get('/points', function(req, res) {
+    res.render('creator.html');
 });
 
 /*
@@ -333,7 +339,7 @@ app.delete('/data/routes/:id', function(req, res) {
         return route.remove(function(err){
             if (!err) {
                 service.removeRouteFromPoints(route.points, route._id);
-                return res.send({});
+                return res.send({status: 'OK'});
             }
             else {
                 if (__DEBUG) console.log(err);
@@ -344,6 +350,34 @@ app.delete('/data/routes/:id', function(req, res) {
     });
 });
 
+app.post('/data/temp', function(req,res) {
+    var point = new Temp({
+        lat: req.body.lat,
+        lng: req.body.lng
+    });
+    point.save(function(err) {
+        if (!err) return res.send({point: point});
+        else {
+            if (__DEBUG) console.log(err);
+            res.statusCode = 500;
+            return res.send({error : 'Server error'});
+        }
+    })
+});
+
+app.delete('/data/temp', function(req, res) {
+    Temp.find(function(err, points) {
+        if ((!err) && (points)) {
+            points.forEach(function(item) {
+                item.remove(function(err) {
+                    if ((err) && (__DEBUG)) console.log(err);
+                })
+            });
+            res.send({status: 'OK'});
+        }
+    });
+})
+
 /*
  * Transport CRUD
  */
@@ -352,6 +386,24 @@ app.get('/data/transport', function(req,res) {
     return Transport.find(function(err, trans) {
         if (!err) {
             return res.send(trans);
+        }
+        else {
+            if (__DEBUG) console.log(err);
+            res.statusCode = 500;
+            return res.send({error: 'Server error'});
+        }
+    });
+});
+
+/*
+ * Temp markers CRUD
+ *
+ */
+
+app.get('/data/temp', function(req,res) {
+    return Temp.find(function(err, points) {
+        if (!err) {
+            return res.send(points);
         }
         else {
             if (__DEBUG) console.log(err);
@@ -414,9 +466,7 @@ app.post('/work', function (req, res) {
                         trans: trans
                     };
                     // check error
-                    if (!err) {
-                        result.routes = routes;
-                    }
+                    if (!err) result.routes = routes;
                     // if error, result.routes will be empty array
                     else {
                         if (__DEBUG) console.log(err);
