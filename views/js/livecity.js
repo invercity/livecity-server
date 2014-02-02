@@ -46,7 +46,7 @@ TEXT = {
         authSucc: 'You have been authorized successfully',
         login: 'Login',
         exit: 'Exit',
-        minute: 'min.'
+        minute: 'min.',
     }
 };
 
@@ -436,7 +436,7 @@ Livecity.prototype.auth = function() {
 
 // [P] update - update trans layer on a map
 Livecity.prototype.update = function() {
-    //this.transLayer.update();
+    this.transLayer.update();
 };
 
 // [P] onSavePoint - save point handler [DEPRECATED]
@@ -1022,7 +1022,9 @@ function TransLayer(main) {
                     var trans = result[i];
                     var t = new MapTrans(main, trans._id, trans.route, new google.maps.LatLng(trans.lat, trans.lng));
                     obj.add(t);
-                    if (obj.routes.indexOf(trans.route) !== -1) t.setVisible(true);
+                    if (obj.routes.indexOf(trans.route) !== -1) {
+                        t.setVisible(true);
+                    }
                 }
             }
         });
@@ -1036,14 +1038,13 @@ function TransLayer(main) {
 
     // set visibility by route id
     this.setVisibleByRoute = function(id, is) {
+
         var routes = this.routes;
         $.each(this.trans, function(index,item) {
-            if (item.id_route === id) {
-                item.setVisible(is);
-                if (is) routes.push(id);
-                else routes.splice(routes.indexOf(id), 1);
-            }
+            if (item.id_route === id) item.setVisible(is);
         });
+        if (is) routes.push(id);
+        else routes.splice(routes.indexOf(id), 1);
     };
 
     // update points, and set visible required
@@ -1595,8 +1596,12 @@ MapPoint.prototype.update = function(callback) {
                     var head = '№' + item.title + ' - ';
                     // check route status
                     // if OK - there are trans on route
-                    if (item.status === 'OK') content += (head + item.time +
-                        TEXT[link.getParent().getLang()].minute + '<br/>');
+                    if (item.status === 'OK') {
+                        // check time
+                        var timeValue = (item.time < 1) ? '< 1' : item.time;
+                        timeValue += ' ';
+                        content += (head + timeValue + TEXT[link.getParent().getLang()].minute + '<br/>');
+                    }
                     // if NOTRANS - there is trans for this route
                     if (item.status === 'NOTRANS') content += (head + TEXT[link.getParent().getLang()].noData + "<br/>");
                     // another checks....
