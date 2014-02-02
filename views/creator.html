@@ -53,15 +53,6 @@ and open the template in the editor.
                 // add map click handler
                 google.maps.event.addListener(map, 'click', function(event) {
                     addMarker(map, event.latLng);
-                    $.ajax({
-                        datatype: 'JSON',
-                        type: 'POST',
-                        url: 'http://178.54.56.121:3000/data/temp',
-                        data: {
-                            lat: event.latLng.lat(),
-                            lng: event.latLng.lng()
-                        }
-                    });
                 });
                 // load existing markers
                 $.ajax({
@@ -81,6 +72,16 @@ and open the template in the editor.
                     position: position,
                     map: map
                 }));
+                $.ajax({
+                    datatype: 'JSON',
+                    type: 'POST',
+                    url: 'http://178.54.56.121:3000/data/temp',
+                    data: {
+                        lat: position.lat(),
+                        lng: position.lng(),
+                        id: markers.length - 1
+                    }
+                });
             }
             function dropAll() {
                 $.ajax({

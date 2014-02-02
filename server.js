@@ -353,7 +353,8 @@ app.delete('/data/routes/:id', function(req, res) {
 app.post('/data/temp', function(req,res) {
     var point = new Temp({
         lat: req.body.lat,
-        lng: req.body.lng
+        lng: req.body.lng,
+        index: req.body.id
     });
     point.save(function(err) {
         if (!err) return res.send({point: point});
