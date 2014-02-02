@@ -1,6 +1,6 @@
 {
     "name": "livecity",
-    "version": "v0.1.2-beta",
+    "version": "v0.1.3-beta",
     "author": "invercity",
     "description": "node js based app for city traffic monitoring",
     "contributors": [

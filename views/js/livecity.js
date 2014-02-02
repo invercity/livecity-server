@@ -574,6 +574,52 @@ Livecity.prototype.onCloseGuide = function() {
     this.guide = null;
 };
 
+Livecity.prototype.optimizeView = function(point, callback) {
+    var __this = this;
+    var bounds = new google.maps.LatLngBounds();
+    var vPoints = this.pointLayer.getVisible();
+    var vRoutes = this.routeLayer.getVisible();
+    async.each(vPoints, function(item ,callback) {
+        bounds.extend(item.getPosition());
+        callback();
+    }, function() {
+        async.each(vRoutes, function(item, callback) {
+            bounds.extend(item.getInfoStart().getPosition());
+            bounds.extend(item.getInfoEnd().getPosition());
+            callback();
+        }, function(){
+            // if there are no selected routes
+            /*if (vRoutes.length === 0) {
+             if (vPoints.length === 0) __this.getMap().setZoom(__this.getProperties().zoom);
+             if (vPoints.length === 1) {
+             __this.getMap().setZoom(__this.getProperties().zoom);
+             __this.getMap().setCenter(vPoints[0].getPosition());
+             }
+             }
+             if ((vPoints.length > 1) || (vRoutes.length > 0)) {
+             __this.getMap().fitBounds(bounds);
+             // __this.getMap().setCenter(bounds.getCenter());
+             __this.getMap().setZoom(__this.getMap().getZoom() - 1);
+             } */
+            if ((vPoints.length === 0) && (vRoutes.length === 0)) {
+                var b1 = new google.maps.LatLngBounds();
+                b1.extend(__this.getProperties().center)
+                __this.getMap().fitBounds(b1);
+                __this.getMap().setZoom(__this.getProperties().zoom);
+            }
+            else __this.getMap().fitBounds(bounds);
+            if (point) {
+                var b = new google.maps.LatLngBounds();
+                b.extend(bounds.getCenter());
+                b.extend(point.getPosition());
+                __this.getMap().setCenter(b.getCenter());
+            }
+            if (vPoints.length === 1) __this.getMap().setZoom(__this.getProperties().zoom);
+            else if (callback) callback;
+        });
+    });
+};
+
 /*
  * Notifier Class
  */
@@ -666,6 +712,7 @@ function SearchBar(parent) {
     };
     // init SearchBar handler
     this.init = function(sel) {
+        var newPoint = null;
         // check if this is not base mode
         if ((__parent.pointEditorOpened) ||
             (__parent.routeEditorOpened) ||
@@ -691,7 +738,7 @@ function SearchBar(parent) {
                 }
                 // this is new point we need to show
                 else {
-                    var newPoint = __parent.pointLayer.getPointById(newElem);
+                    newPoint = __parent.pointLayer.getPointById(newElem);
                     newPoint.update();
                     newPoint.setVisible(true);
                     newPoint.setInfoVisible(true);
@@ -729,6 +776,10 @@ function SearchBar(parent) {
                 }
             }
         }
+        // add zoom update
+        __parent.optimizeView(newPoint, function() {
+
+        });
     };
 }
 
@@ -777,6 +828,46 @@ function PointLayer(main) {
             }
         }
         return result;
+    };
+
+    // get southwest point [ASYNC]
+    this.getSouthWestPoint = function(callback) {
+        var sw = null;
+        var points = this.getVisible();
+        async.eachSeries(points, function(point, callback) {
+            if (!sw) sw = point;
+            else if ((point.getPosition().lat() < sw.getPosition().lat()) ||
+                    (point.getPosition().lng() < sw.getPosition().lng())) sw = point;
+            callback();
+        }, function() {
+            callback(sw);
+        });
+    };
+
+    this.getNorthPoint = function(callback) {
+        var sw = null;
+        var points = this.getVisible();
+        async.eachSeries(points, function(point, callback) {
+            if (!sw) sw = point;
+            else if (point.getPosition().lat() > sw.getPosition().lat()) sw = point;
+            callback();
+        }, function() {
+            callback(sw);
+        });
+    };
+
+    // get northeast point [ASYNC]
+    this.getNorthEastPoint = function(callback) {
+        var ne = null;
+        var points = this.getVisible();
+        async.eachSeries(points, function(point, callback) {
+            if (!ne) ne = point;
+            else if ((point.getPosition().lat() >= ne.getPosition().lat()) ||
+                (point.getPosition().lng() >= ne.getPosition().lng())) ne = point;
+            callback();
+        }, function() {
+            callback(ne);
+        });
     };
 
     // add point to layer
@@ -1506,7 +1597,7 @@ function MapPoint(parent, id, position, icon, title) {
         return __infoVisible;
     };
 
-    // GET visible
+    // SET visible
     this.setVisible = function(is) {
         __visible = is;
         __marker.setVisible(is);
