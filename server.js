@@ -29,8 +29,15 @@ var CORS = function(req, res, next) {
     next();
 };
 
+// garbage collector
+var GC = function(req, res, next) {
+    gc();
+    next();
+};
+
 app.configure(function() {
     app.use(CORS);
+    app.use(GC);
     app.use(express.favicon());
     app.use(express.compress());
     app.use(express.bodyParser());
