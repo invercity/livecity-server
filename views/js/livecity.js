@@ -117,7 +117,7 @@ $(document).ready(function() {
         },
         mapTypeId: google.maps.MapTypeId.ROADMAP,
         lang: 'RU',
-        url: 'http://178.54.56.121:3000'
+        url: 'http://localhost:3000'
     };
     // create new city
     city = new Livecity(objects,settings);
