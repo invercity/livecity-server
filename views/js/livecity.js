@@ -124,7 +124,7 @@ $(document).ready(function() {
     // init city
     city.init();
     // set update function with interval
-    setInterval('city.update()',5000);
+    setInterval('city.update()',2000);
     // Edit stations click handler
     objects.editPoints.click(function() { city.onEditPoint(); });
     // edit route handler
