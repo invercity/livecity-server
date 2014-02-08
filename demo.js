@@ -22,7 +22,7 @@ var arg = process.argv.slice(2)[0];
 if (arg) {
     if (arg == 'create') {
         Temp.find(function(err, points) {
-            var indexes = [542, 191, 253]//, 253, 360, 429]//, 64, 13, 64, 114, 191, 213, 231, 240, 253, 378, 360, 401, 429, 452, 475];
+            var indexes = [542, 191]//, 253]//, 253, 360, 429]//, 64, 13, 64, 114, 191, 213, 231, 240, 253, 378, 360, 401, 429, 452, 475];
             async.each(indexes, function(item, callback) {
                 var car = new Transport({
                     lat: points[item - 1].lat.toFixed(6),

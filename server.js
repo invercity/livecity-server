@@ -357,35 +357,6 @@ app.delete('/data/routes/:id', function(req, res) {
     });
 });
 
-app.post('/data/temp', function(req,res) {
-    var point = new Temp({
-        lat: req.body.lat,
-        lng: req.body.lng,
-        index: req.body.id
-    });
-    point.save(function(err) {
-        if (!err) return res.send({point: point});
-        else {
-            if (__DEBUG) console.log(err);
-            res.statusCode = 500;
-            return res.send({error : 'Server error'});
-        }
-    })
-});
-
-app.delete('/data/temp', function(req, res) {
-    Temp.find(function(err, points) {
-        if ((!err) && (points)) {
-            points.forEach(function(item) {
-                item.remove(function(err) {
-                    if ((err) && (__DEBUG)) console.log(err);
-                })
-            });
-            res.send({status: 'OK'});
-        }
-    });
-})
-
 /*
  * Transport CRUD
  */
@@ -417,6 +388,57 @@ app.get('/data/temp', function(req,res) {
             if (__DEBUG) console.log(err);
             res.statusCode = 500;
             return res.send({error: 'Server error'});
+        }
+    });
+});
+
+app.post('/data/temp', function(req,res) {
+    var point = new Temp({
+        lat: req.body.lat,
+        lng: req.body.lng,
+        index: req.body.id
+    });
+    point.save(function(err) {
+        if (!err) return res.send({temp: point});
+        else {
+            if (__DEBUG) console.log(err);
+            res.statusCode = 500;
+            return res.send({error : 'Server error'});
+        }
+    })
+});
+
+app.put('/data/temp/:id', function(req,res) {
+    Temp.findById(req.params.id, function(err, temp){
+        if (temp) {
+            temp.lat = req.body.lat;
+            temp.lng = req.body.lng;
+            temp.save(function(err) {
+                if (!err) return res.send({temp: temp});
+                else {
+                    if (__DEBUG) console.log(err);
+                    res.statusCode = 500;
+                    return res.send({error : 'Server error'});
+                }
+            });
+        }
+        else {
+            if (__DEBUG) console.log(err);
+            res.statusCode = 500;
+            return res.send({error : 'Server error'});
+        }
+    });
+});
+
+app.delete('/data/temp', function(req, res) {
+    Temp.find(function(err, points) {
+        if ((!err) && (points)) {
+            points.forEach(function(item) {
+                item.remove(function(err) {
+                    if ((err) && (__DEBUG)) console.log(err);
+                })
+            });
+            res.send({status: 'OK'});
         }
     });
 });

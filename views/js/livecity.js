@@ -584,19 +584,6 @@ Livecity.prototype.optimizeView = function(point, callback) {
             bounds.extend(item.getInfoEnd().getPosition());
             callback();
         }, function(){
-            // if there are no selected routes
-            /*if (vRoutes.length === 0) {
-             if (vPoints.length === 0) __this.getMap().setZoom(__this.getProperties().zoom);
-             if (vPoints.length === 1) {
-             __this.getMap().setZoom(__this.getProperties().zoom);
-             __this.getMap().setCenter(vPoints[0].getPosition());
-             }
-             }
-             if ((vPoints.length > 1) || (vRoutes.length > 0)) {
-             __this.getMap().fitBounds(bounds);
-             // __this.getMap().setCenter(bounds.getCenter());
-             __this.getMap().setZoom(__this.getMap().getZoom() - 1);
-             } */
             if ((vPoints.length === 0) && (vRoutes.length === 0)) {
                 var b1 = new google.maps.LatLngBounds();
                 b1.extend(__this.getProperties().center);
@@ -624,22 +611,26 @@ function Notifier(parent) {
     var __box = parent.getObjects().alertbox;
     // message stack
     var __stack = [];
-    // GET alertbox
+
+    // GET alert box
     this.getBox = function() {
         return __box;
     };
 
+    // push message to stack
     this.push = function() {
         __stack.push({});
     };
 
+    // pop item from stack
     this.pop = function() {
         __stack.pop();
     };
 
+    // is empty stack
     this.empty = function() {
         return __stack.length === 0;
-    }
+    };
 }
 
 // [P] msg - show message with selected text
@@ -679,15 +670,22 @@ function SearchBar(parent) {
         $(groups[1]).html('');
     };
 
-    // update values for select
+    // update values for select [ASYNC]
     this.update = function() {
+        // clear items from box
         this.clear();
-        $.each(__parent.pointLayer.points,function(indx,item) {
-            //console.log(JSON.stringify(item));
-            __link.add(0,item.getId(),item.getTitle());
-        });
-        $.each(__parent.routeLayer.routes,function(indx,item) {
-            __link.add(1,item.getId(),item.getTitle());
+        // add all points
+        async.each(__parent.pointLayer.points,function(point, callback) {
+            __link.add(0,point.getId(),point.getTitle());
+            callback();
+        }, function() {
+            // add all routes
+            async.each(__parent.routeLayer.routes,function(route, callback) {
+                __link.add(1,route.getId(),route.getTitle());
+                callback();
+            }, function(callback) {
+                if (callback) callback();
+            });
         });
     };
 
@@ -774,7 +772,7 @@ function SearchBar(parent) {
         }
         // add zoom update
         __parent.optimizeView(newPoint, function() {
-
+            // TBD
         });
     };
 }
@@ -920,17 +918,10 @@ function PointLayer(main) {
         return this.current;
     };
 
-    // get point by point id [async]
+    // get point by point id
     this.getPointById = function(id) {
         var points = this.points;
         for (var i = 0; i < points.length; i++) if (points[i].getId() === id) return points[i];
-        return -1;
-    };
-
-    // get point by point id [async]
-    this.getPointByName = function(name) {
-        var points = this.points;
-        for (var i = 0; i < points.length; i++) if (points[i].getTitle() === name) return points[i];
         return -1;
     };
 }
@@ -1060,17 +1051,26 @@ function TransLayer(main) {
     this.trans = [];
     // array for route ID's
     this.routes = [];
+
     // get visible trans
     this.getVisible = function() {
         var result = [];
         for (var i = 0; i < this.trans.length; i++) if (this.trans[i].visible) result.push(this.trans[i]);
         return result;
     };
-    // clear all items
-    this.clear = function() {
-        for (var i = 0; i < this.trans.length; i++) this.trans[i].setVisible(false);
-        this.trans = [];
+
+    // clear all items [ASYNC]
+    this.clear = function(callback) {
+        var _this = this;
+        async.each(this.trans, function(item ,callback) {
+            item.setVisible(false);
+            callback();
+        }, function() {
+            _this.trans = [];
+            if (callback) callback();
+        });
     };
+
     // load cars from server
     this.load = function(callback) {
         var _this = this;
@@ -1085,6 +1085,7 @@ function TransLayer(main) {
             });
         });
     };
+
     // add trans to layer
     this.add = function(item) {
         this.trans.push(item);
@@ -1093,20 +1094,25 @@ function TransLayer(main) {
     };
 
     // set visibility by route id
-    this.setVisibleByRoute = function(id, is) {
+    this.setVisibleByRoute = function(id, is, callback) {
+        if (is) this.routes.push(id);
+        else this.routes.splice(this.routes.indexOf(id), 1);
         async.each(this.trans, function(item, callback) {
             if (item.id_route === id) item.setVisible(is);
             callback();
+        }, function() {
+            if (callback) callback();
         });
-        if (is) this.routes.push(id);
-        else this.routes.splice(this.routes.indexOf(id), 1);
     };
 
-    // update points, and set visible required
-    this.update = function() {
-        this.clear();
-        this.load();
-        // TBD
+    // update points, and set visible required [ASYNC]
+    this.update = function(callback) {
+        var _this = this;
+        this.clear(function() {
+            _this.load(function() {
+                if (callback) callback();
+            });
+        });
     };
 }
 
@@ -1275,7 +1281,7 @@ MapRoute.prototype.add = function(node) {
 };
 
 // [P] init route [ASYNC]
-MapRoute.prototype.init = function(ids,callback) {
+MapRoute.prototype.init = function(ids, callback) {
     // link to this
     var link = this;
     async.each(ids, function(item,callback) {
@@ -1341,7 +1347,7 @@ MapRoute.prototype.save = function(callback) {
 
 // [P] remove - remove route [ASYNC]
 MapRoute.prototype.remove = function(callback) {
-    // TBA
+    // TBD
 };
 
 /*
@@ -1435,7 +1441,7 @@ function MapNode(parent, id, start, end, data, total) {
         return __base;
     };
 
-    // UPD
+    // TBD
     if (!__data) this.init();
     else __base.setDirections(JSON.parse(__data, parseNode));
 }
@@ -1465,7 +1471,7 @@ MapNode.prototype.init = function(callback) {
 // [P] save - save this node [ASYNC]
 MapNode.prototype.save = function(callback) {
     // check if this node is unsaved
-    // UPD - add update logic
+    // TBD - add update logic
     if (this.getId()) return;
     // link to this
     var link = this;

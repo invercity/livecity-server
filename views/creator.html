@@ -32,6 +32,8 @@ and open the template in the editor.
         <script type="text/javascript">
             // buffer for markers
             var markers = [];
+            var ids = [];
+            var points = [];
             // init function (create map and load existing markers from server)
             function initialize() {
                 var settings = {
@@ -57,11 +59,14 @@ and open the template in the editor.
                     $.ajax({
                         datatype: 'JSON',
                         type: 'POST',
-                        url: 'http://178.54.56.121:3000/data/temp',
+                        url: '/data/temp',
                         data: {
                             lat: event.latLng.lat(),
                             lng: event.latLng.lng(),
                             id: markers.length - 1
+                        },
+                        success: function(result) {
+                            ids.push(result.temp._id);
                         }
                     });
                 });
@@ -69,27 +74,60 @@ and open the template in the editor.
                 $.ajax({
                     datatype: 'JSON',
                     type: 'GET',
-                    url: 'http://178.54.56.121:3000/data/temp',
+                    url: '/data/temp',
                     success: function(result) {
-                        result.forEach(function(item) {
-                            addMarker(map, new google.maps.LatLng(item.lat, item.lng));
+                        for (var i=0;i<result.length;i++) {
+                            addMarker(map, new google.maps.LatLng(result[i].lat, result[i].lng));
+                            ids.push(result[i]._id);
+                        }
+                    }
+                });
+                $.get('/data/points',function(result) {
+                    for (var i=0;i<result.length;i++) {
+                        var item = result[i];
+                        var point = new google.maps.Marker({
+                            position: new google.maps.LatLng(item.lat, item.lng),
+                            map: map,
+                            icon: new google.maps.MarkerImage(
+                                    'img/stop2.png',
+                                    new google.maps.Size(16, 16),
+                                    new google.maps.Point(0, 0),
+                                    new google.maps.Point(8, 10))
                         });
+                        points.push(point);
                     }
                 });
             };
 
             function addMarker(map, position) {
-                markers.push(new google.maps.Marker({
+                var marker = new google.maps.Marker({
                     position: position,
-                    map: map
-                }));
+                    map: map,
+                    draggable: true
+                });
+                google.maps.event.addListener(marker, 'click', function() {
+                    alert(markers.indexOf(marker));
+                });
+                google.maps.event.addListener(marker, 'dragend', function() {
+                    $.ajax({
+                        datatype: 'JSON',
+                        type: 'PUT',
+                        url: '/data/temp/' + ids[markers.indexOf(marker)],
+                        data: {
+                            lat: marker.position.lat(),
+                            lng: marker.position.lng()
+                        }
+                    });
+                });
+                markers.push(marker);
                 $('#index').val(markers.length - 1);
-            }
+            };
+
             function dropAll() {
                 $.ajax({
                     datatype: 'JSON',
                     type: 'DELETE',
-                    url: 'http://178.54.56.121:3000/data/temp',
+                    url: '/data/temp',
                     success: function(result) {
                         async.each(markers, function(item, callback) {
                             item.setVisible(false);
