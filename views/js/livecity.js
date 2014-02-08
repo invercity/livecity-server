@@ -123,6 +123,7 @@ $(document).ready(function() {
     // init city
     city.init();
     // set update function with interval
+    // TBD
     setInterval('city.update()',2000);
     // Edit stations click handler
     objects.editPoints.click(function() { city.onEditPoint(); });
@@ -164,7 +165,7 @@ $(document).ready(function() {
     }).change(function() {
             city.searchBar.init($(this).val());
     });
-    // keydown handler
+    // key down handler
     objects.body.on('keydown',function(e) {
         // escape handler
         if (e.keyCode === 27) city.onEscape();
@@ -789,8 +790,6 @@ function PointLayer(main) {
     // visibility
     this.visible = false;
 
-    // ----------- Methods -------------- //
-
     // visibility setter [ASYNC]
     this.setVisible = function(is, callback) {
         this.visible = is;
@@ -886,20 +885,15 @@ function PointLayer(main) {
     this.load = function(callback) {
         var main = this.main;
         var layer = this;
-        $.ajax({
-            datatype: main.static.TYPE_JSON,
-            type: main.static.TYPE_GET,
-            url: '/data/points',
-            success: function(result) {
-                async.each(result,function(item,callback) {
-                    var point = new MapPoint(main, item._id, new google.maps.LatLng(item.lat, item.lng),
-                        main.static.ICON_BLUE(), item.title);
-                    layer.add(point);
-                    callback();
-                },function(err) {
-                    if (callback) callback(err);
-                });
-            }
+        $.get('/data/points', function(result) {
+            async.each(result,function(item,callback) {
+                var point = new MapPoint(main, item._id, new google.maps.LatLng(item.lat, item.lng),
+                    main.static.ICON_BLUE(), item.title);
+                layer.add(point);
+                callback();
+            },function(err) {
+                if (callback) callback(err);
+            });
         });
     };
 
@@ -955,8 +949,6 @@ function RouteLayer(main) {
     this.current = null;
     // visibility
     this.visible = false;
-
-    // ----------- Methods -------------- //
 
     // SET visible [ASYNC]
     this.setVisible = function(is, callback) {
@@ -1020,50 +1012,36 @@ function RouteLayer(main) {
         var main = this.main;
         var obj = this;
         // at first - getting nodes
-        $.ajax({
-            datatype: main.static.TYPE_JSON,
-            type: main.static.TYPE_GET,
-            url: '/data/nodes',
-            async: false,
-            success: function(result) {
-                // UPD - async
-                // create nodes and add it to RouteLayer
-                for (var i = 0; i < result.length; i++) {
-                    var node = result[i];
-                    // get start point of node by its id
-                    var nodeStart = main.pointLayer.getPointById(node.start);
-                    // get end point of node by its id
-                    var nodeEnd = main.pointLayer.getPointById(node.end);
-                    var n = new MapNode(main, node._id, nodeStart, nodeEnd, node.data, node.total);
-                    // add node to layer
-                    main.routeLayer.nodes.push(n);
-                }
-                // next step - getting routes
-                $.ajax({
-                    datatype: main.static.TYPE_JSON,
-                    type: main.static.TYPE_GET,
-                    url: '/data/routes',
-                    async: false,
-                    success: function(result) {
-                        async.each(result,function(item,callback) {
-                            // get start point of route by id
-                            var start = main.pointLayer.getPointById(item.start);
-                            // get end point of route by id
-                            var end = main.pointLayer.getPointById(item.end);
-                            var route = new MapRoute(main, item._id, start, end, item.title, item.total);
-                            // init nodes and points by its node id
-                            route.init(item.nodes, function () {
-                                // add route to layer
-                                obj.routes.push(route);
-                                callback();
-                            });
+        $.get('/data/nodes', function(result) {
+            async.each(result, function(node, callback) {
+                // get start point of node by its id
+                var nodeStart = main.pointLayer.getPointById(node.start);
+                // get end point of node by its id
+                var nodeEnd = main.pointLayer.getPointById(node.end);
+                var n = new MapNode(main, node._id, nodeStart, nodeEnd, node.data, node.total);
+                // add node to layer
+                main.routeLayer.nodes.push(n);
+                callback();
+            }, function() {
+                $.get('/data/routes', function(result) {
+                    async.each(result,function(item,callback) {
+                        // get start point of route by id
+                        var start = main.pointLayer.getPointById(item.start);
+                        // get end point of route by id
+                        var end = main.pointLayer.getPointById(item.end);
+                        var route = new MapRoute(main, item._id, start, end, item.title, item.total);
+                        // init nodes and points by its node id
+                        route.init(item.nodes, function () {
+                            // add route to layer
+                            obj.routes.push(route);
+                            callback();
+                        });
 
-                        },function(err) {
-                            if (callback) callback(err);
-                        })
-                    }
+                    },function(err) {
+                        if (callback) callback(err);
+                    })
                 });
-            }
+            });
         });
     };
 
@@ -1094,25 +1072,17 @@ function TransLayer(main) {
         this.trans = [];
     };
     // load cars from server
-    this.load = function() {
-        var main = this.main;
-        var obj = this;
-        $.ajax({
-            datatype: main.static.TYPE_JSON,
-            type: main.static.TYPE_GET,
-            url: '/data/transport',
-            async: false,
-            success: function(result) {
-                if ((!result) || (result.length === 0)) return;
-                for (var i = 0; i < result.length; i++) {
-                    var trans = result[i];
-                    var t = new MapTrans(main, trans._id, trans.route, new google.maps.LatLng(trans.lat, trans.lng));
-                    obj.add(t);
-                    if (obj.routes.indexOf(trans.route) !== -1) {
-                        t.setVisible(true);
-                    }
-                }
-            }
+    this.load = function(callback) {
+        var _this = this;
+        $.get('/data/transport', function(result) {
+            async.each(result, function(trans, callback) {
+                var t = new MapTrans(main, trans._id, trans.route, new google.maps.LatLng(trans.lat, trans.lng));
+                _this.add(t);
+                if (_this.routes.indexOf(trans.route) !== -1) t.setVisible(true);
+                callback();
+            }, function() {
+                if (callback) callback();
+            });
         });
     };
     // add trans to layer
@@ -1124,13 +1094,12 @@ function TransLayer(main) {
 
     // set visibility by route id
     this.setVisibleByRoute = function(id, is) {
-
-        var routes = this.routes;
-        $.each(this.trans, function(index,item) {
+        async.each(this.trans, function(item, callback) {
             if (item.id_route === id) item.setVisible(is);
+            callback();
         });
-        if (is) routes.push(id);
-        else routes.splice(routes.indexOf(id), 1);
+        if (is) this.routes.push(id);
+        else this.routes.splice(this.routes.indexOf(id), 1);
     };
 
     // update points, and set visible required
@@ -1157,7 +1126,7 @@ function MapRoute(parent, id, start, end, title, total) {
         boxClass: "infoRoute",
         pixelOffset: new google.maps.Size(-50, -50),
         closeBoxURL: 'img/close_t.png',
-        position: start.getMarker().position
+        position: start.getPosition()
     }) : null;
     // end point info
     var __infoEnd = (end) ? new InfoBox({
@@ -1165,7 +1134,7 @@ function MapRoute(parent, id, start, end, title, total) {
         boxClass: "infoRoute",
         pixelOffset: new google.maps.Size(-50, -50),
         closeBoxURL: 'img/close_t.png',
-        position: end.getMarker().position
+        position: end.getPosition()
     }) : null;
     // visibility flag
     var __visible = false;
@@ -1667,41 +1636,33 @@ function MapPoint(parent, id, position, icon, title) {
 // [P] update - update point data [ASYNC]
 MapPoint.prototype.update = function(callback) {
     var link = this;
-    // UPD
-    if (this.getId()) {
-        $.ajax({
-            datatype: this.getParent().static.TYPE_JSON,
-            type: this.getParent().static.TYPE_GET,
-            url: '/arrival/' + this.getId(),
-            success: function(result) {
-                var content = '';
-                var routeResult = null;
-                // check each route
-                async.each(result.routes, function(item,callback){
-                    // template for route
-                    var head = '№' + item.title + ' - ';
-                    // check route status
-                    // if OK - there are trans on route
-                    if (item.status === 'OK') {
-                        // check time
-                        var timeValue = (item.time < 1) ? '< 1' : item.time;
-                        timeValue += ' ';
-                        content += (head + timeValue + TEXT[link.getParent().getLang()].minute + '<br/>');
-                    }
-                    // if NOTRANS - there is trans for this route
-                    if (item.status === 'NOTRANS') content += (head + TEXT[link.getParent().getLang()].noData + "<br/>");
-                    // another checks....
-
-                    //
-                    callback();
-                },function(err) {
-                    if (result.routes.length === 0) content += TEXT[link.getParent().getLang()].noAvialableRoutes + "<br/>";
-                    link.getInfo().setContent(link.getBaseContent() + content);
-                    if (callback) callback(err);
-                });
+    $.get('/arrival/' + this.getId(), function(result) {
+        var content = '';
+        var routeResult = null;
+        // check each route
+        async.each(result.routes, function(item,callback){
+            // template for route
+            var head = '№' + item.title + ' - ';
+            // check route status
+            // if OK - there are trans on route
+            if (item.status === 'OK') {
+                // check time
+                var timeValue = (item.time < 1) ? '< 1' : item.time;
+                timeValue += ' ';
+                content += (head + timeValue + TEXT[link.getParent().getLang()].minute + '<br/>');
             }
+            // if NOTRANS - there is trans for this route
+            if (item.status === 'NOTRANS') content += (head + TEXT[link.getParent().getLang()].noData + "<br/>");
+            // another checks....
+
+            //
+            callback();
+        },function(err) {
+            if (result.routes.length === 0) content += TEXT[link.getParent().getLang()].noAvialableRoutes + "<br/>";
+            link.getInfo().setContent(link.getBaseContent() + content);
+            if (callback) callback(err);
         });
-    }
+    });
 };
 
 // [P] save  - save point [ASYNC]
