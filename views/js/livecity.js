@@ -46,7 +46,7 @@ TEXT = {
         authSucc: 'You have been authorized successfully',
         login: 'Login',
         exit: 'Exit',
-        minute: 'min.',
+        minute: 'min.'
     }
 };
 
@@ -116,8 +116,7 @@ $(document).ready(function() {
             style: google.maps.NavigationControlStyle.SMALL
         },
         mapTypeId: google.maps.MapTypeId.ROADMAP,
-        lang: 'RU',
-        url: 'http://localhost:3000'
+        lang: 'RU'
     };
     // create new city
     city = new Livecity(objects,settings);
@@ -173,7 +172,7 @@ $(document).ready(function() {
     /*
      * TEXT SET
      */
-    $.get(city.getUrl() + '/app/version', function(version) {
+    $.get('/app/version', function(version) {
         objects.control.html('livecity<div class="small"><sup> ' + version + '</sup></div> ');
     });
 
@@ -278,10 +277,6 @@ function Livecity(objects,settings) {
     // GET map
     this.getMap = function() {
         return __map;
-    };
-    // GET url
-    this.getUrl = function() {
-        return __settings.url;
     };
     // notifier
     this.notifier = new Notifier(this);
@@ -603,7 +598,7 @@ Livecity.prototype.optimizeView = function(point, callback) {
              } */
             if ((vPoints.length === 0) && (vRoutes.length === 0)) {
                 var b1 = new google.maps.LatLngBounds();
-                b1.extend(__this.getProperties().center)
+                b1.extend(__this.getProperties().center);
                 __this.getMap().fitBounds(b1);
                 __this.getMap().setZoom(__this.getProperties().zoom);
             }
@@ -615,7 +610,7 @@ Livecity.prototype.optimizeView = function(point, callback) {
                 __this.getMap().setCenter(b.getCenter());
             }
             if (vPoints.length === 1) __this.getMap().setZoom(__this.getProperties().zoom);
-            else if (callback) callback;
+            else if (callback) callback();
         });
     });
 };
@@ -681,7 +676,7 @@ function SearchBar(parent) {
         var groups = __parent.getObjects().searchBar.groups;
         $(groups[0]).html('');
         $(groups[1]).html('');
-    }
+    };
 
     // update values for select
     this.update = function() {
@@ -762,7 +757,7 @@ function SearchBar(parent) {
                             var p = parent.pointLayer.getPointById(point);
                             p.setVisible(true);
                             p.setInfoVisible(true);
-                        };
+                        }
                         callback();
                     },function() {});
                     // add logic for displaying points
@@ -894,7 +889,7 @@ function PointLayer(main) {
         $.ajax({
             datatype: main.static.TYPE_JSON,
             type: main.static.TYPE_GET,
-            url: main.getUrl() + '/data/points',
+            url: '/data/points',
             success: function(result) {
                 async.each(result,function(item,callback) {
                     var point = new MapPoint(main, item._id, new google.maps.LatLng(item.lat, item.lng),
@@ -1028,7 +1023,7 @@ function RouteLayer(main) {
         $.ajax({
             datatype: main.static.TYPE_JSON,
             type: main.static.TYPE_GET,
-            url: main.getUrl() + '/data/nodes',
+            url: '/data/nodes',
             async: false,
             success: function(result) {
                 // UPD - async
@@ -1047,7 +1042,7 @@ function RouteLayer(main) {
                 $.ajax({
                     datatype: main.static.TYPE_JSON,
                     type: main.static.TYPE_GET,
-                    url: main.getUrl() + '/data/routes',
+                    url: '/data/routes',
                     async: false,
                     success: function(result) {
                         async.each(result,function(item,callback) {
@@ -1105,7 +1100,7 @@ function TransLayer(main) {
         $.ajax({
             datatype: main.static.TYPE_JSON,
             type: main.static.TYPE_GET,
-            url: main.getUrl() + '/data/transport',
+            url: '/data/transport',
             async: false,
             success: function(result) {
                 if ((!result) || (result.length === 0)) return;
@@ -1356,7 +1351,7 @@ MapRoute.prototype.save = function(callback) {
                 $.ajax({
                     datatype: link.getParent().static.TYPE_JSON,
                     type: link.getParent().static.TYPE_POST,
-                    url: link.getParent().getUrl() + '/data/routes/',
+                    url: '/data/routes/',
                     data: {
                         start: link.getStart(),
                         end: link.getEnd(),
@@ -1508,7 +1503,7 @@ MapNode.prototype.save = function(callback) {
     $.ajax({
         datatype: this.getParent().static.TYPE_JSON,
         type: this.getParent().static.TYPE_POST,
-        url: this.getParent().getUrl() + '/data/nodes/',
+        url: '/data/nodes/',
         data: {
             start: this.getStart().getId(),
             end: this.getEnd().getId(),
@@ -1677,7 +1672,7 @@ MapPoint.prototype.update = function(callback) {
         $.ajax({
             datatype: this.getParent().static.TYPE_JSON,
             type: this.getParent().static.TYPE_GET,
-            url: this.getParent().getUrl() + '/arrival/' + this.getId(),
+            url: '/arrival/' + this.getId(),
             success: function(result) {
                 var content = '';
                 var routeResult = null;
@@ -1717,7 +1712,7 @@ MapPoint.prototype.save = function(callback) {
         $.ajax({
             datatype: this.getParent().static.TYPE_JSON,
             type: this.getParent().static.TYPE_POST,
-            url: this.getParent().getUrl() + '/data/points',
+            url: '/data/points',
             data: {
                 lat : this.getParent().getObjects().pointEditor.valueLat.text(),
                 lng : this.getParent().getObjects().pointEditor.valueLng.text(),
@@ -1736,7 +1731,7 @@ MapPoint.prototype.save = function(callback) {
         $.ajax({
             datatype: this.getParent().static.TYPE_JSON,
             type: this.getParent().static.TYPE_PUT,
-            url: this.getParent().getUrl() + '/data/points/' + this.getId(),
+            url: '/data/points/' + this.getId(),
             data: {
                 lat : this.getParent().getObjects().pointEditor.valueLat.text(),
                 lng : this.getParent().getObjects().pointEditor.valueLng.text(),
@@ -1758,7 +1753,7 @@ MapPoint.prototype.remove = function(callback) {
     $.ajax({
         datatype: this.getParent().static.TYPE_JSON,
         type: this.getParent().static.TYPE_DELETE,
-        url: this.getParent().getUrl() + '/data/points/' + this.getId(),
+        url: '/data/points/' + this.getId(),
         cache: false,
         success: function(result) {
             link.getMarker().setMap(null);
