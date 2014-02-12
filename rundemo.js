@@ -5,7 +5,8 @@
 var exec = require('child_process').exec;
 var async = require('async');
 
-var _DEBUG = true;
+// debug flag
+var _DEBUG = false;
 
 exec('nodejs demo.js create', function() {
     console.log('test data created');

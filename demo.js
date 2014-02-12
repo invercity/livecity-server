@@ -15,21 +15,25 @@ var Service = require('./lib/service').Service;
 var Temp = require('./lib/db').Temp;
 // create service layer
 var service = new Service(Point, Node, Route, Transport);
-// get run arguments
+// get execution arguments
 var arg = process.argv.slice(2)[0];
 
 if (arg) {
+    // if 'create' option selected
     if (arg == 'create') {
         Temp.find(function(err, points) {
             // transport basic indexes
-            var indexes = [103, 191, 253, 360];
-            //, 253]//, 253, 360, 429]//, 64, 13, 64, 114, 191, 213, 231, 240, 253, 378, 360, 401, 429, 452, 475];
+            var indexes = [12, 64, 103, 161, 191, 211, 253, 297, 313, 360, 402, 428, 475];
+            // prepare each transport
             async.each(points, function(item, callback) {
+                // if this is an item from 'selected'
                 if (indexes.indexOf(item.index) !== -1) {
+                    // create such virtual transport
                     var car = new Transport({
                         lat: item.lat,
                         lng: item.lng
                     });
+                    // and save it
                     car.save(function(err) {
                         callback();
                     });
@@ -37,12 +41,14 @@ if (arg) {
                 else callback();
 
             }, function(err) {
+                // finish process in 1 sec
                 setTimeout(function() {
                     process.exit();
                 }, 1000);
             })
         });
     }
+    // if 'do' option selected
     else if (arg == 'do') {
         Route.find(function(err, routes) {
             Temp.find(function(err, points) {
@@ -82,6 +88,7 @@ if (arg) {
             });
         });
     }
+    // if 'clean' option selected
     else if (arg == 'clean') {
         Transport.remove({}, function() {
             console.log('cleaned');
