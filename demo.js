@@ -2,7 +2,7 @@
  * Created by invercity on 2/3/14.
  */
 /*
- DEMO - moving transport on a map
+ DEMO - moving static transport on a map
  */
 var async = require('async');
 var ObjectId = require('mongoose').Schema.Types.ObjectId;
@@ -15,24 +15,27 @@ var Service = require('./lib/service').Service;
 var Temp = require('./lib/db').Temp;
 // create service layer
 var service = new Service(Point, Node, Route, Transport);
-
-
+// get run arguments
 var arg = process.argv.slice(2)[0];
 
 if (arg) {
     if (arg == 'create') {
         Temp.find(function(err, points) {
-            var indexes = [542, 191]//, 253]//, 253, 360, 429]//, 64, 13, 64, 114, 191, 213, 231, 240, 253, 378, 360, 401, 429, 452, 475];
-            async.each(indexes, function(item, callback) {
-                var car = new Transport({
-                    lat: points[item - 1].lat.toFixed(6),
-                    lng: points[item - 1].lng.toFixed(6)
-                });
-                car.save(function(err) {
-                    //setTimeout(function() {
+            // transport basic indexes
+            var indexes = [103, 191, 253, 360];
+            //, 253]//, 253, 360, 429]//, 64, 13, 64, 114, 191, 213, 231, 240, 253, 378, 360, 401, 429, 452, 475];
+            async.each(points, function(item, callback) {
+                if (indexes.indexOf(item.index) !== -1) {
+                    var car = new Transport({
+                        lat: item.lat,
+                        lng: item.lng
+                    });
+                    car.save(function(err) {
                         callback();
-                    //}, 2000);
-                });
+                    });
+                }
+                else callback();
+
             }, function(err) {
                 setTimeout(function() {
                     process.exit();
@@ -45,19 +48,30 @@ if (arg) {
             Temp.find(function(err, points) {
                 Transport.find(function(err, trans){
                     async.each(trans, function(item, callback){
+                        // detect current point
                         async.detect(points, function(p, callback) {
-                            if ((p.lat.toFixed(6) === item.lat.toFixed(6)) &&
-                                (p.lng.toFixed(6) === item.lng.toFixed(6))) callback(true);
+                            if ((p.lat === item.lat) &&
+                                (p.lng === item.lng)) callback(true);
                             callback(false);
                         }, function(point) {
                             if (point) {
-                                var index = points.indexOf(point) + 1;
+                                var index = point.index + 1;
+                                //console.log('next index: ' + index);
                                 if (index === points.length) index = 0;
-                                var nextPoint = points[index];
-                                service.updateTransportData(item._id, routes[0]._id,
-                                    nextPoint.lat.toFixed(6), nextPoint.lng.toFixed(6), function() {
-                                        callback();
-                                    });
+                                // detect next point
+                                async.detect(points, function(po, callback) {
+                                    if (po.index === index) callback(true);
+                                    callback(false);
+                                }, function(nextPoint) {
+                                    if (nextPoint) {
+                                        var id = trans.indexOf(item);
+                                        service.updateTransportData(item._id, routes[0]._id,
+                                            nextPoint.lat, nextPoint.lng, function() {
+                                                callback();
+                                        });
+                                    }
+                                });
+
                             }
                             else callback();
                         })

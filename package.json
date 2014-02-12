@@ -17,7 +17,6 @@
         "url": "https://github.com/invercity/livecity.git"
     },
     "dependencies" : {
-        "mongojs" : "*",
         "express" : "*",
         "request" : "*",
         "mongoose": "*",

@@ -21,6 +21,7 @@ and open the template in the editor.
     </head>
     <body onload="initialize()">
         <!-- START/END BUTTON -->
+        
         <div style="position: absolute; height: 20px; width: 50px; z-index: 1000; right: 0">
             <button id="act" onclick="dropAll()"> Drop </button>
             <input id="index" type="text" style="width: 40px" value="none">
@@ -77,7 +78,7 @@ and open the template in the editor.
                     url: '/data/temp',
                     success: function(result) {
                         for (var i=0;i<result.length;i++) {
-                            addMarker(map, new google.maps.LatLng(result[i].lat, result[i].lng));
+                            var marker = addMarker(map, new google.maps.LatLng(result[i].lat, result[i].lng));
                             ids.push(result[i]._id);
                         }
                     }
@@ -120,7 +121,9 @@ and open the template in the editor.
                     });
                 });
                 markers.push(marker);
+                var index = markers.length - 1;
                 $('#index').val(markers.length - 1);
+                return marker;
             };
 
             function dropAll() {
