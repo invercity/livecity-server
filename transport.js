@@ -2,7 +2,7 @@
  * Created by invercity on 2/3/14.
  */
 /*
- DEMO - moving static transport on a map
+ * DEMO - moving static transport on a map
  */
 var async = require('async');
 var ObjectId = require('mongoose').Schema.Types.ObjectId;
@@ -91,7 +91,6 @@ if (arg) {
     // if 'clean' option selected
     else if (arg == 'clean') {
         Transport.remove({}, function() {
-            console.log('cleaned');
             process.exit();
         })
     }
