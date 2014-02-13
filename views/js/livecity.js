@@ -25,7 +25,8 @@ TEXT = {
         authSucc: 'Вы успешно авторизированы',
         login: 'Вход',
         exit: 'Выход',
-        minute: 'мин.'
+        minute: 'мин.',
+        transArrived: 'прибыл'
     },
     ENG: {
         backToDefaultPlace: 'You have back to default place',
@@ -46,7 +47,8 @@ TEXT = {
         authSucc: 'You have been authorized successfully',
         login: 'Login',
         exit: 'Exit',
-        minute: 'min.'
+        minute: 'min.',
+        transArrived: 'arrived'
     }
 };
 
@@ -1642,9 +1644,9 @@ function MapPoint(parent, id, position, icon, title) {
 // [P] update - update point data [ASYNC]
 MapPoint.prototype.update = function(callback) {
     var link = this;
+    // get traffic info for this point
     $.get('/arrival/' + this.getId(), function(result) {
         var content = '';
-        var routeResult = null;
         // check each route
         async.each(result.routes, function(item,callback){
             // template for route
@@ -1653,11 +1655,16 @@ MapPoint.prototype.update = function(callback) {
             // if OK - there are trans on route
             if (item.status === 'OK') {
                 // check time
-                var timeValue = (item.time < 1) ? '< 1' : item.time;
-                timeValue += ' ';
-                content += (head + timeValue + TEXT[link.getParent().getLang()].minute + '<br/>');
+                // if time === 0 - trans has been arived
+                if (item.time === 0) content +=(head +  TEST[link.getParent().getLang()].transArrived + '<br/>');
+                // else - some minutes left
+                else {
+                    var timeValue = (item.time < 1) ? '< 1' : item.time;
+                    timeValue += ' ';
+                    content += (head + timeValue + TEXT[link.getParent().getLang()].minute + '<br/>');
+                }
             }
-            // if NOTRANS - there is trans for this route
+            // if NOTRANS - there are no trans for this route
             if (item.status === 'NOTRANS') content += (head + TEXT[link.getParent().getLang()].noData + "<br/>");
             // another checks....
 
@@ -1759,7 +1766,10 @@ function MapTrans(main, id, id_route, position) {
     };
 }
 
-// route builder
+/*
+ * RouteBuilder Class
+ * @main - link to parent layer
+ */
 function RouteBuilder(main) {
     this.main = main;
     // array for points
@@ -1871,7 +1881,7 @@ function RouteBuilder(main) {
 /*
  * Guide Class
  */
-function Guide(main,start,end,result,total) {
+function Guide(main, start, end, result, total) {
     this.main = main;
     this.base = new google.maps.DirectionsRenderer({
         suppressMarkers: true,
@@ -1883,10 +1893,7 @@ function Guide(main,start,end,result,total) {
     this.result = (result) ? result : null;
     this.total = (total) ? total : 0;
 
-    /*
-     * Methods
-     */
-
+    // push - add new point to stack
     this.push = function(position){
         var obj = this;
         if ((this.start) && (this.end)) return;
@@ -1942,6 +1949,7 @@ function Guide(main,start,end,result,total) {
         }
     };
 
+    // popAll - pop all points from stack
     this.popAll = function() {
         if (this.start) {
             this.start.setMap(null);
