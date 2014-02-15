@@ -57,6 +57,7 @@ $(document).ready(function() {
     // links to page objects
     var objects = {
         body : $('body'),
+        authForm: $('#authform'),
         alertbox: $('#alertbox'),
         map: document.getElementById('map_canvas'),
         auth : $('#auth'),
@@ -100,7 +101,13 @@ $(document).ready(function() {
             option: function() {
                 return $('option');
             },
-            groups: $('optgroup')
+            groups: $('optgroup'),
+            main: function() {
+                return $('#main_search_chzn');
+            },
+            drop: function() {
+                return $('.chzn-drop');
+            }
         }
     };
 
@@ -163,22 +170,27 @@ $(document).ready(function() {
     objects.guideEditor.create.click(function() {city.guide.popAll();});
     // search bar init
     objects.searchBar.chosen.chosen({
-            no_results_text: TEXT[city.getLang()]
+            no_results_text: TEXT[city.getLang()],
+            width: '100%'
     }).change(function() {
             city.searchBar.init($(this).val());
     });
+    // fixing searchBar width... [TEMPORARY]
+    objects.searchBar.main().css('width', '100%');
+    objects.searchBar.drop().css('width', '100%');
     // key down handler
     objects.body.on('keydown',function(e) {
         // escape handler
         if (e.keyCode === 27) city.onEscape();
     });
+
     /*
      * TEXT SET
      */
+
     $.get('/app/version', function(version) {
         objects.control.html('livecity<div class="small"><sup> ' + version + '</sup></div> ');
     });
-
 });
 
 /*
@@ -406,6 +418,7 @@ Livecity.prototype.setCenter = function(center) {
 Livecity.prototype.auth = function() {
     if (this.getUID()) {
         // end session
+        //this.getObjects().authForm.css('display', 'none');
         this.getObjects().auth.css("background", "url('img/key.png') right no-repeat");
         this.getObjects().auth.text(TEXT[this.getLang()].login);
         // FEATURE - replace with load()
@@ -420,6 +433,7 @@ Livecity.prototype.auth = function() {
         this.outMsg(TEXT[this.getLang()].sessionEnd,"green");
         // login
     } else {
+        //this.getObjects().authForm.css('display', '');
         this.getObjects().auth.css("background", "url('img/lock.png') right no-repeat");
         this.getObjects().auth.text(TEXT[this.getLang()].exit);
         // FEATURE
