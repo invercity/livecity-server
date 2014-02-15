@@ -9,7 +9,7 @@ TEXT = {
         backToDefaultPlace: 'Вы вернулись в исходное положение',
         thisActionIsNotAllowed: 'Данное действие не доступно в режиме редактора',
         noDataToSave: 'Нет данных для сохранения',
-        nothingSelected: 'Ничего не сохранено',
+        nothingSelected: 'Ничего не выбрано',
         selectFirstEndPointOnMap: 'Выберите начальную и конечную точку на карте',
         pointRemoved: 'Метка удалена',
         pointSaved: 'Метка сохранена',
@@ -68,8 +68,8 @@ $(document).ready(function() {
         pointEditor: {
             base: $('#edit_point'),
             close: $('#close_button_point'),
-            save: $('#save_edit'),
-            remove: $('#delete_edit'),
+            save: $('#point-save'),
+            remove: $('#point-delete'),
             valueLat: $('#label_posx'),
             valueLng: $('#label_posy'),
             valueTitle: $('#label_name')
@@ -77,23 +77,24 @@ $(document).ready(function() {
         routeEditor: {
             base: $('#edit_route'),
             close: $('#close_button_route'),
-            save: $('#save_route'),
-            start: $('#setRouteStart'),
-            end: $('#setRouteEnd'),
-            valueTitle: $('#label_route_name'),
-            valueStart: $('#routeStartText'),
-            valueEnd: $('#routeEndText')
+            save: $('#route-save'),
+            remove: $('#route-route-remove'),
+            start: $('#button-route-start'),
+            end: $('#button-route-end'),
+            valueTitle: $('#route-name'),
+            valueStart: $('#route-start'),
+            valueEnd: $('#route-end')
         },
         guideEditor : {
             base: $('#guide'),
-            close: $('#close_button_guide'),
-            save: $('#guide_save'),
-            create: $('#guide_new'),
+            close: $('#guide-close'),
+            save: $('#guide-save'),
+            create: $('#guide-new'),
             valueStart: $('#guide_start'),
             valueEnd: $('#guide_end'),
             valueLength: $('#guide_length'),
             valueUrl: $('#guide_url'),
-            valueIfPlacesShowed: $('#guide_show_places')
+            valueIfPlacesShowed: $('#guide-show-places')
         },
         searchBar: {
             base: $('#main-search'),
