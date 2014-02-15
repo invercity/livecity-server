@@ -66,7 +66,7 @@ $(document).ready(function() {
         editRoutes: $('#edit_routes'),
         editGuide: $('#edit_guide'),
         pointEditor: {
-            base: $('#edit_point'),
+            open: $('#open-point-editor'),
             close: $('#point-editor-close'),
             save: $('#point-save'),
             remove: $('#point-delete'),
@@ -75,7 +75,7 @@ $(document).ready(function() {
             valueTitle: $('#label_name')
         },
         routeEditor: {
-            base: $('#edit_route'),
+            open: $('#open-route-editor'),
             close: $('#route-editor-close'),
             save: $('#route-save'),
             remove: $('#route-route-remove'),
@@ -86,7 +86,7 @@ $(document).ready(function() {
             valueEnd: $('#route-end')
         },
         guideEditor : {
-            base: $('#guide'),
+            open: $('#open-guide'),
             close: $('#guide-close'),
             save: $('#guide-save'),
             create: $('#guide-new'),
@@ -95,6 +95,13 @@ $(document).ready(function() {
             valueLength: $('#guide_length'),
             valueUrl: $('#guide_url'),
             valueIfPlacesShowed: $('#guide-show-places')
+        },
+        toolbox: {
+            base: $('#toolbox'),
+            data: $('#toolbox-data'),
+            activeGuide: $('#tab-guide-active'),
+            activePoint: $('#tab-point-active'),
+            activeRoute: $('#tab-route-active')
         },
         searchBar: {
             base: $('#main-search'),
@@ -136,11 +143,11 @@ $(document).ready(function() {
     // TBD
     setInterval('city.update()',2000);
     // Edit stations click handler
-    objects.editPoints.click(function() { city.onEditPoint(); });
+    objects.pointEditor.open.click(function() { city.onEditPoint(); });
     // edit route handler
-    objects.editRoutes.click(function () { city.onEditRoute();});
+    objects.routeEditor.open.click(function () { city.onEditRoute();});
     // guide handler
-    objects.editGuide.click(function() {city.onGuide();});
+    objects.guideEditor.open.click(function() {city.onEditGuide();});
     // Close edit panel handler
     objects.pointEditor.save.click(function () {city.onSavePoint();});
     // Cancel edit point click handler
@@ -148,7 +155,7 @@ $(document).ready(function() {
     // Cancel edit route click handler
     objects.routeEditor.close.click(function () {city.onCloseRouteEditor();});
     // Cancel guide
-    objects.guideEditor.close.click(function() {city.onCloseGuide();});
+    objects.guideEditor.close.click(function() {city.onCloseGuideEditor();});
     // remove button click
     objects.pointEditor.remove.click(function () {city.onDeletePoint();});
     // back to city center
@@ -304,16 +311,8 @@ function Livecity(objects,settings) {
     this.transLayer = new TransLayer(this);
     // search bar
     this.searchBar = new SearchBar(this);
-    // route builder
-    this.routeBuilder = null;
-    // guide
-    this.guide = null;
-    // flag for point editor
-    this.pointEditorOpened = false;
-    //flag for route editor
-    this.routeEditorOpened = false;
-    // flag for guide
-    this.guideOpened = false;
+    // tool box
+    this.toolbox = new ToolBox(this);
 }
 
 // [P] init - init map [DEPRECATED]
@@ -329,7 +328,7 @@ Livecity.prototype.init = function() {
     // map click handler
     google.maps.event.addListener(this.getMap(), 'click', function(event) {
         // point editor mode
-        if (link.pointEditorOpened) {
+        if (link.toolbox.isPointEditorOpened()) {
             var point = link.addPoint(event.latLng);
             point.save(function() {
                 link.pointLayer.add(point);
@@ -339,10 +338,12 @@ Livecity.prototype.init = function() {
             });
         }
         // guide editor mode
-        if (link.guideOpened) {
-            link.guide.push(event.latLng);
+        if (link.toolbox.isGuideEditorOpened()) {
+            // temporary
+            link.toolbox.__guideEditor.push(event.latLng);
         }
     });
+    this.toolbox.maximize(false);
     this.update();
 };
 
@@ -354,16 +355,19 @@ Livecity.prototype.outMsg = function(text,color) {
 // [P] onEscape - Escape button handler
 Livecity.prototype.onEscape = function() {
     // point editor mode
-    if (this.pointEditorOpened) {
-        // if nothing selected
-        if (!this.pointLayer.getCurrent()) this.onClosePointEditor();
-        else {
-            this.pointLayer.setCurrent();
-            this.clearEditor();
-        }
+    if ((this.toolbox.isPointEditorOpened()) && (this.pointLayer.getCurrent())) {
+        this.pointLayer.setCurrent();
+        this.toolbox.clear();
     }
-    if (this.routeEditorOpened) this.onCloseRouteEditor();
-    if (this.guideOpened) this.onCloseGuide();
+    if (this.toolbox.isRouteEditorOpened()) {
+        // TBD
+        //this.onCloseRouteEditor();
+    }
+    if (this.toolbox.isGuideEditorOpened()) {
+        // TBD
+        this.toolbox.__guideEditor.popAll();
+        this.toolbox.clear();
+    }
 };
 
 // [P] setEditPointData - set edits for editing marker
@@ -419,29 +423,23 @@ Livecity.prototype.setCenter = function(center) {
 Livecity.prototype.auth = function() {
     if (this.getUID()) {
         // end session
-        //this.getObjects().authForm.css('display', 'none');
+        // hide toolbar
+        this.toolbox.show(false);
+        // temporary
         this.getObjects().auth.css("background", "url('img/key.png') right no-repeat");
         this.getObjects().auth.text(TEXT[this.getLang()].login);
-        // FEATURE - replace with load()
-        this.getObjects().editPoints.css("visibility", "hidden");
-        this.getObjects().editRoutes.css("visibility", "hidden");
-        this.getObjects().editGuide.css("visibility", "hidden");
-        // F
         this.setUID(null);
-        if (this.routeEditorOpened) this.onCloseRouteEditor();
-        if (this.pointEditorOpened) this.onClosePointEditor();
-        if (this.guideOpened) this.onCloseGuide();
+        if (this.toolbox.isRouteEditorOpened()) this.onCloseRouteEditor();
+        if (this.toolbox.isPointEditorOpened()) this.onClosePointEditor();
+        if (this.toolbox.isGuideEditorOpened()) this.onCloseGuideEditor();
         this.outMsg(TEXT[this.getLang()].sessionEnd,"green");
         // login
     } else {
-        //this.getObjects().authForm.css('display', '');
+        // show toolbar
+        this.toolbox.show(true);
+        // temporary
         this.getObjects().auth.css("background", "url('img/lock.png') right no-repeat");
         this.getObjects().auth.text(TEXT[this.getLang()].exit);
-        // FEATURE
-        this.getObjects().editPoints.css("visibility", "visible");
-        this.getObjects().editRoutes.css("visibility", "visible");
-        this.getObjects().editGuide.css("visibility", "visible");
-        // F
         this.setUID(1);
         this.outMsg(TEXT[this.getLang()].authSucc,"green");
     }
@@ -473,7 +471,7 @@ Livecity.prototype.onDeletePoint = function() {
     else {
         this.pointLayer.remove(current, function () {
             link.searchBar.update();
-            link.clearEditor();
+            link.toolbox.clear();
             link.outMsg(TEXT[link.getLang()].pointRemoved,"green");
         });
     }
@@ -481,110 +479,37 @@ Livecity.prototype.onDeletePoint = function() {
 
 // [P] onEditPoint - edit marker button handler [DEPRECATED]
 Livecity.prototype.onEditPoint = function() {
-    if (this.pointEditorOpened) {
-        this.onClosePointEditor();
-        return;
-    }
-    //close other editors
-    if (this.routeEditorOpened) this.onCloseRouteEditor();
-    if (this.guideOpened) this.onCloseGuide();
-    // setting up cursor
-    this.getMap().setOptions({
-        draggableCursor: 'crosshair'
-    });
-    // show all points
-    this.routeLayer.setVisible(false);
-    this.pointLayer.setVisible(false);
-    this.pointLayer.setVisible(true);
-    // deselect search bar
-    this.searchBar.deselect();
-    // set current point as NULL
-    this.pointLayer.setCurrent();
-    // show editor
-    this.getObjects().pointEditor.base.show('500');
-    // set the document flag
-    this.pointEditorOpened = true;
+    this.toolbox.openPointEditor(true);
 };
 
 // [P] onEditRoute - edit route button handler [DEPRECATED]
 Livecity.prototype.onEditRoute = function() {
-    // if pointEditor opened already - close it
-    if (this.routeEditorOpened) {
-        this.onCloseRouteEditor();
-        return;
-    }
-    // close other editors
-    if (this.pointEditorOpened) this.onClosePointEditor();
-    if (this.guideOpened) this.onCloseGuide();
-    // disable searchbar
-    this.searchBar.deselect();
-    // show all points
-    this.routeLayer.setVisible(false);
-    this.pointLayer.setVisible(false);
-    this.pointLayer.setVisible(true);
-    this.routeBuilder = new RouteBuilder(this);
-    // show editor
-    this.getObjects().routeEditor.base.show('500');
-    // set editor flag
-    this.routeEditorOpened = true;
+    this.toolbox.openRouteEditor(true);
 };
-
 // [P] onGuide - actions on open guide [DEPRECATED]
-Livecity.prototype.onGuide = function() {
-    // if guid opened already - close it
-    if (this.guideOpened) {
-        this.onCloseGuide();
-        return;
-    }
-    // close other editors
-    if (this.pointEditorOpened) this.onClosePointEditor();
-    if (this.routeEditorOpened) this.onCloseRouteEditor();
-    // show guide
-    this.getObjects().guideEditor.base.show('500');
-    // set guide flag
-    this.guideOpened = true;
-    // set map handlers
-    this.getMap().setOptions({
-        draggableCursor: 'crosshair'
-    });
-
-    this.guide = new Guide(this);
-    this.searchBar.deselect();
-    this.outMsg(TEXT[this.getLang()].selectFirstEndPointOnMap,'green');
+Livecity.prototype.onEditGuide = function() {
+    this.toolbox.openGuideEditor(true);
 };
 
 // [P] onClosePointEditor - actions for closing editor
 Livecity.prototype.onClosePointEditor = function() {
-    this.getObjects().pointEditor.base.hide('500');
-    // change cursor to default
-    this.getMap().setOptions({
-        draggableCursor: 'pointer'
-    });
-    // unset marker
-    this.pointLayer.setCurrent();
-    // set the main document flag
-    this.pointEditorOpened = false;
-    this.pointLayer.setVisible(false);
+    this.toolbox.openPointEditor(false);
+    this.toolbox.deselect();
+    this.toolbox.maximize(false);
 };
 
 // [P] onCloseRouteEditor - actions for closing editor
 Livecity.prototype.onCloseRouteEditor = function() {
-    this.getObjects().routeEditor.base.hide('500');
-    this.routeEditorOpened = false;
-    this.routeBuilder.end();
-    this.routeBuilder = null;
-    this.clearEditor();
+    this.toolbox.openRouteEditor(false);
+    this.toolbox.deselect();
+    this.toolbox.maximize(false);
 };
 
 // [P] onCloseGuide - actions for closing guide
-Livecity.prototype.onCloseGuide = function() {
-    this.getObjects().guideEditor.base.hide('500');
-    this.guideOpened = false;
-    this.getMap().setOptions({
-        draggableCursor: 'pointer'
-    });
-    this.guide.popAll();
-    this.guide = null;
+Livecity.prototype.onCloseGuideEditor = function() {
+    this.toolbox.openGuideEditor(false);
+    this.toolbox.deselect();
+    this.toolbox.maximize(false);
 };
 
 Livecity.prototype.optimizeView = function(point, callback) {
@@ -618,6 +543,197 @@ Livecity.prototype.optimizeView = function(point, callback) {
             else if (callback) callback();
         });
     });
+};
+
+/*
+ * ToolBox Class
+ */
+function ToolBox(parent) {
+    // link to parent
+    this.__parent = parent;
+    // point editor flag
+    this.__pointEditorOpened = false;
+    // route editor link
+    this.__routeEditor = null;
+    // guide editor link
+    this.__guideEditor = null;
+    // visibility flag
+    this.__visible = false;
+    // maximize flag
+    this.__maximized = false;
+}
+
+// [P]
+ToolBox.prototype.isPointEditorOpened = function() {
+    return this.__pointEditorOpened;
+};
+
+// [P]
+ToolBox.prototype.isRouteEditorOpened = function() {
+    return (this.__routeEditor !== null);
+};
+
+// [P]
+ToolBox.prototype.isGuideEditorOpened = function() {
+    return (this.__guideEditor !== null);
+};
+
+// [P]
+ToolBox.prototype.openPointEditor = function(is) {
+    if (true === is) {
+        if ((!this.__maximized)) {
+            this.maximize(true);
+        }
+        else if ((this.__maximized) && (this.isPointEditorOpened())) {
+            this.maximize(false);
+            return;
+        }
+        if (!this.isPointEditorOpened()) {
+            //close other editors
+            if (this.isRouteEditorOpened()) this.openRouteEditor(false);
+            if (this.isGuideEditorOpened()) this.openGuideEditor(false);
+            // setting up cursor
+            this.__parent.getMap().setOptions({
+                draggableCursor: 'crosshair'
+            });
+            // show all points
+            this.__parent.routeLayer.setVisible(false);
+            this.__parent.pointLayer.setVisible(false);
+            this.__parent.pointLayer.setVisible(true);
+            // deselect search bar
+            this.__parent.searchBar.deselect();
+            // set current point as NULL
+            this.__parent.pointLayer.setCurrent();
+            // set the document flag
+            this.__pointEditorOpened = true;
+        }
+    }
+    else {
+        this.__parent.getMap().setOptions({
+            draggableCursor: 'pointer'
+        });
+        // unset marker
+        this.__parent.pointLayer.setCurrent();
+        // hide points
+        this.__parent.pointLayer.setVisible(false);
+        // set the main document flag
+        this.__pointEditorOpened = false;
+        // clear input data
+        this.clear();
+    }
+};
+
+ToolBox.prototype.deselect = function() {
+    this.__parent.getObjects().toolbox.activeGuide.removeClass('active');
+    this.__parent.getObjects().toolbox.activePoint.removeClass('active');
+    this.__parent.getObjects().toolbox.activeRoute.removeClass('active');
+};
+
+// [P]
+ToolBox.prototype.openRouteEditor = function(is) {
+    if (true === is) {
+        // if minimized - maximize it
+        if ((!this.__maximized)) {
+            this.maximize(true);
+        }
+        else if ((this.__maximized) && (this.isRouteEditorOpened())) {
+            this.maximize(false);
+            return;
+        }
+        if (!this.isRouteEditorOpened()) {
+            // close other editors
+            if (this.isPointEditorOpened()) this.openPointEditor(false);
+            if (this.isGuideEditorOpened()) this.openGuideEditor(false);
+            // disable searchbar
+            this.__parent.searchBar.deselect();
+            // show all points
+            this.__parent.routeLayer.setVisible(false);
+            this.__parent.pointLayer.setVisible(false);
+            this.__parent.pointLayer.setVisible(true);
+            this.__routeEditor = new RouteBuilder(this.__parent);
+        }
+    }
+    else {
+        this.__routeEditor.end();
+        this.__routeEditor = null;
+        this.clear();
+    }
+};
+
+ToolBox.prototype.openGuideEditor = function(is) {
+    if (true === is) {
+        // if toolbar minimized - maximize it
+        if ((!this.__maximized)) {
+            this.maximize(true);
+        }
+        else if ((this.__maximized) && (this.isGuideEditorOpened())) {
+            this.maximize(false);
+            return;
+        }
+        if (!this.isGuideEditorOpened()) {
+            // close other editors
+            if (this.isPointEditorOpened()) this.openPointEditor(false);
+            if (this.isRouteEditorOpened()) this.openRouteEditor(false);
+            // temp
+            this.__parent.searchBar.deselect();
+            this.__parent.outMsg(TEXT[this.__parent.getLang()].selectFirstEndPointOnMap,'green');
+            // set map handlers
+            this.__parent.getMap().setOptions({
+                draggableCursor: 'crosshair'
+            });
+
+            this.__guideEditor = new Guide(this.__parent);
+        }
+    }
+    else {
+        this.__parent.getMap().setOptions({
+            draggableCursor: 'pointer'
+        });
+        this.__guideEditor.popAll();
+        this.__guideEditor = null;
+        // unset 'checked
+        this.__parent.getObjects().guideEditor.valueIfPlacesShowed.removeAttr('checked');
+        // hide point layer
+        this.__parent.pointLayer.setVisible(false);
+        // clear input data
+        this.clear();
+    }
+};
+
+ToolBox.prototype.maximize = function(is) {
+    if (true === is) {
+        this.__maximized = true;
+        this.__parent.getObjects().toolbox.base.css('height', '90%');
+        this.__parent.getObjects().toolbox.data.show();
+    }
+    else {
+        this.__maximized = false;
+        this.__parent.getObjects().toolbox.base.css('height', '50px');
+        this.__parent.getObjects().toolbox.data.hide();
+    }
+};
+
+ToolBox.prototype.show = function(is) {
+    if (true === is) {
+        this.__visible = true;
+        this.__parent.getObjects().toolbox.base.show();
+    }
+    else {
+        this.__visible = false;
+        this.__parent.getObjects().toolbox.base.hide();
+    }
+}
+
+ToolBox.prototype.clear = function() {
+    this.__parent.getObjects().pointEditor.valueLat.text(TEXT.zero);
+    this.__parent.getObjects().pointEditor.valueLng.text(TEXT.zero);
+    this.__parent.getObjects().pointEditor.valueTitle.val(TEXT.empty);
+    this.__parent.getObjects().routeEditor.valueTitle.val(TEXT.empty);
+    this.__parent.getObjects().routeEditor.valueStart.text(TEXT[this.__parent.getLang()].notSelected);
+    this.__parent.getObjects().routeEditor.valueEnd.text(TEXT[this.__parent.getLang()].notSelected);
+    this.__parent.getObjects().guideEditor.valueStart.text(TEXT[this.__parent.getLang()].notSet);
+    this.__parent.getObjects().guideEditor.valueEnd.text(TEXT[this.__parent.getLang()].notSet);
+    this.__parent.getObjects().guideEditor.valueLength.text(TEXT.zero);
 };
 
 /*
@@ -1975,7 +2091,6 @@ function Guide(main, start, end, result, total) {
             this.end = null;
             this.base.setMap(null);
         }
-        this.main.clearEditor();
     };
 }
 
