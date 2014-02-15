@@ -67,7 +67,7 @@ $(document).ready(function() {
         editGuide: $('#edit_guide'),
         pointEditor: {
             base: $('#edit_point'),
-            close: $('#close_button_point'),
+            close: $('#point-editor-close'),
             save: $('#point-save'),
             remove: $('#point-delete'),
             valueLat: $('#label_posx'),
@@ -76,7 +76,7 @@ $(document).ready(function() {
         },
         routeEditor: {
             base: $('#edit_route'),
-            close: $('#close_button_route'),
+            close: $('#route-editor-close'),
             save: $('#route-save'),
             remove: $('#route-route-remove'),
             start: $('#button-route-start'),

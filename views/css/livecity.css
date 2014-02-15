@@ -185,20 +185,6 @@ body { height: 100%; margin: 0; padding: 0}
     margin-left: 10px;
 }
 
-.editor-close {
-    background:  url('../img/close.png') transparent no-repeat;
-    border: none;
-    width: 20px;
-    margin-left: 0;
-    height: 20px;
-    position: relative;
-    padding-top: 4px;
-}
-
-.editor-title {
-    margin-left: 40%;
-}
-
 .form-signin {
     position: absolute;
     z-index: 1000;
