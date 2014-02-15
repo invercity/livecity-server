@@ -25,6 +25,10 @@ In future releases installing scripts will be added
 To run livecity, just fire in terminal:  
 ```npm start```  
 
+## Wiki
+
+Github [wiki] (https://github.com/invercity/livecity/wiki) pages
+
 
 
 
