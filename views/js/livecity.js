@@ -404,19 +404,6 @@ Livecity.prototype.addPoint = function(position) {
     return point;
 };
 
-// [P] clearEditor - clear editor inputs
-Livecity.prototype.clearEditor = function() {
-    this.getObjects().pointEditor.valueLat.text(TEXT.zero);
-    this.getObjects().pointEditor.valueLng.text(TEXT.zero);
-    this.getObjects().pointEditor.valueTitle.val(TEXT.empty);
-    this.getObjects().routeEditor.valueTitle.val(TEXT.empty);
-    this.getObjects().routeEditor.valueStart.text(TEXT[this.getLang()].notSelected);
-    this.getObjects().routeEditor.valueEnd.text(TEXT[this.getLang()].notSelected);
-    this.getObjects().guideEditor.valueStart.text(TEXT[this.getLang()].notSet);
-    this.getObjects().guideEditor.valueEnd.text(TEXT[this.getLang()].notSet);
-    this.getObjects().guideEditor.valueLength.text(TEXT.zero);
-};
-
 // [P] setCenter - set map to selected map position
 Livecity.prototype.setCenter = function(center) {
     // if center is not selected, set map center default value
@@ -2188,6 +2175,8 @@ function Guide(main, start, end, result, total) {
             this.end = null;
             this.base.setMap(null);
         }
+        // TBD
+        this.main.toolBox.clear();
     };
 }
 
