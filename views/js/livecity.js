@@ -7,6 +7,9 @@ TEXT = {
     empty: '',
     RU: {
         backToDefaultPlace: 'Вы вернулись в исходное положение',
+        editingFinished: 'Редактирования завершено',
+        modePointEditor: 'Режим редактирования остановок',
+        modeRouteEditor: 'Режим редактирования маршрутов',
         thisActionIsNotAllowed: 'Данное действие не доступно в режиме редактора',
         noDataToSave: 'Нет данных для сохранения',
         nothingSelected: 'Ничего не выбрано',
@@ -30,6 +33,9 @@ TEXT = {
     },
     ENG: {
         backToDefaultPlace: 'You have back to default place',
+        editingFinished: 'Editing finished',
+        modePointEditor: 'Point editor mode',
+        modeRouteEditor: 'Route editor mode',
         noDataToSave: 'No data to save',
         nothingSelected: 'Nothing selected',
         selectFirstEndPointOnMap: 'Select first and end point on map',
@@ -367,18 +373,22 @@ Livecity.prototype.outMsg = function(text,color) {
 // [P] onEscape - Escape button handler
 Livecity.prototype.onEscape = function() {
     // point editor mode
-    if ((this.toolBox.isPointEditorOpened()) && (this.pointLayer.getCurrent())) {
-        this.pointLayer.setCurrent();
-        this.toolBox.clear();
+    if (this.toolBox.isPointEditorOpened()) {
+        if (this.pointLayer.getCurrent()) {
+            this.pointLayer.setCurrent();
+            this.toolBox.clear();
+        }
+        else this.onClosePointEditor();
     }
     if (this.toolBox.isRouteEditorOpened()) {
-        // TBD
-        //this.onCloseRouteEditor();
+        this.onCloseRouteEditor();
     }
     if (this.toolBox.isGuideEditorOpened()) {
-        // TBD
-        this.toolBox.__guideEditor.popAll();
-        this.toolBox.clear();
+        if (!this.toolBox.__guideEditor.empty()) {
+            this.toolBox.__guideEditor.popAll();
+            this.toolBox.clear();
+        }
+        else this.onCloseGuideEditor();
     }
 };
 
@@ -504,15 +514,18 @@ Livecity.prototype.onDeletePoint = function() {
 // [P] onEditPoint - edit marker button handler [DEPRECATED]
 Livecity.prototype.onEditPoint = function() {
     this.toolBox.openPointEditor(true);
+    this.outMsg(TEXT[this.getLang()].modePointEditor,"green");
 };
 
 // [P] onEditRoute - edit route button handler [DEPRECATED]
 Livecity.prototype.onEditRoute = function() {
     this.toolBox.openRouteEditor(true);
+    this.outMsg(TEXT[this.getLang()].modeRouteEditor,"green");
 };
 // [P] onGuide - actions on open guide [DEPRECATED]
 Livecity.prototype.onEditGuide = function() {
     this.toolBox.openGuideEditor(true);
+    this.outMsg(TEXT[this.getLang()].selectFirstEndPointOnMap,'green');
 };
 
 // [P] onClosePointEditor - actions for closing editor
@@ -520,6 +533,7 @@ Livecity.prototype.onClosePointEditor = function() {
     this.toolBox.openPointEditor(false);
     this.toolBox.deselect();
     this.toolBox.maximize(false);
+    this.outMsg(TEXT[this.getLang()].editingFinished,"green");
 };
 
 // [P] onCloseRouteEditor - actions for closing editor
@@ -527,6 +541,7 @@ Livecity.prototype.onCloseRouteEditor = function() {
     this.toolBox.openRouteEditor(false);
     this.toolBox.deselect();
     this.toolBox.maximize(false);
+    this.outMsg(TEXT[this.getLang()].editingFinished,"green");
 };
 
 // [P] onCloseGuide - actions for closing guide
@@ -534,6 +549,7 @@ Livecity.prototype.onCloseGuideEditor = function() {
     this.toolBox.openGuideEditor(false);
     this.toolBox.deselect();
     this.toolBox.maximize(false);
+    this.outMsg(TEXT[this.getLang()].editingFinished,"green");
 };
 
 Livecity.prototype.optimizeView = function(point, callback) {
@@ -757,7 +773,6 @@ ToolBox.prototype.openGuideEditor = function(is) {
             this.__parent.searchBar.deselect();
             this.__parent.pointLayer.setVisible(false);
             this.__parent.routeLayer.setVisible(false);
-            this.__parent.outMsg(TEXT[this.__parent.getLang()].selectFirstEndPointOnMap,'green');
             // set map handlers
             this.__parent.getMap().setOptions({
                 draggableCursor: 'crosshair'
@@ -2178,6 +2193,11 @@ function Guide(main, start, end, result, total) {
         // TBD
         this.main.toolBox.clear();
     };
+
+    // empty - check if editing process finished
+    this.empty = function() {
+        return this.start === null;
+    }
 }
 
 function stringifyNode(name, value) {
