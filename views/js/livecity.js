@@ -257,70 +257,56 @@ function Livecity(objects,settings) {
         TYPE_PUT: 'PUT'
     };
 
-    /*
-     *  PRIVATE ATTRIBUTES
-     */
-
-    // UID
-    var __uid = null;
     // objects
-    var __objects = objects;
+    this.__objects = objects;
     // set settings
-    var __settings = settings;
+    this.__settings = settings;
     // map
-    var __map = new google.maps.Map(__objects.map,__settings);
+    this.__map = new google.maps.Map(this.__objects.map,this.__settings);
 
     /*
      * PUBLIC GETTERS & SETTERS
      */
 
-    // GET uid
-    this.getUID = function() {
-        return __uid;
-    };
-    // SET uid
-    this.setUID = function(uid) {
-        __uid = uid;
-    };
     // GET objects
     this.getObjects = function() {
-        return __objects;
+        return this.__objects;
     };
     // SET objects
     this.setObjects = function(objs) {
-        __objects = objs;
+        this.__objects = objs;
     };
     // GET selected object
     this.getObject = function(name) {
-        return __objects[name];
+        return this.__objects[name];
     };
     // SET selected object
     this.setObject = function(name,value) {
-        __objects[name] = value;
+        this.__objects[name] = value;
     };
     // GET property
     this.getProperty = function(name) {
-        return __settings[name];
+        return this.__settings[name];
     };
     // SET property
     this.setProperty = function(name,value) {
-        __settings[name] = value;
+        this.__settings[name] = value;
     };
     // GET settings
     this.getProperties = function() {
-        return __settings;
+        return this.__settings;
     };
     // GET lang property
     this.getLang = function() {
-        return __settings.lang;
+        return this.__settings.lang;
     };
     // SET lang property
     this.setLang = function(lng) {
-        __settings.lang = lng;
+        this.__settings.lang = lng;
     };
     // GET map
     this.getMap = function() {
-        return __map;
+        return this.__map;
     };
     // notifier
     this.notifier = new Notifier(this);
@@ -405,11 +391,11 @@ Livecity.prototype.setEditPointData = function(position, title, focus) {
     var lat = position.lat();
     var lng = position.lng();
     // UPD - add option Round?
-    this.getObjects().pointEditor.valueLat.text(Number(lat).toFixed(4));
-    this.getObjects().pointEditor.valueLng.text(Number(lng).toFixed(4));
-    this.getObjects().pointEditor.valueTitle.val(title);
+    this.__objects.pointEditor.valueLat.text(Number(lat).toFixed(4));
+    this.__objects.pointEditor.valueLng.text(Number(lng).toFixed(4));
+    this.__objects.pointEditor.valueTitle.val(title);
     // UPD
-    if (focus) this.getObjects().pointEditor.valueTitle.focus();
+    if (focus) this.__objects.pointEditor.valueTitle.focus();
 };
 
 // [P] addPoint - add new point on map
@@ -500,7 +486,7 @@ Livecity.prototype.onLogin = function(e) {
     e.preventDefault();
 };
 
-// [P] update - update trans layer on a map
+// [P] update - update trans layer on a map [DEPRECATED on v1.0]
 Livecity.prototype.update = function() {
     this.transLayer.update();
 };
@@ -532,44 +518,99 @@ Livecity.prototype.onDeletePoint = function() {
     }
 };
 
-// [P] onEditPoint - edit marker button handler [DEPRECATED]
+// [P] onEditPoint - edit marker button handler
 Livecity.prototype.onEditPoint = function() {
+    // prepare toolbox
     this.toolBox.openPointEditor(true);
+    // setting up cursor
+    this.__map.setOptions({
+        draggableCursor: 'crosshair'
+    });
+    // show all points
+    this.routeLayer.setVisible(false);
+    this.pointLayer.setVisible(false);
+    this.pointLayer.setVisible(true);
+    // hide trans layer
+    this.transLayer.hide();
+    // deselect search bar
+    this.searchBar.deselect();
+    // set current point as NULL
+    this.pointLayer.setCurrent();
+    // show notify
     this.outMsg(TEXT[this.getLang()].modePointEditor,"green");
 };
 
 // [P] onEditRoute - edit route button handler [DEPRECATED]
 Livecity.prototype.onEditRoute = function() {
+    // prepare toolbox
     this.toolBox.openRouteEditor(true);
+    // disable searchbar
+    this.searchBar.deselect();
+    // show all points
+    this.routeLayer.setVisible(false);
+    this.pointLayer.setVisible(false);
+    this.pointLayer.setVisible(true);
+    // hide trans layer
+    this.transLayer.hide();
+    // show notify
     this.outMsg(TEXT[this.getLang()].modeRouteEditor,"green");
 };
 // [P] onGuide - actions on open guide [DEPRECATED]
 Livecity.prototype.onEditGuide = function() {
+    // prepare toolbox
     this.toolBox.openGuideEditor(true);
+    // disable searchbox
+    this.searchBar.deselect();
+    // hide other layers
+    this.pointLayer.setVisible(false);
+    this.routeLayer.setVisible(false);
+    // hide trans layer
+    this.transLayer.hide();
+    // set map handlers
+    this.__map.setOptions({
+        draggableCursor: 'crosshair'
+    });
+    // show notify
     this.outMsg(TEXT[this.getLang()].selectFirstEndPointOnMap,'green');
 };
 
 // [P] onClosePointEditor - actions for closing editor
 Livecity.prototype.onClosePointEditor = function() {
+    // prepere editor
     this.toolBox.openPointEditor(false);
-    this.toolBox.deselect();
-    this.toolBox.maximize(false);
+    // change map cursor
+    this.__map.setOptions({
+        draggableCursor: 'pointer'
+    });
+    // unset current marker
+    this.pointLayer.setCurrent();
+    // hide points
+    this.pointLayer.setVisible(false);
+    // show notification
     this.outMsg(TEXT[this.getLang()].editingFinished,"green");
 };
 
 // [P] onCloseRouteEditor - actions for closing editor
 Livecity.prototype.onCloseRouteEditor = function() {
+    // prepare toolbox
     this.toolBox.openRouteEditor(false);
-    this.toolBox.deselect();
-    this.toolBox.maximize(false);
+    // show notify
     this.outMsg(TEXT[this.getLang()].editingFinished,"green");
 };
 
 // [P] onCloseGuide - actions for closing guide
 Livecity.prototype.onCloseGuideEditor = function() {
+    // prepare toolbox
     this.toolBox.openGuideEditor(false);
-    this.toolBox.deselect();
-    this.toolBox.maximize(false);
+    // chenge map cursor
+    this.__map.setOptions({
+        draggableCursor: 'pointer'
+    });
+    // hide point layer
+    this.pointLayer.setVisible(false)
+    // hide trans layer
+    this.transLayer.hide();
+    // show notify
     this.outMsg(TEXT[this.getLang()].editingFinished,"green");
 };
 
@@ -697,6 +738,9 @@ ToolBox.prototype.isGuideEditorOpened = function() {
 // [P]
 ToolBox.prototype.openPointEditor = function(is) {
     if (true === is) {
+        //close other editors
+        if (this.isRouteEditorOpened()) this.openRouteEditor(false);
+        if (this.isGuideEditorOpened()) this.openGuideEditor(false);
         if ((!this.__maximized)) {
             this.maximize(true);
         }
@@ -705,37 +749,19 @@ ToolBox.prototype.openPointEditor = function(is) {
             return;
         }
         if (!this.isPointEditorOpened()) {
-            //close other editors
-            if (this.isRouteEditorOpened()) this.openRouteEditor(false);
-            if (this.isGuideEditorOpened()) this.openGuideEditor(false);
-            // setting up cursor
-            this.__parent.getMap().setOptions({
-                draggableCursor: 'crosshair'
-            });
-            // show all points
-            this.__parent.routeLayer.setVisible(false);
-            this.__parent.pointLayer.setVisible(false);
-            this.__parent.pointLayer.setVisible(true);
-            // deselect search bar
-            this.__parent.searchBar.deselect();
-            // set current point as NULL
-            this.__parent.pointLayer.setCurrent();
             // set the document flag
             this.__pointEditorOpened = true;
         }
     }
     else {
-        this.__parent.getMap().setOptions({
-            draggableCursor: 'pointer'
-        });
-        // unset marker
-        this.__parent.pointLayer.setCurrent();
-        // hide points
-        this.__parent.pointLayer.setVisible(false);
-        // set the main document flag
-        this.__pointEditorOpened = false;
+        // minimize toolbar
+        this.maximize(false);
+        // deselect toolbox
+        this.deselect();
         // clear input data
         this.clear();
+        // set the main document flag
+        this.__pointEditorOpened = false;
     }
 };
 
@@ -748,6 +774,9 @@ ToolBox.prototype.deselect = function() {
 // [P]
 ToolBox.prototype.openRouteEditor = function(is) {
     if (true === is) {
+        // close other editors
+        if (this.isPointEditorOpened()) this.openPointEditor(false);
+        if (this.isGuideEditorOpened()) this.openGuideEditor(false);
         // if minimized - maximize it
         if ((!this.__maximized)) {
             this.maximize(true);
@@ -757,27 +786,27 @@ ToolBox.prototype.openRouteEditor = function(is) {
             return;
         }
         if (!this.isRouteEditorOpened()) {
-            // close other editors
-            if (this.isPointEditorOpened()) this.openPointEditor(false);
-            if (this.isGuideEditorOpened()) this.openGuideEditor(false);
-            // disable searchbar
-            this.__parent.searchBar.deselect();
-            // show all points
-            this.__parent.routeLayer.setVisible(false);
-            this.__parent.pointLayer.setVisible(false);
-            this.__parent.pointLayer.setVisible(true);
+            // create new editor
             this.__routeEditor = new RouteBuilder(this.__parent);
         }
     }
     else {
+        // deselect toolbar and minimize
+        this.deselect();
+        this.maximize(false);
+        // clear data
+        this.clear();
+        // finish RouteEditor and destroy it
         this.__routeEditor.end();
         this.__routeEditor = null;
-        this.clear();
     }
 };
 
 ToolBox.prototype.openGuideEditor = function(is) {
     if (true === is) {
+        // close other editors
+        if (this.isPointEditorOpened()) this.openPointEditor(false);
+        if (this.isRouteEditorOpened()) this.openRouteEditor(false);
         // if toolbar minimized - maximize it
         if ((!this.__maximized)) {
             this.maximize(true);
@@ -787,33 +816,22 @@ ToolBox.prototype.openGuideEditor = function(is) {
             return;
         }
         if (!this.isGuideEditorOpened()) {
-            // close other editors
-            if (this.isPointEditorOpened()) this.openPointEditor(false);
-            if (this.isRouteEditorOpened()) this.openRouteEditor(false);
-            // temp
-            this.__parent.searchBar.deselect();
-            this.__parent.pointLayer.setVisible(false);
-            this.__parent.routeLayer.setVisible(false);
-            // set map handlers
-            this.__parent.getMap().setOptions({
-                draggableCursor: 'crosshair'
-            });
-
+            // create new guide
             this.__guideEditor = new Guide(this.__parent);
         }
     }
     else {
-        this.__parent.getMap().setOptions({
-            draggableCursor: 'pointer'
-        });
-        this.__guideEditor.popAll();
-        this.__guideEditor = null;
         // unset 'checked
         this.__parent.getObjects().guideEditor.valueIfPlacesShowed.removeAttr('checked');
-        // hide point layer
-        this.__parent.pointLayer.setVisible(false);
+        // deselect toolbar and minimize
+        this.deselect();
+        // minimize toolbox
+        this.maximize(false);
         // clear input data
         this.clear();
+        // resume GuideEditor and destroy it
+        this.__guideEditor.popAll();
+        this.__guideEditor = null;
     }
 };
 
@@ -1362,6 +1380,16 @@ function TransLayer(main) {
         });
     };
 
+    // hide - hide all transports [ASYNC]
+    this.hide = function(callback) {
+        this.routes = [];
+        async.each(this.trans, function(item, callback) {
+            item.setVisible(false);
+        },function() {
+            if (callback) callback();
+        });
+    };
+
     // update points, and set visible required [ASYNC]
     this.update = function(callback) {
         var _this = this;
@@ -1388,7 +1416,7 @@ function MapRoute(parent, id, start, end, title, total) {
         content: '<div class="text"><center>' + start.getTitle() + '</center></div>',
         boxClass: "infoRoute",
         pixelOffset: new google.maps.Size(-50, -50),
-        closeBoxURL: 'img/close_t.png',
+        closeBoxURL: '',
         position: start.getPosition()
     }) : null;
     // end point info
@@ -1396,7 +1424,7 @@ function MapRoute(parent, id, start, end, title, total) {
         content: '<div class="text"><center>' + end.getTitle() + '</center></div>',
         boxClass: "infoRoute",
         pixelOffset: new google.maps.Size(-50, -50),
-        closeBoxURL: 'img/close_t.png',
+        closeBoxURL: '',
         position: end.getPosition()
     }) : null;
     // visibility flag
@@ -1482,7 +1510,7 @@ function MapRoute(parent, id, start, end, title, total) {
             content: '<div class="text"><center>' + point.getTitle() + '</center></div>',
             boxClass: "infoRoute",
             pixelOffset: new google.maps.Size(-50, -50),
-            closeBoxURL: 'img/close_t.png',
+            closeBoxURL: '',
             position: point.getMarker().position
         });
     };
@@ -1500,7 +1528,7 @@ function MapRoute(parent, id, start, end, title, total) {
             content: '<div class="text"><center>' + point.getTitle() + '</center></div>',
             boxClass: "infoRoute",
             pixelOffset: new google.maps.Size(-50, -50),
-            closeBoxURL: 'img/close_t.png',
+            closeBoxURL: '',
             position: point.getMarker().position
         });
     };
