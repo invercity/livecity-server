@@ -69,6 +69,16 @@ $(document).ready(function() {
         map: document.getElementById('map_canvas'),
         onAuth : $('#auth'),
         control: $('#control'),
+
+        app: {
+            info: $('#app-info'),
+            version: $('#app-version'),
+            versionText: $('#app-version-text'),
+            routes: $('#app-routes'),
+            routesText: $('#app-routes-text'),
+            transports: $('#app-transports'),
+            transportsText: $('#app-transports-text')
+        },
         editPoints: $('#edit_points'),
         editRoutes: $('#edit_routes'),
         editGuide: $('#edit_guide'),
@@ -186,6 +196,8 @@ $(document).ready(function() {
     objects.loginBox.base.on('submit', function(e) {city.onLogin(e)});
     // login cancel handler
     objects.loginBox.close.click(function() {city.loginBox.setVisible(false)});
+    // app info click
+    objects.app.info.click(function(){city.onUpdateInfo();});
     // guide checkbox
     objects.guideEditor.valueIfPlacesShowed.change(function() {
         // check 'checked' property
@@ -207,14 +219,6 @@ $(document).ready(function() {
     objects.body.on('keydown',function(e) {
         // escape handler
         if (e.keyCode === 27) city.onEscape();
-    });
-
-    /*
-     * TEXT SET
-     */
-
-    $.get('/app/version', function(version) {
-        objects.control.html('livecity<div class="small"><sup> ' + version + '</sup></div> ');
     });
 });
 
@@ -430,6 +434,15 @@ Livecity.prototype.setCenter = function(center) {
         this.getMap().setCenter(center);
         this.setProperty('center',center);
     }
+};
+
+Livecity.prototype.onUpdateInfo = function() {
+    var _this = this;
+    $.get('/app/version', function(version) {
+        _this.getObjects().app.version.html(version);
+    });
+    this.getObjects().app.routes.html(city.routeLayer.routes.length);
+    this.getObjects().app.transports.html(city.transLayer.trans.length);
 };
 
 // [P] login - prepare view for authorized/unauthorized user

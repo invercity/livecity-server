@@ -30,15 +30,30 @@
     <!-- AUTHORIZATION -->
 
     <div class="container z1" style="width: 100%">
-        <div class="navbar" style="width: 500px; max-width: 800px; margin: 0 auto;">
+        <div class="navbar" style="width: 500px; max-width: 800px; margin: 0 auto; border: 1px solid #b1b1b1">
             <div class="navbar-inner" style="padding: 0">
                 <ul class="nav">
                     <li class="dropdown">
-                        <a class="dropdown-toggle clickable" data-toggle="dropdown">
+                        <a class="dropdown-toggle clickable" data-toggle="dropdown" id="app-info">
                             Livecity
                         </a>
                         <ul class="dropdown-menu">
-                            <div style="width: 100px; height: 100px"></div>
+                            <div>
+                                <div class="input-group input-group-sm margin-left5">
+                                    <h6 class="clickable">
+                                        <div id="app-version-text" class="inline">Версия:</div>
+                                        <span class="label label-default" id="app-version"></span>
+                                    </h6>
+                                    <h6 class="clickable">
+                                        <div id="app-routes-text" class="inline">Маршрутов:</div>
+                                        <span class="label label-default" id="app-routes"></span>
+                                    </h6>
+                                    <h6 class="clickable">
+                                        <div id="app-transports-text" class="inline">Транспорта:</div>
+                                        <span class="label label-default" id="app-transports"></span>
+                                    </h6>
+                                </div>
+                            </div>
                         </ul>
                     </li>
                     <li class="navbar-search" style="width: 330px; padding-left: 0">

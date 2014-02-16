@@ -154,3 +154,7 @@ body { height: 100%; margin: 0; padding: 0}
 .width90 {
     width: 90%
 }
+
+.inline {
+    display: inline;
+}
