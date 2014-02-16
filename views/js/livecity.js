@@ -57,10 +57,9 @@ $(document).ready(function() {
     // links to page objects
     var objects = {
         body : $('body'),
-        authForm: $('#authform'),
         alertbox: $('#alertbox'),
         map: document.getElementById('map_canvas'),
-        auth : $('#auth'),
+        onAuth : $('#auth'),
         control: $('#control'),
         editPoints: $('#edit_points'),
         editRoutes: $('#edit_routes'),
@@ -96,12 +95,18 @@ $(document).ready(function() {
             valueUrl: $('#guide_url'),
             valueIfPlacesShowed: $('#guide-show-places')
         },
-        toolbox: {
+        toolBox: {
             base: $('#toolbox'),
             data: $('#toolbox-data'),
             activeGuide: $('#tab-guide-active'),
             activePoint: $('#tab-point-active'),
             activeRoute: $('#tab-route-active')
+        },
+        loginBox: {
+            base: $('#authform'),
+            login: $('#auth-login'),
+            pass: $('#auth-pass'),
+            act: $('#auth-submit')
         },
         searchBar: {
             base: $('#main-search'),
@@ -166,8 +171,10 @@ $(document).ready(function() {
     objects.routeEditor.start.click(function() {city.routeBuilder.setStart();});
     // set route start handler
     objects.routeEditor.end.click(function() {city.routeBuilder.setEnd();});
-    // auth button handler
-    objects.auth.click(function() {city.auth();});
+    // onAuth button handler
+    objects.onAuth.click(function() {city.onAuth();});
+    // login button handler
+    objects.loginBox.base.on('submit', function(e) {city.onLogin(e)});
     // guide checkbox
     objects.guideEditor.valueIfPlacesShowed.change(function() {
         // check 'checked' property
@@ -175,7 +182,7 @@ $(document).ready(function() {
         else city.pointLayer.setVisible(false);
     });
     // new guide handler
-    objects.guideEditor.create.click(function() {city.guide.popAll();});
+    objects.guideEditor.create.click(function() {city.toolBox.__guideEditor.popAll();});
     // search bar init
     objects.searchBar.chosen.chosen({
             no_results_text: TEXT[city.getLang()],
@@ -312,7 +319,9 @@ function Livecity(objects,settings) {
     // search bar
     this.searchBar = new SearchBar(this);
     // tool box
-    this.toolbox = new ToolBox(this);
+    this.toolBox = new ToolBox(this);
+    // auth box
+    this.loginBox = new LoginBox(this);
 }
 
 // [P] init - init map [DEPRECATED]
@@ -328,7 +337,7 @@ Livecity.prototype.init = function() {
     // map click handler
     google.maps.event.addListener(this.getMap(), 'click', function(event) {
         // point editor mode
-        if (link.toolbox.isPointEditorOpened()) {
+        if (link.toolBox.isPointEditorOpened()) {
             var point = link.addPoint(event.latLng);
             point.save(function() {
                 link.pointLayer.add(point);
@@ -338,12 +347,15 @@ Livecity.prototype.init = function() {
             });
         }
         // guide editor mode
-        if (link.toolbox.isGuideEditorOpened()) {
+        if (link.toolBox.isGuideEditorOpened()) {
             // temporary
-            link.toolbox.__guideEditor.push(event.latLng);
+            link.toolBox.__guideEditor.push(event.latLng);
         }
     });
-    this.toolbox.maximize(false);
+    this.toolBox.maximize(false);
+    this.loginBox.checkAuthorization(function(res) {
+        link.login(res);
+    });
     this.update();
 };
 
@@ -355,18 +367,18 @@ Livecity.prototype.outMsg = function(text,color) {
 // [P] onEscape - Escape button handler
 Livecity.prototype.onEscape = function() {
     // point editor mode
-    if ((this.toolbox.isPointEditorOpened()) && (this.pointLayer.getCurrent())) {
+    if ((this.toolBox.isPointEditorOpened()) && (this.pointLayer.getCurrent())) {
         this.pointLayer.setCurrent();
-        this.toolbox.clear();
+        this.toolBox.clear();
     }
-    if (this.toolbox.isRouteEditorOpened()) {
+    if (this.toolBox.isRouteEditorOpened()) {
         // TBD
         //this.onCloseRouteEditor();
     }
-    if (this.toolbox.isGuideEditorOpened()) {
+    if (this.toolBox.isGuideEditorOpened()) {
         // TBD
-        this.toolbox.__guideEditor.popAll();
-        this.toolbox.clear();
+        this.toolBox.__guideEditor.popAll();
+        this.toolBox.clear();
     }
 };
 
@@ -419,30 +431,55 @@ Livecity.prototype.setCenter = function(center) {
     }
 };
 
-// [P] auth - authorize user/end session
-Livecity.prototype.auth = function() {
-    if (this.getUID()) {
-        // end session
-        // hide toolbar
-        this.toolbox.show(false);
-        // temporary
-        this.getObjects().auth.css("background", "url('img/key.png') right no-repeat");
-        this.getObjects().auth.text(TEXT[this.getLang()].login);
-        this.setUID(null);
-        if (this.toolbox.isRouteEditorOpened()) this.onCloseRouteEditor();
-        if (this.toolbox.isPointEditorOpened()) this.onClosePointEditor();
-        if (this.toolbox.isGuideEditorOpened()) this.onCloseGuideEditor();
-        this.outMsg(TEXT[this.getLang()].sessionEnd,"green");
-        // login
-    } else {
-        // show toolbar
-        this.toolbox.show(true);
-        // temporary
-        this.getObjects().auth.css("background", "url('img/lock.png') right no-repeat");
-        this.getObjects().auth.text(TEXT[this.getLang()].exit);
-        this.setUID(1);
-        this.outMsg(TEXT[this.getLang()].authSucc,"green");
+Livecity.prototype.login = function(is) {
+    if (true === is) {
+        this.toolBox.show(true);
+        this.getObjects().onAuth.css("background", "url('img/lock.png') right no-repeat");
+        this.getObjects().onAuth.text(TEXT[this.getLang()].exit);
+        this.loginBox.setVisible(false);
+
     }
+    else {
+        this.toolBox.show(false);
+        if (this.toolBox.isRouteEditorOpened()) this.onCloseRouteEditor();
+        if (this.toolBox.isPointEditorOpened()) this.onClosePointEditor();
+        if (this.toolBox.isGuideEditorOpened()) this.onCloseGuideEditor();
+        this.getObjects().onAuth.css("background", "url('img/key.png') right no-repeat");
+        this.getObjects().onAuth.text(TEXT[this.getLang()].login);
+    }
+};
+
+// [P] onAuth - authorize user/end session
+Livecity.prototype.onAuth = function(change) {
+    var _this = this;
+    this.loginBox.checkAuthorization(function(res) {
+        if (true === res) {
+            _this.loginBox.logout(function(res){
+                if (true === res) {
+                    _this.login(false);
+                    _this.outMsg(TEXT[_this.getLang()].sessionEnd,"green");
+                }
+                else {
+                    // TBD
+                    // logout err
+                }
+            })
+        }
+        else {
+            _this.loginBox.setVisible(true);
+        }
+    });
+};
+
+Livecity.prototype.onLogin = function(e) {
+    var _this = this;
+    this.loginBox.login(this.getObjects().loginBox.base, function(result){
+        if (true === result) {
+            _this.login(true);
+            _this.outMsg(TEXT[_this.getLang()].authSucc,"green");
+        };
+    });
+    e.preventDefault();
 };
 
 // [P] update - update trans layer on a map
@@ -471,7 +508,7 @@ Livecity.prototype.onDeletePoint = function() {
     else {
         this.pointLayer.remove(current, function () {
             link.searchBar.update();
-            link.toolbox.clear();
+            link.toolBox.clear();
             link.outMsg(TEXT[link.getLang()].pointRemoved,"green");
         });
     }
@@ -479,37 +516,37 @@ Livecity.prototype.onDeletePoint = function() {
 
 // [P] onEditPoint - edit marker button handler [DEPRECATED]
 Livecity.prototype.onEditPoint = function() {
-    this.toolbox.openPointEditor(true);
+    this.toolBox.openPointEditor(true);
 };
 
 // [P] onEditRoute - edit route button handler [DEPRECATED]
 Livecity.prototype.onEditRoute = function() {
-    this.toolbox.openRouteEditor(true);
+    this.toolBox.openRouteEditor(true);
 };
 // [P] onGuide - actions on open guide [DEPRECATED]
 Livecity.prototype.onEditGuide = function() {
-    this.toolbox.openGuideEditor(true);
+    this.toolBox.openGuideEditor(true);
 };
 
 // [P] onClosePointEditor - actions for closing editor
 Livecity.prototype.onClosePointEditor = function() {
-    this.toolbox.openPointEditor(false);
-    this.toolbox.deselect();
-    this.toolbox.maximize(false);
+    this.toolBox.openPointEditor(false);
+    this.toolBox.deselect();
+    this.toolBox.maximize(false);
 };
 
 // [P] onCloseRouteEditor - actions for closing editor
 Livecity.prototype.onCloseRouteEditor = function() {
-    this.toolbox.openRouteEditor(false);
-    this.toolbox.deselect();
-    this.toolbox.maximize(false);
+    this.toolBox.openRouteEditor(false);
+    this.toolBox.deselect();
+    this.toolBox.maximize(false);
 };
 
 // [P] onCloseGuide - actions for closing guide
 Livecity.prototype.onCloseGuideEditor = function() {
-    this.toolbox.openGuideEditor(false);
-    this.toolbox.deselect();
-    this.toolbox.maximize(false);
+    this.toolBox.openGuideEditor(false);
+    this.toolBox.deselect();
+    this.toolBox.maximize(false);
 };
 
 Livecity.prototype.optimizeView = function(point, callback) {
@@ -542,6 +579,61 @@ Livecity.prototype.optimizeView = function(point, callback) {
             if (vPoints.length === 1) __this.getMap().setZoom(__this.getProperties().zoom);
             else if (callback) callback();
         });
+    });
+};
+
+/*
+ * LoginBox Class
+ */
+function LoginBox(parent) {
+    // link to parent
+    this.__parent = parent;
+    // visible flag
+    this.__visible = false;
+};
+
+// [P]
+LoginBox.prototype.setVisible = function(is) {
+    if (true === is) {
+        this.__visible = true;
+        this.__parent.getObjects().loginBox.base.show();
+    }
+    else {
+        this.__visible = false;
+        this.__parent.getObjects().loginBox.base.hide();
+    }
+};
+
+LoginBox.prototype.login = function(box, callback) {
+    $.ajax({
+        url: '/login',
+        type: 'POST',
+        data: box.serialize(),
+        success: function(result) {
+            if (result.authorized) {
+                callback(true);
+            }
+            else callback(false);
+    }});
+};
+
+LoginBox.prototype.logout = function(callback) {
+    var _this = this;
+    $.ajax({
+        url: '/logout',
+        type: 'POST',
+        success: function(res) {
+            if (res.logout) {
+                callback(true);
+            }
+            else callback(false);
+        }
+    });
+};
+
+LoginBox.prototype.checkAuthorization = function(callback) {
+    $.get('/session', function(res) {
+        callback(true === res.authorized);
     });
 };
 
@@ -624,9 +716,9 @@ ToolBox.prototype.openPointEditor = function(is) {
 };
 
 ToolBox.prototype.deselect = function() {
-    this.__parent.getObjects().toolbox.activeGuide.removeClass('active');
-    this.__parent.getObjects().toolbox.activePoint.removeClass('active');
-    this.__parent.getObjects().toolbox.activeRoute.removeClass('active');
+    this.__parent.getObjects().toolBox.activeGuide.removeClass('active');
+    this.__parent.getObjects().toolBox.activePoint.removeClass('active');
+    this.__parent.getObjects().toolBox.activeRoute.removeClass('active');
 };
 
 // [P]
@@ -676,6 +768,8 @@ ToolBox.prototype.openGuideEditor = function(is) {
             if (this.isRouteEditorOpened()) this.openRouteEditor(false);
             // temp
             this.__parent.searchBar.deselect();
+            this.__parent.pointLayer.setVisible(false);
+            this.__parent.routeLayer.setVisible(false);
             this.__parent.outMsg(TEXT[this.__parent.getLang()].selectFirstEndPointOnMap,'green');
             // set map handlers
             this.__parent.getMap().setOptions({
@@ -703,24 +797,24 @@ ToolBox.prototype.openGuideEditor = function(is) {
 ToolBox.prototype.maximize = function(is) {
     if (true === is) {
         this.__maximized = true;
-        this.__parent.getObjects().toolbox.base.css('height', '90%');
-        this.__parent.getObjects().toolbox.data.show();
+        this.__parent.getObjects().toolBox.base.css('height', '90%');
+        this.__parent.getObjects().toolBox.data.show();
     }
     else {
         this.__maximized = false;
-        this.__parent.getObjects().toolbox.base.css('height', '50px');
-        this.__parent.getObjects().toolbox.data.hide();
+        this.__parent.getObjects().toolBox.base.css('height', '50px');
+        this.__parent.getObjects().toolBox.data.hide();
     }
 };
 
 ToolBox.prototype.show = function(is) {
     if (true === is) {
         this.__visible = true;
-        this.__parent.getObjects().toolbox.base.show();
+        this.__parent.getObjects().toolBox.base.show();
     }
     else {
         this.__visible = false;
-        this.__parent.getObjects().toolbox.base.hide();
+        this.__parent.getObjects().toolBox.base.hide();
     }
 }
 
@@ -734,6 +828,11 @@ ToolBox.prototype.clear = function() {
     this.__parent.getObjects().guideEditor.valueStart.text(TEXT[this.__parent.getLang()].notSet);
     this.__parent.getObjects().guideEditor.valueEnd.text(TEXT[this.__parent.getLang()].notSet);
     this.__parent.getObjects().guideEditor.valueLength.text(TEXT.zero);
+};
+
+// [P]
+ToolBox.prototype.isEditorOpened = function() {
+    return ((this.isGuideEditorOpened()) || (this.isPointEditorOpened()) || (this.isRouteEditorOpened()));
 };
 
 /*
@@ -841,11 +940,9 @@ function SearchBar(parent) {
     this.init = function(sel) {
         var newPoint = null;
         // check if this is not base mode
-        if ((__parent.pointEditorOpened) ||
-            (__parent.routeEditorOpened) ||
-            (__parent.guideOpened)) {
-                this.deselect();
-                __parent.outMsg(TEXT[__parent.getLang()].thisActionIsNotAllowed,"red");
+        if (__parent.toolBox.isEditorOpened()) {
+            this.deselect();
+            __parent.outMsg(TEXT[__parent.getLang()].thisActionIsNotAllowed,"red");
         }
         else {
             // if null

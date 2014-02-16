@@ -150,7 +150,7 @@ body { height: 100%; margin: 0; padding: 0}
     opacity: 0.8;
     display: none;
     cursor: default;
-    border: 2px solid #cecece;
+    border: 2px solid #b1b1b1;
 }
 
 .routeText {

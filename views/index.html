@@ -17,7 +17,7 @@
     <script src="js/bootstrap.js"></script>
     <script src="js/chosen.jquery.js"></script>
     <script src="js/async.js"></script>
-    <!-- STYLES -->
+      <!-- STYLES -->
     <link rel="stylesheet" href="css/livecity.css">
     <link rel="stylesheet" href="css/chosen.css">
     <link rel="stylesheet" href="css/bootstrap.css">
@@ -31,14 +31,17 @@
 
     <div class="container">
         <form class="form-signin" id="authform" style="display: none">
-            <h3 class="form-signin-heading"> Авторизация</h3>
-            <input type="text" class="input-block-level" placeholder="Логин">
-            <input type="password" class="input-block-level" placeholder="Пароль">
-            <button class="btn btn-primary" type="submit">Войти</button>
+            <h3 class="form-signin-heading">
+                Авторизация
+                <!--<button class="close">&times;</button>-->
+            </h3>
+            <input type="text" name="login" id="login" class="input-block-level" placeholder="Логин">
+            <input type="password" name="pass" id="pass" class="input-block-level" placeholder="Пароль">
+            <button class="btn btn-primary" id="auth-submit" type="submit">Войти</button>
             &NonBreakingSpace;
-            <label class="checkbox" style="display: inline-table">
+            <!--<label class="checkbox" style="display: inline-table">
                 <input type="checkbox" value="remember-me"> Запомнить меня
-            </label>
+            </label>-->
         </form>
     </div>
 

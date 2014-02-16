@@ -23,7 +23,8 @@
         "ejs"     : "*",
         "path"    : "*",
         "nconf"   : "*",
-        "async"   : "*"
+        "async"   : "*",
+        "bcrypt"  : "*"
     },
     "analyze": false,
     "engines": {

@@ -11,6 +11,7 @@ var Node = require('./lib/db').Node;
 var Route = require('./lib/db').Route;
 var Transport = require('./lib/db').Transport;
 var Service = require('./lib/service').Service;
+var User = require('./lib/db').User;
 // Temporary markers handler
 var Temp = require('./lib/db').Temp;
 // create service layer
@@ -36,6 +37,8 @@ var GC = function(req, res, next) {
 };
 
 app.configure(function() {
+    app.use(express.cookieParser());
+    app.use(express.session({secret: '123454321'}));
     app.use(CORS);
     app.use(GC);
     app.use(express.favicon());
@@ -546,6 +549,54 @@ app.post('/work', function (req, res) {
         service.updateTransportData(req.body._id,req.body.route, req.body.lat, req.body.lng, function(result){
             res.send(result);
         });
+    }
+});
+
+app.post('/login', function(req, res) {
+    User.findOne({username: req.body.login}, function(err, user) {
+        if ((!err) && (user)) {
+            user.comparePassword(req.body.pass, function (err, isMatch) {
+                if ((!err) && (isMatch)) {
+                    req.session.authorized = true;
+                    req.session.user = req.body.user;
+                    res.send({authorized: true});
+                }
+                else res.send({error: 'Invalid user data'});
+            });
+        }
+        else res.send({error: 'Invalid user data'});
+    });
+});
+
+app.post('/register', function(req, res){
+    var user = new User({
+        username: req.body.username,
+        password: req.body.password
+    });
+    user.save(function(err){
+        if (!err) res.send({user: user});
+        else res.send({err: err});
+    });
+});
+
+app.post('/logout', function(req, res) {
+    if (req.session) {
+        req.session.destroy(function() {
+            res.send({logout: true});
+        })
+    }
+    else res.send({});
+});
+
+app.get('/session', function(req, res){
+    if ((req.session) && (req.session.authorized)) {
+        res.send({
+            authorized: true,
+            user: req.session.user
+        });
+    }
+    else {
+        res.send({});
     }
 });
 
