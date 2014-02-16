@@ -114,7 +114,8 @@ $(document).ready(function() {
             base: $('#authform'),
             login: $('#auth-login'),
             pass: $('#auth-pass'),
-            act: $('#auth-submit')
+            act: $('#auth-submit'),
+            close: $('#authform-close')
         },
         searchBar: {
             base: $('#main-search'),
@@ -183,6 +184,8 @@ $(document).ready(function() {
     objects.onAuth.click(function() {city.onAuth();});
     // login button handler
     objects.loginBox.base.on('submit', function(e) {city.onLogin(e)});
+    // login cancel handler
+    objects.loginBox.close.click(function() {city.loginBox.setVisible(false)});
     // guide checkbox
     objects.guideEditor.valueIfPlacesShowed.change(function() {
         // check 'checked' property
@@ -193,7 +196,7 @@ $(document).ready(function() {
     objects.guideEditor.create.click(function() {city.toolBox.__guideEditor.popAll();});
     // search bar init
     objects.searchBar.chosen.chosen({
-            no_results_text: TEXT[city.getLang()],
+            no_results_text: TEXT[city.getLang()]
     }).change(function() {
             city.searchBar.init($(this).val());
     });
