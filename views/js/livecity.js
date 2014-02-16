@@ -26,6 +26,7 @@ TEXT = {
         notSet: 'Не задано',
         sessionEnd: 'Текущая сессия завершена',
         authSucc: 'Вы успешно авторизированы',
+        authErr: 'Неверный логин и(или) пароль',
         login: 'Вход',
         exit: 'Выход',
         minute: 'мин.',
@@ -51,6 +52,7 @@ TEXT = {
         notSet: 'Not set',
         sessionEnd: 'Current session finished',
         authSucc: 'You have been authorized successfully',
+        authErr: 'Invalid login and(or) password',
         login: 'Login',
         exit: 'Exit',
         minute: 'min.',
@@ -192,7 +194,6 @@ $(document).ready(function() {
     // search bar init
     objects.searchBar.chosen.chosen({
             no_results_text: TEXT[city.getLang()],
-            width: '100%'
     }).change(function() {
             city.searchBar.init($(this).val());
     });
@@ -428,13 +429,13 @@ Livecity.prototype.setCenter = function(center) {
     }
 };
 
+// [P] login - prepare view for authorized/unauthorized user
 Livecity.prototype.login = function(is) {
     if (true === is) {
         this.toolBox.show(true);
         this.getObjects().onAuth.css("background", "url('img/lock.png') right no-repeat");
         this.getObjects().onAuth.text(TEXT[this.getLang()].exit);
         this.loginBox.setVisible(false);
-
     }
     else {
         this.toolBox.show(false);
@@ -447,7 +448,7 @@ Livecity.prototype.login = function(is) {
 };
 
 // [P] onAuth - authorize user/end session
-Livecity.prototype.onAuth = function(change) {
+Livecity.prototype.onAuth = function() {
     var _this = this;
     this.loginBox.checkAuthorization(function(res) {
         if (true === res) {
@@ -474,7 +475,11 @@ Livecity.prototype.onLogin = function(e) {
         if (true === result) {
             _this.login(true);
             _this.outMsg(TEXT[_this.getLang()].authSucc,"green");
-        };
+        }
+        else {
+            _this.login(false);
+            _this.outMsg(TEXT[_this.getLang()].authErr, "red");
+        }
     });
     e.preventDefault();
 };
