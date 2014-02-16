@@ -185,11 +185,11 @@ $(document).ready(function() {
     // back to city center
     objects.control.click(function (){city.setCenter();});
     // save route handler
-    objects.routeEditor.save.click(function() { city.routeBuilder.save();});
+    objects.routeEditor.save.click(function() { city.toolBox.__routeEditor.save();});
     // set route start handler
-    objects.routeEditor.start.click(function() {city.routeBuilder.setStart();});
+    objects.routeEditor.start.click(function() {city.toolBox.__routeEditor.setStart();});
     // set route start handler
-    objects.routeEditor.end.click(function() {city.routeBuilder.setEnd();});
+    objects.routeEditor.end.click(function() {city.toolBox.__routeEditor.setEnd();});
     // onAuth button handler
     objects.onAuth.click(function() {city.onAuth();});
     // login button handler
@@ -322,6 +322,8 @@ function Livecity(objects,settings) {
     this.toolBox = new ToolBox(this);
     // auth box
     this.loginBox = new LoginBox(this);
+    // directions service
+    this.directionsService = new google.maps.DirectionsService();
 }
 
 // [P] init - init map [DEPRECATED]
@@ -594,6 +596,8 @@ Livecity.prototype.onClosePointEditor = function() {
 Livecity.prototype.onCloseRouteEditor = function() {
     // prepare toolbox
     this.toolBox.openRouteEditor(false);
+    // hide point layer
+    this.pointLayer.setVisible(false);
     // show notify
     this.outMsg(TEXT[this.getLang()].editingFinished,"green");
 };
@@ -787,7 +791,7 @@ ToolBox.prototype.openRouteEditor = function(is) {
         }
         if (!this.isRouteEditorOpened()) {
             // create new editor
-            this.__routeEditor = new RouteBuilder(this.__parent);
+            this.__routeEditor = new RouteEditor(this.__parent);
         }
     }
     else {
@@ -1205,8 +1209,6 @@ function PointLayer(main) {
 function RouteLayer(main) {
     // parent layer
     this.main = main;
-    // service for making route
-    this.directionsService = new google.maps.DirectionsService();
     // route on layer
     this.routes = [];
     // nodes on layer
@@ -1740,7 +1742,7 @@ MapNode.prototype.init = function(callback) {
         travelMode: google.maps.TravelMode.DRIVING,
         optimizeWaypoints: false
     };
-    this.getParent().routeLayer.directionsService.route(request, function(result, status) {
+    this.getParent().directionsService.route(request, function(result, status) {
         if (status === google.maps.DirectionsStatus.OK) {
             link.setData(JSON.stringify(result, stringifyNode));
             link.getBase().setDirections(result);
@@ -1897,7 +1899,7 @@ function MapPoint(parent, id, position, icon, title) {
             // UPD - async.js
             for (var i = 0; i < __parent.pointLayer.points.length; i++) {
                 if (__parent.pointLayer.points[i].getMarker() === this)
-                    __parent.routeBuilder.add(__parent.pointLayer.points[i]);
+                    __parent.toolBox.__routeEditor.add(__parent.pointLayer.points[i]);
             }
         }
         // if we work in base mode
@@ -2050,10 +2052,11 @@ function MapTrans(main, id, id_route, position) {
 }
 
 /*
- * RouteBuilder Class
+ * RouteEditor Class
  * @main - link to parent layer
  */
-function RouteBuilder(main) {
+function RouteEditor(main) {
+    // link to parent object
     this.main = main;
     // array for points
     this.points = [];
@@ -2106,7 +2109,7 @@ function RouteBuilder(main) {
         }
     };
 
-    // init routeBuilder by existing route
+    // init routeEditor by existing route
     this.initExist = function(route) {
         // TBD
     };
@@ -2129,6 +2132,7 @@ function RouteBuilder(main) {
         var link = this;
         // check name
         var title = this.main.getObjects().routeEditor.valueTitle.val();
+        // TBD - move to parent
         if (title === '') this.main.outMsg(TEXT[this.main.getLang()].nameNotChoosed, "red");
         else if (!this.route.getStart()) this.main.outMsg(TEXT[this.main.getLang()].routeStartNotSelected, "red");
         else if (!this.route.getEnd()) this.main.outMsg(TEXT[this.main.getLang()].routeEndNotSelected, "red");
@@ -2153,12 +2157,19 @@ function RouteBuilder(main) {
 
     // action on builder closing
     this.end = function() {
-        this.main.pointLayer.setVisible(false);
         if (this.points.length === 0) return;
         this.route.setVisible(false);
         this.leavePoints();
-        this.main.pointLayer.setVisible(false);
     };
+}
+
+/*
+ * GuideEditor Class
+ * Creating/Modifying Guides
+ */
+function GuideEditor(parent) {
+    // link to parent
+    this.__parent = parent;
 }
 
 /*
@@ -2217,7 +2228,7 @@ function Guide(main, start, end, result, total) {
                 travelMode: google.maps.TravelMode.DRIVING,
                 optimizeWaypoints: false
             };
-            this.main.routeLayer.directionsService.route(request, function(result, status) {
+            this.main.directionsService.route(request, function(result, status) {
                 if (status === google.maps.DirectionsStatus.OK) {
                     obj.result = JSON.stringify(result, stringifyNode);
                     obj.base.setDirections(result);
