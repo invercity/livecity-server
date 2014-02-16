@@ -436,7 +436,7 @@ Livecity.prototype.setCenter = function(center) {
 Livecity.prototype.login = function(is) {
     if (true === is) {
         this.toolBox.show(true);
-        this.getObjects().onAuth.css("background", "url('img/lock.png') right no-repeat");
+        //this.getObjects().onAuth.css("background", "url('img/lock.png') right no-repeat");
         this.getObjects().onAuth.text(TEXT[this.getLang()].exit);
         this.loginBox.setVisible(false);
     }
@@ -445,7 +445,7 @@ Livecity.prototype.login = function(is) {
         if (this.toolBox.isRouteEditorOpened()) this.onCloseRouteEditor();
         if (this.toolBox.isPointEditorOpened()) this.onClosePointEditor();
         if (this.toolBox.isGuideEditorOpened()) this.onCloseGuideEditor();
-        this.getObjects().onAuth.css("background", "url('img/key.png') right no-repeat");
+        //this.getObjects().onAuth.css("background", "url('img/key.png') right no-repeat");
         this.getObjects().onAuth.text(TEXT[this.getLang()].login);
     }
 };
