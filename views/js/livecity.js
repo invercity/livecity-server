@@ -894,7 +894,9 @@ Notifier.prototype.msg = function(text, color, sec) {
     var duration = (sec) ? sec*1000 : 3000;
     this.push();
     this.getBox().css("display", "block");
-    this.getBox().css("background-color", color);
+    // replace 'green' and 'red' with normal colors
+    var col = (color === 'green') ? '#27A845' : '#F20505';
+    this.getBox().css("background-color", col);
     this.getBox().text(text);
     // show message for 3 seconds
     setTimeout(function() {
