@@ -895,6 +895,7 @@ Notifier.prototype.msg = function(text, color, sec) {
     this.push();
     this.getBox().css("display", "block");
     // replace 'green' and 'red' with normal colors
+    // TBD
     var col = (color === 'green') ? '#27A845' : '#F20505';
     this.getBox().css("background-color", col);
     this.getBox().text(text);
@@ -968,6 +969,7 @@ function SearchBar(parent) {
         if (__parent.toolBox.isEditorOpened()) {
             this.deselect();
             __parent.outMsg(TEXT[__parent.getLang()].thisActionIsNotAllowed,"red");
+            return;
         }
         else {
             // if null
@@ -1858,12 +1860,12 @@ function MapPoint(parent, id, position, icon, title) {
     // setting listeners
     google.maps.event.addListener(__marker, 'click', function(event) {
         // if we work in PointEditor
-        if (__parent.pointEditorOpened) {
+        if (__parent.toolBox.isPointEditorOpened()) {
             __parent.setEditPointData(event.latLng, __marker.title, true);
             __parent.pointLayer.setCurrent(link);
             this.setDraggable(true);
         // if we work in RouteEditor
-        } else if (__parent.routeEditorOpened) {
+        } else if (__parent.toolBox.isRouteEditorOpened()) {
             // UPD - async.js
             for (var i = 0; i < __parent.pointLayer.points.length; i++) {
                 if (__parent.pointLayer.points[i].getMarker() === this)
@@ -1880,14 +1882,14 @@ function MapPoint(parent, id, position, icon, title) {
         }
     });
     google.maps.event.addListener(__marker, 'drag', function(event) {
-        if (__parent.pointEditorOpened) {
+        if (__parent.toolBox.isPointEditorOpened()) {
             //FEATURE
             var title = __parent.getObjects().pointEditor.valueTitle.val();
             __parent.setEditPointData(event.latLng, title, false);
         }
     });
     google.maps.event.addListener(__marker, 'dragend', function() {
-        if (__parent.pointEditorOpened) {
+        if (__parent.toolBox.isPointEditorOpened()) {
             __parent.pointLayer.current.save();
             __parent.outMsg(TEXT[__parent.getLang()].pointSaved,"green");
         }
