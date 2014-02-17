@@ -101,6 +101,9 @@
     <div id="toolbox" class="toolbox">
         <div class="tabbable tabs-below">
             <div class="tab-content" id="toolbox-data">
+
+                <!-- ROUTE EDITOR -->
+
                 <div class="tab-pane fade in" id="tab-route">
                     <div class="input-group input-group-sm margin-left5">
                         <!-- TITLE -->
@@ -118,9 +121,9 @@
                             Конечная<br/>
                             <span class="label label-default" id="route-end"> Не выбрано</span>
                         </h5>
-                        <h5 id="route-length">
+                        <h5 class="clickable">
                             Длина маршрута<br/>
-                            <span class="label label-default">0</span>
+                            <span class="label label-default" id="route-length">0</span>
                         </h5>
                         <input type="text" id="route-name" class="form-control" placeholder="Название" style="width: 90%">
                         <div class="btn-toolbar">
@@ -173,6 +176,9 @@
                         </ul>
                     </div>
                 </div>
+
+                <!-- GUIDE EDITOR-->
+
                 <div class="tab-pane fade in" id="tab-guide">
                     <!-- INPUTS -->
                     <div class="input-group input-group-sm margin-left5">

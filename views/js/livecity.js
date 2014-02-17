@@ -100,7 +100,8 @@ $(document).ready(function() {
             end: $('#button-route-end'),
             valueTitle: $('#route-name'),
             valueStart: $('#route-start'),
-            valueEnd: $('#route-end')
+            valueEnd: $('#route-end'),
+            valueLength: $('#route-length')
         },
         guideEditor : {
             open: $('#open-guide'),
@@ -873,6 +874,7 @@ ToolBox.prototype.clear = function() {
     this.__parent.getObjects().routeEditor.valueTitle.val(TEXT.empty);
     this.__parent.getObjects().routeEditor.valueStart.text(TEXT[this.__parent.getLang()].notSelected);
     this.__parent.getObjects().routeEditor.valueEnd.text(TEXT[this.__parent.getLang()].notSelected);
+    this.__parent.getObjects().routeEditor.valueLength.text(TEXT.zero);
     this.__parent.getObjects().guideEditor.valueStart.text(TEXT[this.__parent.getLang()].notSet);
     this.__parent.getObjects().guideEditor.valueEnd.text(TEXT[this.__parent.getLang()].notSet);
     this.__parent.getObjects().guideEditor.valueLength.text(TEXT.zero);
@@ -1513,6 +1515,11 @@ function MapRoute(parent, id, start, end, title, total) {
         return __total;
     };
 
+    // SET total
+    this.setTotal = function(total) {
+        __total = total;
+    };
+
     // SET start
     this.setStart = function(point) {
         __start = point.getId();
@@ -1575,6 +1582,8 @@ MapRoute.prototype.add = function(node) {
     // UPDATE
     if (node.getId()) this.getNodes().push(this.getParent().routeLayer.nodes[this.getParent().routeLayer.nodes.indexOf(node)]);
     else this.getNodes().push(node);
+    // update total distance
+    this.setTotal(this.getTotal() + node.getTotal());
 };
 
 // [P] init route [ASYNC]
@@ -1664,7 +1673,7 @@ function MapNode(parent, id, start, end, data, total) {
     // point b
     var __end = (end) ? end : null;
     // node base class
-    var __base = new google.maps.DirectionsRenderer({
+    this.__base = new google.maps.DirectionsRenderer({
         suppressMarkers: true,
         preserveViewport: true
     });
@@ -1687,12 +1696,12 @@ function MapNode(parent, id, start, end, data, total) {
         __start.setVisible(is);
         __end.setVisible(is);
         if (!is) {
-            __base.setMap(null);
+            this.__base.setMap(null);
             // if info was opened
             __start.setInfoVisible(false);
             __end.setInfoVisible(false);
         }
-        else __base.setMap(__parent.getMap());
+        else this.__base.setMap(__parent.getMap());
     };
 
     // GET visible
@@ -1735,12 +1744,10 @@ function MapNode(parent, id, start, end, data, total) {
 
     // GET base
     this.getBase = function() {
-        return __base;
+        return this.__base;
     };
 
-    // TBD
-    if (!__data) this.init();
-    else __base.setDirections(JSON.parse(__data, parseNode));
+    if (__data) this.__base.setDirections(JSON.parse(__data, parseNode));
 }
 
 // [P] init - init node using GService [ASYNC]
@@ -1756,13 +1763,19 @@ MapNode.prototype.init = function(callback) {
         if (status === google.maps.DirectionsStatus.OK) {
             link.setData(JSON.stringify(result, stringifyNode));
             link.getBase().setDirections(result);
-            var myroute = result.routes[0];
-            var ttl = 0;
-            for (var i = 0; i < myroute.legs.length; i++) ttl += myroute.legs[i].distance.value;
-            link.setTotal(ttl);
+            link.calculate();
         }
         if (callback) callback(result);
     });
+};
+
+MapNode.prototype.calculate = function() {
+    var result = JSON.parse(this.getData(), parseNode);
+    if (!result) return;
+    var myroute = result.routes[0];
+    var ttl = 0;
+    for (var i = 0; i < myroute.legs.length; i++) ttl += myroute.legs[i].distance.value;
+    this.setTotal(ttl);
 };
 
 // [P] save - save this node [ASYNC]
@@ -2061,7 +2074,7 @@ function MapTrans(main, id, id_route, position) {
     };
 }
 
-/*
+/*`
  * RouteEditor Class
  * @main - link to parent layer
  */
@@ -2079,8 +2092,12 @@ function RouteEditor(main) {
         var size = this.points.length;
         if (this.points.length > 1) {
             var node = new MapNode(this.main, null, this.points[size - 2], this.points[size - 1], null, 0);
-            this.route.add(node);
-            node.setVisible(true);
+            var _this = this;
+            node.init(function() {
+                _this.route.add(node);
+                _this.main.getObjects().routeEditor.valueLength.html(_this.route.getTotal());
+                node.setVisible(true);
+            });
         }
     };
 
@@ -2188,7 +2205,7 @@ function GuideEditor(parent) {
     this.__parent = parent;
     // guide
     this.__guide = new Guide(parent);
-}
+};
 
 GuideEditor.prototype.push = function(position) {
     var _this = this;
@@ -2245,6 +2262,9 @@ GuideEditor.prototype.isEmpty = function() {
     return this.__guide.getStart() === null;
 };
 
+/*
+ * Guide Class
+ */
 function Guide(parent) {
     // link to parent
     this.__parent = parent;
@@ -2253,12 +2273,20 @@ function Guide(parent) {
         suppressMarkers: true,
         preserveViewport: true
     });
+    // start marker
     this.__start = null;
+    // end marker
     this.__end = null;
+    // start address
     this.__startAddress = null;
+    // end address
     this.__endAddress = null;
+    // total distance
     this.__total = 0;
+    // DirectionsResult stringified
     this.__result = null;
+    // id
+    this.__id = null;
 };
 
 Guide.prototype.getStart = function() {
