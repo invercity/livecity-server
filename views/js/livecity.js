@@ -205,7 +205,7 @@ $(document).ready(function() {
         else city.pointLayer.setVisible(false);
     });
     // new guide handler
-    objects.guideEditor.create.click(function() {city.toolBox.__guideEditor.popAll();});
+    objects.guideEditor.create.click(function() {city.toolBox.__guideEditor.resume();});
     // search bar init
     objects.searchBar.chosen.chosen({
             no_results_text: TEXT[city.getLang()]
@@ -324,6 +324,8 @@ function Livecity(objects,settings) {
     this.loginBox = new LoginBox(this);
     // directions service
     this.directionsService = new google.maps.DirectionsService();
+    // geocoder service
+    this.geocoder = new google.maps.Geocoder();
 }
 
 // [P] init - init map [DEPRECATED]
@@ -355,6 +357,7 @@ Livecity.prototype.init = function() {
         }
     });
     this.toolBox.maximize(false);
+    // check user session
     this.loginBox.checkAuthorization(function(res) {
         link.login(res);
     });
@@ -377,16 +380,16 @@ Livecity.prototype.onEscape = function() {
         else this.onClosePointEditor();
     }
     if (this.toolBox.isRouteEditorOpened()) {
-        if (!this.toolBox.__routeEditor.empty()) {
-            this.toolBox.__routeEditor.end();
+        if (!this.toolBox.__routeEditor.isEmpty()) {
+            this.toolBox.__routeEditor.resume();
             this.pointLayer.setVisible(true);
             this.toolBox.clear();
         }
         else this.onCloseRouteEditor();
     }
     if (this.toolBox.isGuideEditorOpened()) {
-        if (!this.toolBox.__guideEditor.empty()) {
-            this.toolBox.__guideEditor.popAll();
+        if (!this.toolBox.__guideEditor.isEmpty()) {
+            this.toolBox.__guideEditor.resume();
             this.toolBox.clear();
         }
         else this.onCloseGuideEditor();
@@ -668,14 +671,9 @@ function LoginBox(parent) {
 
 // [P]
 LoginBox.prototype.setVisible = function(is) {
-    if (true === is) {
-        this.__visible = true;
-        this.__parent.getObjects().loginBox.base.show();
-    }
-    else {
-        this.__visible = false;
-        this.__parent.getObjects().loginBox.base.hide();
-    }
+    if (true === is) this.__parent.getObjects().loginBox.base.show();
+    else this.__parent.getObjects().loginBox.base.hide();
+    this.__visible = is;
 };
 
 LoginBox.prototype.login = function(box, callback) {
@@ -806,7 +804,7 @@ ToolBox.prototype.openRouteEditor = function(is) {
         // clear data
         this.clear();
         // finish RouteEditor and destroy it
-        this.__routeEditor.end();
+        this.__routeEditor.resume();
         this.__routeEditor = null;
     }
 };
@@ -826,7 +824,7 @@ ToolBox.prototype.openGuideEditor = function(is) {
         }
         if (!this.isGuideEditorOpened()) {
             // create new guide
-            this.__guideEditor = new Guide(this.__parent);
+            this.__guideEditor = new GuideEditor(this.__parent);
         }
     }
     else {
@@ -839,7 +837,7 @@ ToolBox.prototype.openGuideEditor = function(is) {
         // clear input data
         this.clear();
         // resume GuideEditor and destroy it
-        this.__guideEditor.popAll();
+        this.__guideEditor.resume();
         this.__guideEditor = null;
     }
 };
@@ -910,7 +908,7 @@ function Notifier(parent) {
     };
 
     // is empty stack
-    this.empty = function() {
+    this.isEmpty = function() {
         return __stack.length === 0;
     };
 }
@@ -929,7 +927,7 @@ Notifier.prototype.msg = function(text, color, sec) {
     // show message for 3 seconds
     setTimeout(function() {
         link.pop();
-        if (link.empty()) link.getBox().css("display", "none");
+        if (link.isEmpty()) link.getBox().css("display", "none");
     }, duration);
 };
 
@@ -2139,7 +2137,7 @@ function RouteEditor(main) {
     };
 
     // empty - check
-    this.empty = function() {
+    this.isEmpty = function() {
         return this.points.length === 0;
     };
 
@@ -2172,8 +2170,8 @@ function RouteEditor(main) {
         }
     };
 
-    // action on builder closing
-    this.end = function() {
+    // resume - finish editing route and create new
+    this.resume = function() {
         if (this.points.length === 0) return;
         this.route.setVisible(false);
         this.route = new MapRoute(this.main);
@@ -2188,99 +2186,128 @@ function RouteEditor(main) {
 function GuideEditor(parent) {
     // link to parent
     this.__parent = parent;
+    // guide
+    this.__guide = new Guide(parent);
 }
 
-/*
- * Guide Class
- */
-function Guide(main, start, end, result, total) {
-    this.main = main;
-    this.base = new google.maps.DirectionsRenderer({
+GuideEditor.prototype.push = function(position) {
+    var _this = this;
+    // if both points added - resume
+    if ((this.__guide.getStart()) && (this.__guide.getEnd())) return;
+    // if position is the pos of A
+    if (!this.__guide.getStart()) {
+        this.__parent.geocoder.geocode({'latLng': position}, function(results, status) {
+            if (status == google.maps.GeocoderStatus.OK) {
+                if (results[1]) {
+                    _this.__parent.getObjects().guideEditor.valueStart.text(results[1].formatted_address.substr(0,30) + '...');
+                    _this.__guide.setStart(position, results[1].formatted_address);
+                }
+            }
+        });
+    }
+    else {
+        this.__parent.geocoder.geocode({'latLng': position}, function(results, status) {
+            if (status == google.maps.GeocoderStatus.OK) {
+                if (results[1]) {
+                    _this.__parent.getObjects().guideEditor.valueEnd.text(results[1].formatted_address.substr(0,30) + '...');
+                    _this.__guide.setEnd(position, results[1].formatted_address);
+                }
+            }
+        });
+        var request = {
+            origin: this.__guide.getStart().position,
+            destination: position,
+            travelMode: google.maps.TravelMode.DRIVING,
+            optimizeWaypoints: false
+        };
+        this.__parent.directionsService.route(request, function(result, status) {
+            if (status === google.maps.DirectionsStatus.OK) {
+                _this.__guide.setResult(result);
+                var myroute = result.routes[0];
+                var ttl = 0;
+                for (var i = 0; i < myroute.legs.length; i++) ttl += myroute.legs[i].distance.value;
+                _this.__guide.setTotal(ttl);
+                _this.__parent.getObjects().guideEditor.valueLength.text(ttl);
+                _this.__guide.setVisible(true);
+            }
+        });
+    }
+};
+
+GuideEditor.prototype.resume = function() {
+    this.__guide.setVisible(false);
+    this.__guide = new Guide(this.__parent);
+    // TBD
+    this.__parent.toolBox.clear();
+};
+
+GuideEditor.prototype.isEmpty = function() {
+    return this.__guide.getStart() === null;
+};
+
+function Guide(parent) {
+    // link to parent
+    this.__parent = parent;
+    // base
+    this.__base = new google.maps.DirectionsRenderer({
         suppressMarkers: true,
         preserveViewport: true
     });
-    this.geocoder = new google.maps.Geocoder();
-    this.start = (start) ? start : null;
-    this.end = (end) ? end : null;
-    this.result = (result) ? result : null;
-    this.total = (total) ? total : 0;
+    this.__start = null;
+    this.__end = null;
+    this.__startAddress = null;
+    this.__endAddress = null;
+    this.__total = 0;
+    this.__result = null;
+};
 
-    // push - add new point to stack
-    this.push = function(position){
-        var obj = this;
-        if ((this.start) && (this.end)) return;
-        // if position is the pos of A
-        if (!this.start) {
-            this.start = new google.maps.Marker({
-                position: position,
-                draggable: true,
-                map: this.main.getMap(),
-                icon: this.main.static.ICON_A()
-            });
-            this.geocoder.geocode({'latLng': position}, function(results, status) {
-                if (status == google.maps.GeocoderStatus.OK) {
-                    if (results[1]) {
-                        // FEATURE - fetch address from result
-                        obj.main.getObjects().guideEditor.valueStart.text(results[1].formatted_address.substr(0,30) + '...');
-                    }
-                }
-            });
-        }
-        else {
-            this.end = new google.maps.Marker({
-                position: position,
-                map: this.main.getMap(),
-                draggable: true,
-                icon: this.main.static.ICON_B()
-            });
-            this.geocoder.geocode({'latLng': position}, function(results, status) {
-                if (status == google.maps.GeocoderStatus.OK) {
-                    if (results[1]) {
-                       obj.main.getObjects().guideEditor.valueEnd.text(results[1].formatted_address.substr(0,30) + '...');
-                    }
-                }
-            });
-            var request = {
-                origin: this.start.position,
-                destination: this.end.position,
-                travelMode: google.maps.TravelMode.DRIVING,
-                optimizeWaypoints: false
-            };
-            this.main.directionsService.route(request, function(result, status) {
-                if (status === google.maps.DirectionsStatus.OK) {
-                    obj.result = JSON.stringify(result, stringifyNode);
-                    obj.base.setDirections(result);
-                    var myroute = result.routes[0];
-                    var ttl = 0;
-                    for (var i = 0; i < myroute.legs.length; i++) ttl += myroute.legs[i].distance.value;
-                    obj.total = ttl;
-                    obj.main.getObjects().guideEditor.valueLength.text(ttl);
-                    obj.base.setMap(obj.main.getMap());
-                }
-            });
-        }
-    };
+Guide.prototype.getStart = function() {
+    return this.__start;
+};
 
-    // popAll - pop all points from stack
-    this.popAll = function() {
-        if (this.start) {
-            this.start.setMap(null);
-            this.start = null;
-        }
-        if (this.end) {
-            this.end.setMap(null);
-            this.end = null;
-            this.base.setMap(null);
-        }
-        // TBD
-        this.main.toolBox.clear();
-    };
+Guide.prototype.getEnd = function() {
+    return this.__end;
+};
 
-    // empty - check if editing process finished
-    this.empty = function() {
-        return this.start === null;
-    }
-}
+Guide.prototype.setStart = function(position, address) {
+    this.__start = new google.maps.Marker({
+        position: position,
+        draggable: true,
+        map: this.__parent.getMap(),
+        icon: this.__parent.static.ICON_A()
+    });
+    this.__startAddress = address;
+};
+
+Guide.prototype.setEnd = function(position, address) {
+    this.__end = new google.maps.Marker({
+        position: position,
+        draggable: true,
+        map: this.__parent.getMap(),
+        icon: this.__parent.static.ICON_B()
+    });
+    this.__endAddress = address;
+};
+
+Guide.prototype.setTotal = function(ttl) {
+    this.__total = ttl;
+};
+
+Guide.prototype.setResult = function(result) {
+    this.__base.setDirections(result);
+    this.__result = JSON.stringify(result, stringifyNode);
+};
+
+Guide.prototype.setVisible = function(is) {
+    if (true === is) this.__base.setMap(this.__parent.getMap());
+    else this.__base.setMap(null);
+    if (this.__start) this.__start.setVisible(is);
+    if (this.__end) this.__end.setVisible(is);
+};
+
+Guide.prototype.save = function() {
+
+};
 
 function stringifyNode(name, value) {
     if (value instanceof google.maps.LatLng) return 'LatLng(' + value.lat() + ',' + value.lng() + ')';
