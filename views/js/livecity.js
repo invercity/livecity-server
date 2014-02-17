@@ -377,7 +377,12 @@ Livecity.prototype.onEscape = function() {
         else this.onClosePointEditor();
     }
     if (this.toolBox.isRouteEditorOpened()) {
-        this.onCloseRouteEditor();
+        if (!this.toolBox.__routeEditor.empty()) {
+            this.toolBox.__routeEditor.end();
+            this.pointLayer.setVisible(true);
+            this.toolBox.clear();
+        }
+        else this.onCloseRouteEditor();
     }
     if (this.toolBox.isGuideEditorOpened()) {
         if (!this.toolBox.__guideEditor.empty()) {
@@ -1440,12 +1445,19 @@ function MapRoute(parent, id, start, end, title, total) {
     // name
     var __title = (title) ? title : null;
 
-    // SET visible [ASYNC]
-    this.setVisible = function(is,callback) {
+    // SET nodeVisible [ASYNC]
+    this.setNodeVisible = function(is, callback) {
         async.each(__nodes,function(item,callback) {
             item.setVisible(is);
             callback();
         },function(err) {
+            if (callback) callback(err);
+        });
+    };
+
+    // SET visible [ASYNC]
+    this.setVisible = function(is, callback) {
+        this.setNodeVisible(is, function(err) {
             if (is) {
                 if (__infoStart) __infoStart.open(__parent.getMap());
                 if (__infoEnd) __infoEnd.open(__parent.getMap());
@@ -1455,7 +1467,7 @@ function MapRoute(parent, id, start, end, title, total) {
             }
             __visible = is;
             if (callback) callback(err);
-        });
+        })
     };
 
     // GET visible
@@ -2126,6 +2138,11 @@ function RouteEditor(main) {
         })
     };
 
+    // empty - check
+    this.empty = function() {
+        return this.points.length === 0;
+    };
+
     // save new route [ASYNC]
     this.save = function(callback) {
         // link to this
@@ -2159,6 +2176,7 @@ function RouteEditor(main) {
     this.end = function() {
         if (this.points.length === 0) return;
         this.route.setVisible(false);
+        this.route = new MapRoute(this.main);
         this.leavePoints();
     };
 }
