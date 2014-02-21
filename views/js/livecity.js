@@ -447,7 +447,7 @@ Livecity.prototype.login = function(is) {
     if (true === is) {
         this.toolBox.show(true);
         //this.getObjects().onAuth.css("background", "url('img/lock.png') right no-repeat");
-        this.getObjects().onAuth.text(TEXT[this.getLang()].exit);
+        this.getObjects().onAuth.html(TEXT[this.getLang()].exit);
         this.loginBox.setVisible(false);
     }
     else {
@@ -456,7 +456,7 @@ Livecity.prototype.login = function(is) {
         if (this.toolBox.isPointEditorOpened()) this.onClosePointEditor();
         if (this.toolBox.isGuideEditorOpened()) this.onCloseGuideEditor();
         //this.getObjects().onAuth.css("background", "url('img/key.png') right no-repeat");
-        this.getObjects().onAuth.text(TEXT[this.getLang()].login);
+        this.getObjects().onAuth.html(TEXT[this.getLang()].login);
     }
 };
 
@@ -531,6 +531,8 @@ Livecity.prototype.onDeletePoint = function() {
 
 // [P] onEditPoint - edit marker button handler
 Livecity.prototype.onEditPoint = function() {
+    // show notify
+    if (!this.toolBox.isPointEditorOpened()) this.outMsg(TEXT[this.getLang()].modePointEditor,"green");
     // prepare toolbox
     this.toolBox.openPointEditor(true);
     // setting up cursor
@@ -547,12 +549,12 @@ Livecity.prototype.onEditPoint = function() {
     this.searchBar.deselect();
     // set current point as NULL
     this.pointLayer.setCurrent();
-    // show notify
-    this.outMsg(TEXT[this.getLang()].modePointEditor,"green");
 };
 
-// [P] onEditRoute - edit route button handler [DEPRECATED]
+// [P] onEditRoute - edit route button handler
 Livecity.prototype.onEditRoute = function() {
+    // show notify
+    if (!this.toolBox.isRouteEditorOpened()) this.outMsg(TEXT[this.getLang()].modeRouteEditor,"green");
     // prepare toolbox
     this.toolBox.openRouteEditor(true);
     // disable searchbar
@@ -563,11 +565,12 @@ Livecity.prototype.onEditRoute = function() {
     this.pointLayer.setVisible(true);
     // hide trans layer
     this.transLayer.hide();
-    // show notify
-    this.outMsg(TEXT[this.getLang()].modeRouteEditor,"green");
+
 };
-// [P] onGuide - actions on open guide [DEPRECATED]
+// [P] onGuide - actions on open guide
 Livecity.prototype.onEditGuide = function() {
+    // show notify
+    if (!this.toolBox.isGuideEditorOpened()) this.outMsg(TEXT[this.getLang()].selectFirstEndPointOnMap,'green');
     // prepare toolbox
     this.toolBox.openGuideEditor(true);
     // disable searchbox
@@ -581,8 +584,6 @@ Livecity.prototype.onEditGuide = function() {
     this.__map.setOptions({
         draggableCursor: 'crosshair'
     });
-    // show notify
-    this.outMsg(TEXT[this.getLang()].selectFirstEndPointOnMap,'green');
 };
 
 // [P] onClosePointEditor - actions for closing editor
