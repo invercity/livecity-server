@@ -468,7 +468,6 @@ app.get('/data/guide', function(req, res) {
     });
 });
 
-
 // SERVICES
 
 app.get('/arrival/:id', function(req,res) {
@@ -622,7 +621,6 @@ app.get('/session', function(req, res){
         res.send({});
     }
 });
-
 
 app.listen(config.get('port'), function(){
     console.log('Express server listening on port ' + config.get('port'));
