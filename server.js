@@ -6,11 +6,15 @@ var app = express();
 var config = require('./lib/config');
 var pjson = require('./package.json');
 
+// data types
 var Point = require('./lib/db').Point;
 var Node = require('./lib/db').Node;
 var Route = require('./lib/db').Route;
 var Transport = require('./lib/db').Transport;
+var Guide = require('./lib/db').Guide;
+// service layer
 var Service = require('./lib/service').Service;
+// users support
 var User = require('./lib/db').User;
 // Temporary markers handler
 var Temp = require('./lib/db').Temp;
@@ -445,6 +449,25 @@ app.delete('/data/temp', function(req, res) {
         }
     });
 });
+
+
+/*
+ * Guide CRUD
+ */
+
+app.get('/data/guide', function(req, res) {
+    return Guide.find(function(err, guide) {
+        if (!err) {
+            return res.send(guide);
+        }
+        else {
+            if (__DEBUG) console.log(err);
+            res.statusCode = 500;
+            return res.send({error: 'Server error'});
+        }
+    });
+});
+
 
 // SERVICES
 
