@@ -476,6 +476,12 @@ app.get('/arrival/:id', function(req,res) {
     });
 });
 
+app.get('/service/guide', function(req, res) {
+   service.getPersonalRoute(req.params.start, req.params.end, function(result) {
+       return res.send(result);
+   });
+});
+
 app.get('/app/version', function(req, res) {
     return res.send(pjson.version);
 });
