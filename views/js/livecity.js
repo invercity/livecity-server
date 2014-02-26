@@ -397,6 +397,11 @@ Livecity.prototype.onEscape = function() {
     }
 };
 
+// [P] onTransportClick - actions on click on a transport on a map
+Livecity.prototype.onTransportClick = function() {
+
+};
+
 // [P] setEditPointData - set edits for editing marker
 Livecity.prototype.setEditPointData = function(position, title, focus) {
     var lat = position.lat();
@@ -2073,6 +2078,10 @@ function MapTrans(main, id, id_route, position) {
         this.marker.setVisible(is);
         this.visible = is;
     };
+    // listener
+    google.maps.event.addListener(this.marker, 'click', function(event) {
+
+    });
 }
 
 /*`
