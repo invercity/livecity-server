@@ -1,7 +1,8 @@
 # livecity  
 Interactive system for monitoring city traffic  
-Current stable version: ```0.3```;
-Current beta version: ```0.3```  .
+Current stable version: ```0.3```;  
+Current beta version: ```0.3.0```;  
+Next beta version: ```0.3.1``` (will be released on or before April, 20).
 
 ## Quick guide
 ### Installing livecity (Linux users)
