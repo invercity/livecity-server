@@ -476,9 +476,9 @@ app.get('/arrival/:id', function(req,res) {
     });
 });
 
-app.get('/service/guide', function(req, res) {
-   service.getPersonalRoute(req.params.start, req.params.end, function(result) {
-       return res.send(result);
+app.post('/service/guide', function(req, res) {
+   service.getPersonalRoute(req.body.start, req.body.end, function(results) {
+       return res.send(results);
    });
 });
 

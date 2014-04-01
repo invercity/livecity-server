@@ -2247,6 +2247,24 @@ GuideEditor.prototype.push = function(position) {
             travelMode: google.maps.TravelMode.DRIVING,
             optimizeWaypoints: false
         };
+        var data = {
+            start: {
+                lat: position.lat(),
+                lng: position.lng()
+            }
+        };
+        // testing
+        $.ajax({
+            datatype: this.__parent.static.TYPE_JSON,
+            type: this.__parent.static.TYPE_POST,
+            url: '/service/guide',
+            data: data,
+            success: function(result) {
+                console.log(JSON.stringify(result));
+            }
+        });
+
+        // -------
         this.__parent.directionsService.route(request, function(result, status) {
             if (status === google.maps.DirectionsStatus.OK) {
                 _this.__guide.setResult(result);
@@ -2297,6 +2315,14 @@ function Guide(parent) {
     this.__result = null;
     // id
     this.__id = null;
+};
+
+Guide.prototype.getStartPosition = function() {
+    return this.__start == null ? null : this.__start.position;
+};
+
+Guide.prototype.getEndPosition = function() {
+    return this.__end == null ? null : this.__end.position;
 };
 
 Guide.prototype.getStart = function() {
