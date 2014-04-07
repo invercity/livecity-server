@@ -468,16 +468,46 @@ app.get('/data/guide', function(req, res) {
     });
 });
 
-// SERVICES
+/*
+ * SERVICES
+ */
 
+/*
+ * Arrival service
+ *
+ * Type: GET
+ *
+ * Parameters:
+ * /id: Arrival id
+ *
+ * Response:
+ * Object
+ *
+ */
 app.get('/arrival/:id', function(req,res) {
     service.getPointInfo(req.params.id, function(result) {
         return res.send(result);
     });
 });
 
+/*
+ * Guide service
+ *
+ * Type: POST
+ *
+ * Request:
+ * @start - Object {lat: Number, lng: Number}
+ * @end - Object {lat: Number, lng: Number}
+ *
+ * Response:
+ * @error - error message
+ * @status - result [OK, ERROR]
+ * @basic - google data
+ * @data - own routes (not implemented now)
+ *
+ */
 app.post('/service/guide', function(req, res) {
-   service.getPersonalRoute(req.body.start, req.body.end, function(results) {
+   service.getPersonalRoute(req.body.start, req.body.end, req.body.mode, function(results) {
        return res.send(results);
    });
 });
@@ -489,8 +519,12 @@ app.get('/app/version', function(req, res) {
 /*
  * Mobile app work REST service
  *
+ * Type: POST
+ *
  * options:
  *  ?act=init
+ *  ?act=end
+ *  ?act=report
  *
  * Request format:
  *  lat (Number) - latitude (taken from GPS receiver)
@@ -580,6 +614,18 @@ app.post('/work', function (req, res) {
     }
 });
 
+/*
+ * Service login
+ *
+ * Type: POST
+ *
+ * Request:
+ * @login - user login
+ * @pass - user pass
+ *
+ * Response:
+ * session token will be selected if OK
+ */
 app.post('/login', function(req, res) {
     User.findOne({username: req.body.login}, function(err, user) {
         if ((!err) && (user)) {

@@ -2241,32 +2241,53 @@ GuideEditor.prototype.push = function(position) {
                 }
             }
         });
+
         var request = {
             origin: this.__guide.getStartPosition(),
             destination: position,
             travelMode: google.maps.TravelMode.DRIVING,
             optimizeWaypoints: false
         };
-        var data = {
-            start: {
+        /*
+        var json = {
+            end: {
                 lat: position.lat(),
                 lng: position.lng()
-            }
+            },
+            start: {
+                lat: this.__guide.getStartPosition().lat(),
+                lng: this.__guide.getStartPosition().lng()
+            },
+            mode: google.maps.TravelMode.DRIVING
         };
-        // testing
+
+        // testing guide service
+        /*
         $.ajax({
             datatype: this.__parent.static.TYPE_JSON,
             type: this.__parent.static.TYPE_POST,
             url: '/service/guide',
-            data: data,
+            data: json,
             success: function(result) {
-                console.log(JSON.stringify(result));
+                // check result type
+                if (result.status == 'OK') {
+                    console.log(JSON.stringify(result));
+                    _this.__guide.setResult(result.basic);
+                    var myroute = result.basic.routes[0];
+                    var ttl = 0;
+                    for (var i = 0; i < myroute.legs.length; i++) ttl += myroute.legs[i].distance.value;
+                    _this.__guide.setTotal(ttl);
+                    _this.__parent.getObjects().guideEditor.valueLength.text(ttl);
+                    _this.__guide.setVisible(true);
+                }
             }
         });
+        */
 
-        // -------
+        // get basic google route
         this.__parent.directionsService.route(request, function(result, status) {
             if (status === google.maps.DirectionsStatus.OK) {
+                console.log(JSON.stringify(result));
                 _this.__guide.setResult(result);
                 var myroute = result.routes[0];
                 var ttl = 0;
@@ -2276,6 +2297,7 @@ GuideEditor.prototype.push = function(position) {
                 _this.__guide.setVisible(true);
             }
         });
+
     }
 };
 
