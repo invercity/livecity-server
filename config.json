@@ -4,9 +4,10 @@
         "uri": "mongodb://localhost/livecity"
     },
     "debug": false,
-    "app" : {
+    "app": {
         "deltaDistance" : 50,
         "defaultSpeed" : 50,
-        "defaultStopTime" : 2
+        "defaultStopTime" : 2,
+        "defaultSearchPointRadius" : 1000
     }
 }

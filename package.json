@@ -24,7 +24,8 @@
         "path"    : "*",
         "nconf"   : "*",
         "async"   : "*",
-        "bcrypt"  : "*"
+        "bcrypt"  : "*",
+        "googlemaps" : "*"
     },
     "analyze": false,
     "engines": {
