@@ -7,7 +7,7 @@ TEXT = {
     empty: '',
     RU: {
         backToDefaultPlace: 'Вы вернулись в исходное положение',
-        editingFinished: 'Редактирования завершено',
+        editingFinished: 'Редактирование завершено',
         modePointEditor: 'Режим редактирования остановок',
         modeRouteEditor: 'Режим редактирования маршрутов',
         thisActionIsNotAllowed: 'Данное действие не доступно в режиме редактора',
