@@ -2242,7 +2242,7 @@ GuideEditor.prototype.push = function(position) {
             }
         });
         var request = {
-            origin: this.__guide.getStart().position,
+            origin: this.__guide.getStartPosition(),
             destination: position,
             travelMode: google.maps.TravelMode.DRIVING,
             optimizeWaypoints: false
