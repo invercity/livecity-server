@@ -41,8 +41,23 @@ In future releases installing scripts will be added
 
 ### Running
 
-To run livecity, just fire in terminal:  
-```npm start```  
+To run livecity, just fire in terminal:
+```npm start```
+
+## Routes
+
+```/data/[points, routes, nodes, transports]``` - Data CRUD
+* GET - get all items
+* POST - create item
+* PUT ```/data/[type]/id``` - update item by ```id```
+* GET ```/data/[type]/id``` - get item by ```id```
+* DELETE ```/data/[type]/id``` - delete item by ```id```
+
+
+```/service/[type]``` - Services
+[TBA]
+
+
 
 ## Wiki
 
