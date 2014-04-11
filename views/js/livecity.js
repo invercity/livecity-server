@@ -365,6 +365,34 @@ Livecity.prototype.init = function() {
     this.update();
 };
 
+// Livecity stiatic variable - ICONS
+Livecity.ICONS = {
+    BLUE: function() {
+        return new google.maps.MarkerImage('img/stop2.png', new google.maps.Size(16, 16), new google.maps.Point(0, 0), new google.maps.Point(8, 10));
+    },
+    RED: function() {
+        return new google.maps.MarkerImage('img/stop-m2.png', new google.maps.Size(16, 16), new google.maps.Point(0, 0), new google.maps.Point(8, 10));
+    },
+    TRANS: function() {
+        return new google.maps.MarkerImage('img/bus.png', new google.maps.Size(32, 37), new google.maps.Point(0, 0), new google.maps.Point(16, 33));
+    },
+    A: function() {
+        return new google.maps.MarkerImage('http://www.google.com/mapfiles/markerA.png', new google.maps.Size(36, 36), new google.maps.Point(0, 0), new google.maps.Point(9, 33));
+    },
+    B: function() {
+        return new google.maps.MarkerImage('http://www.google.com/mapfiles/markerB.png', new google.maps.Size(36, 36), new google.maps.Point(0, 0), new google.maps.Point(9, 33));
+    }
+};
+
+// Livecity static variable - TYPES
+Livecity.TYPES = {
+    POST: 'POST',
+    JSON: 'JSON',
+    GET: 'GET',
+    DELETE: 'DELETE',
+    PUT: 'PUT'
+}
+
 // [P] outMsg - show notification message
 Livecity.prototype.outMsg = function(text,color) {
     this.notifier.msg(text,color);
@@ -404,6 +432,7 @@ Livecity.prototype.onTransportClick = function() {
 
 // [P] setEditPointData - set edits for editing marker
 Livecity.prototype.setEditPointData = function(position, title, focus) {
+    // get latitude and longitude
     var lat = position.lat();
     var lng = position.lng();
     // UPD - add option Round?
@@ -417,7 +446,7 @@ Livecity.prototype.setEditPointData = function(position, title, focus) {
 // [P] addPoint - add new point on map
 Livecity.prototype.addPoint = function(position) {
     var title = "id" + (this.pointLayer.points.length);
-    var point = new MapPoint(this, null, position, this.static.ICON_RED(), title);
+    var point = new MapPoint(this, null, position, Livecity.ICONS.RED(), title);
     point.getMarker().setDraggable(true);
     point.setVisible(true);
     this.setEditPointData(position, title, true);
@@ -434,24 +463,24 @@ Livecity.prototype.setCenter = function(center) {
     // if selected - set value and save to settings
     else {
         this.getMap().setCenter(center);
-        this.setProperty('center',center);
+        this.setProperty('center', center);
     }
 };
 
 Livecity.prototype.onUpdateInfo = function() {
     var _this = this;
     $.get('/app/version', function(version) {
-        _this.getObjects().app.version.html(version);
+        _this.__objects.app.version.html(version);
     });
-    this.getObjects().app.routes.html(city.routeLayer.routes.length);
-    this.getObjects().app.transports.html(city.transLayer.trans.length);
+    this.__objects.app.routes.html(city.routeLayer.routes.length);
+    this.__objects.app.transports.html(city.transLayer.trans.length);
 };
 
 // [P] login - prepare view for authorized/unauthorized user
 Livecity.prototype.login = function(is) {
     if (true === is) {
         this.toolBox.show(true);
-        this.getObjects().onAuth.html(TEXT[this.getLang()].exit);
+        this.__objects.onAuth.html(TEXT[this.getLang()].exit);
         this.loginBox.setVisible(false);
     }
     else {
@@ -459,7 +488,7 @@ Livecity.prototype.login = function(is) {
         if (this.toolBox.isRouteEditorOpened()) this.onCloseRouteEditor();
         if (this.toolBox.isPointEditorOpened()) this.onClosePointEditor();
         if (this.toolBox.isGuideEditorOpened()) this.onCloseGuideEditor();
-        this.getObjects().onAuth.html(TEXT[this.getLang()].login);
+        this.__objects.onAuth.html(TEXT[this.getLang()].login);
     }
 };
 
@@ -488,7 +517,7 @@ Livecity.prototype.onAuth = function() {
 // [P] onLogin - onLogin handler
 Livecity.prototype.onLogin = function(e) {
     var _this = this;
-    this.loginBox.login(this.getObjects().loginBox.base, function(result){
+    this.loginBox.login(this.__objects.loginBox.base, function(result){
         if (true === result) {
             _this.login(true);
             _this.outMsg(TEXT[_this.getLang()].authSucc, 'green');
@@ -649,17 +678,17 @@ Livecity.prototype.optimizeView = function(point, callback) {
             if ((vPoints.length === 0) && (vRoutes.length === 0)) {
                 var b1 = new google.maps.LatLngBounds();
                 b1.extend(__this.getProperties().center);
-                __this.getMap().fitBounds(b1);
-                __this.getMap().setZoom(__this.getProperties().zoom);
+                __this.__map.fitBounds(b1);
+                __this.__map.setZoom(__this.getProperties().zoom);
             }
-            else __this.getMap().fitBounds(bounds);
+            else __this.__map.fitBounds(bounds);
             if (point) {
                 var b = new google.maps.LatLngBounds();
                 b.extend(bounds.getCenter());
                 b.extend(point.getPosition());
-                __this.getMap().setCenter(b.getCenter());
+                __this.__map.setCenter(b.getCenter());
             }
-            if (vPoints.length === 1) __this.getMap().setZoom(__this.getProperties().zoom);
+            if (vPoints.length === 1) __this.__map.setZoom(__this.getProperties().zoom);
             else if (callback) callback();
         });
     });
@@ -685,7 +714,8 @@ LoginBox.prototype.setVisible = function(is) {
 LoginBox.prototype.login = function(box, callback) {
     $.ajax({
         url: '/service/login?act=login',
-        type: 'POST',
+        datatype: Livecity.TYPES.JSON,
+        type: Livecity.TYPES.POST,
         data: box.serialize(),
         success: function(result) {
             if (result.authorized) {
@@ -699,7 +729,8 @@ LoginBox.prototype.logout = function(callback) {
     var _this = this;
     $.ajax({
         url: '/service/login?act=logout',
-        type: 'POST',
+        datatype: Livecity.TYPES.JSON,
+        type: Livecity.TYPES.POST,
         success: function(res) {
             if (res.logout) {
                 callback(true);
@@ -895,9 +926,9 @@ ToolBox.prototype.isEditorOpened = function() {
  */
 function Notifier(parent) {
     // link to 'box' Element
-    var __box = parent.getObjects().alertbox;
+    this.__box = parent.getObjects().alertbox;
     // message stack
-    var __stack = [];
+    this,__stack = [];
 
     // GET alert box
     this.getBox = function() {
@@ -925,16 +956,16 @@ Notifier.prototype.msg = function(text, color, sec) {
     var link = this;
     var duration = (sec) ? sec*1000 : 3000;
     this.push();
-    this.getBox().css("display", "block");
+    this.__box.css("display", "block");
     // replace 'green' and 'red' with normal colors
     // TBD
     var col = (color === 'green') ? '#27A845' : '#F20505';
-    this.getBox().css("background-color", col);
-    this.getBox().text(text);
+    this.__box.css("background-color", col);
+    this.__box.text(text);
     // show message for 3 seconds
     setTimeout(function() {
         link.pop();
-        if (link.isEmpty()) link.getBox().css("display", "none");
+        if (link.isEmpty()) link.__box.css("display", "none");
     }, duration);
 };
 
@@ -1175,7 +1206,7 @@ function PointLayer(main) {
         $.get('/data/points', function(result) {
             async.each(result,function(item,callback) {
                 var point = new MapPoint(main, item._id, new google.maps.LatLng(item.lat, item.lng),
-                    main.static.ICON_BLUE(), item.title);
+                    Livecity.ICONS.BLUE(), item.title);
                 layer.add(point);
                 callback();
             },function(err) {
@@ -1187,7 +1218,7 @@ function PointLayer(main) {
     // set point as current
     this.setCurrent = function(point) {
         if (this.current) {
-            this.current.getMarker().setIcon(main.static.ICON_BLUE());
+            this.current.getMarker().setIcon(Livecity.ICONS.BLUE());
             this.current.getMarker().setDraggable(false);
         }
         // unset point
@@ -1197,7 +1228,7 @@ function PointLayer(main) {
             var pos = this.points.indexOf(point);
             if (pos !== -1) {
                 this.current = point;
-                point.getMarker().setIcon(main.static.ICON_RED());
+                point.getMarker().setIcon(Livecity.ICONS.RED());
             }
         }
     };
@@ -1635,8 +1666,8 @@ MapRoute.prototype.save = function(callback) {
             },function(err) {
                 // save route
                 $.ajax({
-                    datatype: link.getParent().static.TYPE_JSON,
-                    type: link.getParent().static.TYPE_POST,
+                    datatype: Livecity.TYPES.JSON,
+                    type: Livecity.TYPES.POST,
                     url: '/data/routes/',
                     data: {
                         start: link.getStart(),
@@ -1791,8 +1822,8 @@ MapNode.prototype.save = function(callback) {
     // link to this
     var link = this;
     $.ajax({
-        datatype: this.getParent().static.TYPE_JSON,
-        type: this.getParent().static.TYPE_POST,
+        datatype: Livecity.TYPES.JSON,
+        type: Livecity.TYPES.POST,
         url: '/data/nodes/',
         data: {
             start: this.getStart().getId(),
@@ -1997,8 +2028,8 @@ MapPoint.prototype.save = function(callback) {
     // create new one
     if (!this.getId()) {
         $.ajax({
-            datatype: this.getParent().static.TYPE_JSON,
-            type: this.getParent().static.TYPE_POST,
+            datatype: Livecity.TYPES.JSON,
+            type: Livecity.TYPES.POST,
             url: '/data/points',
             data: {
                 lat : this.getParent().getObjects().pointEditor.valueLat.text(),
@@ -2016,8 +2047,8 @@ MapPoint.prototype.save = function(callback) {
     // update existing
     else {
         $.ajax({
-            datatype: this.getParent().static.TYPE_JSON,
-            type: this.getParent().static.TYPE_PUT,
+            datatype: Livecity.TYPES.JSON,
+            type: Livecity.TYPES.PUT,
             url: '/data/points/' + this.getId(),
             data: {
                 lat : this.getParent().getObjects().pointEditor.valueLat.text(),
@@ -2038,8 +2069,8 @@ MapPoint.prototype.remove = function(callback) {
     var link = this;
     // async delete on server
     $.ajax({
-        datatype: this.getParent().static.TYPE_JSON,
-        type: this.getParent().static.TYPE_DELETE,
+        datatype: Livecity.TYPES.JSON,
+        type: Livecity.TYPES.DELETE,
         url: '/data/points/' + this.getId(),
         cache: false,
         success: function(result) {
@@ -2062,7 +2093,7 @@ function MapTrans(main, id, id_route, position) {
     // icon
     this.marker = new google.maps.Marker({
         position: position,
-        icon: main.static.ICON_TRANS(),
+        icon: Livecity.ICONS.TRANS(),
         map: main.getMap(),
         title: "",
         draggable: false,
@@ -2133,7 +2164,7 @@ function RouteEditor(main) {
         if (this.points.length === 0) main.outMsg(TEXT[main.getLang()].nothingSelected,"red");
         else {
             var start = this.route.getInfoStart();
-            // close prevoius endpoint info
+            // close previous endpoint info
             if (start) start.open(null);
             var lastPoint = this.points[this.points.length - 1];
             // set new endpoint
@@ -2155,7 +2186,7 @@ function RouteEditor(main) {
         var main = this.main;
         var obj = this;
         async.each(this.points,function(item,callback) {
-            item.getMarker().setIcon(main.static.ICON_BLUE());
+            item.getMarker().setIcon(Livecity.ICONS.BLUE());
             callback();
         },function() {
             obj.points.length = 0;
@@ -2358,7 +2389,7 @@ Guide.prototype.setStart = function(position, address) {
         position: position,
         draggable: true,
         map: this.__parent.getMap(),
-        icon: this.__parent.static.ICON_A()
+        icon: Livecity.ICONS.A()
     });
     this.__startAddress = address;
 };
@@ -2368,7 +2399,7 @@ Guide.prototype.setEnd = function(position, address) {
         position: position,
         draggable: true,
         map: this.__parent.getMap(),
-        icon: this.__parent.static.ICON_B()
+        icon: Livecity.ICONS.B()
     });
     this.__endAddress = address;
 };
