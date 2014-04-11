@@ -348,7 +348,7 @@ Livecity.prototype.init = function() {
                 link.pointLayer.add(point);
                 link.pointLayer.setCurrent(point);
                 link.searchBar.update();
-                link.outMsg(TEXT[link.getLang()].pointSaved,"green");
+                link.outMsg(TEXT[link.getLang()].pointSaved, 'green');
             });
         }
         // guide editor mode
@@ -429,7 +429,7 @@ Livecity.prototype.setCenter = function(center) {
     // if center is not selected, set map center default value
     if (!center) {
         this.getMap().setCenter(this.getProperty('center'));
-        this.outMsg(TEXT[this.getLang()].backToDefaultPlace,"green");
+        this.outMsg(TEXT[this.getLang()].backToDefaultPlace, 'green');
     }
     // if selected - set value and save to settings
     else {
@@ -451,7 +451,6 @@ Livecity.prototype.onUpdateInfo = function() {
 Livecity.prototype.login = function(is) {
     if (true === is) {
         this.toolBox.show(true);
-        //this.getObjects().onAuth.css("background", "url('img/lock.png') right no-repeat");
         this.getObjects().onAuth.html(TEXT[this.getLang()].exit);
         this.loginBox.setVisible(false);
     }
@@ -460,7 +459,6 @@ Livecity.prototype.login = function(is) {
         if (this.toolBox.isRouteEditorOpened()) this.onCloseRouteEditor();
         if (this.toolBox.isPointEditorOpened()) this.onClosePointEditor();
         if (this.toolBox.isGuideEditorOpened()) this.onCloseGuideEditor();
-        //this.getObjects().onAuth.css("background", "url('img/key.png') right no-repeat");
         this.getObjects().onAuth.html(TEXT[this.getLang()].login);
     }
 };
@@ -473,7 +471,7 @@ Livecity.prototype.onAuth = function() {
             _this.loginBox.logout(function(res){
                 if (true === res) {
                     _this.login(false);
-                    _this.outMsg(TEXT[_this.getLang()].sessionEnd,"green");
+                    _this.outMsg(TEXT[_this.getLang()].sessionEnd, 'green');
                 }
                 else {
                     // TBD
@@ -487,16 +485,17 @@ Livecity.prototype.onAuth = function() {
     });
 };
 
+// [P] onLogin - onLogin handler
 Livecity.prototype.onLogin = function(e) {
     var _this = this;
     this.loginBox.login(this.getObjects().loginBox.base, function(result){
         if (true === result) {
             _this.login(true);
-            _this.outMsg(TEXT[_this.getLang()].authSucc,"green");
+            _this.outMsg(TEXT[_this.getLang()].authSucc, 'green');
         }
         else {
             _this.login(false);
-            _this.outMsg(TEXT[_this.getLang()].authErr, "red");
+            _this.outMsg(TEXT[_this.getLang()].authErr, 'red');
         }
     });
     e.preventDefault();
@@ -511,11 +510,11 @@ Livecity.prototype.update = function() {
 Livecity.prototype.onSavePoint = function() {
     var link = this;
     var current = this.pointLayer.getCurrent();
-    if (!current) this.outMsg(TEXT[this.getLang()].noDataToSave,"red");
+    if (!current) this.outMsg(TEXT[this.getLang()].noDataToSave, 'red');
     else {
         current.save(function () {
             link.searchBar.update();
-            link.outMsg(TEXT[link.getLang()].pointSaved,"green");
+            link.outMsg(TEXT[link.getLang()].pointSaved, 'green');
         });
     }
 };
@@ -524,12 +523,12 @@ Livecity.prototype.onSavePoint = function() {
 Livecity.prototype.onDeletePoint = function() {
     var link = this;
     var current = this.pointLayer.getCurrent();
-    if (!current) this.outMsg(TEXT[this.getLang()].nothingSelected,"red");
+    if (!current) this.outMsg(TEXT[this.getLang()].nothingSelected, 'red');
     else {
         this.pointLayer.remove(current, function () {
             link.searchBar.update();
             link.toolBox.clear();
-            link.outMsg(TEXT[link.getLang()].pointRemoved,"green");
+            link.outMsg(TEXT[link.getLang()].pointRemoved, 'green');
         });
     }
 };
@@ -537,7 +536,7 @@ Livecity.prototype.onDeletePoint = function() {
 // [P] onEditPoint - edit marker button handler
 Livecity.prototype.onEditPoint = function() {
     // show notify
-    if (!this.toolBox.isPointEditorOpened()) this.outMsg(TEXT[this.getLang()].modePointEditor,"green");
+    if (!this.toolBox.isPointEditorOpened()) this.outMsg(TEXT[this.getLang()].modePointEditor, 'green');
     // prepare toolbox
     this.toolBox.openPointEditor(true);
     // setting up cursor
@@ -559,7 +558,7 @@ Livecity.prototype.onEditPoint = function() {
 // [P] onEditRoute - edit route button handler
 Livecity.prototype.onEditRoute = function() {
     // show notify
-    if (!this.toolBox.isRouteEditorOpened()) this.outMsg(TEXT[this.getLang()].modeRouteEditor,"green");
+    if (!this.toolBox.isRouteEditorOpened()) this.outMsg(TEXT[this.getLang()].modeRouteEditor, 'green');
     // prepare toolbox
     this.toolBox.openRouteEditor(true);
     // disable searchbar
@@ -575,7 +574,7 @@ Livecity.prototype.onEditRoute = function() {
 // [P] onGuide - actions on open guide
 Livecity.prototype.onEditGuide = function() {
     // show notify
-    if (!this.toolBox.isGuideEditorOpened()) this.outMsg(TEXT[this.getLang()].selectFirstEndPointOnMap,'green');
+    if (!this.toolBox.isGuideEditorOpened()) this.outMsg(TEXT[this.getLang()].selectFirstEndPointOnMap, 'green');
     // prepare toolbox
     this.toolBox.openGuideEditor(true);
     // disable searchbox
@@ -604,7 +603,7 @@ Livecity.prototype.onClosePointEditor = function() {
     // hide points
     this.pointLayer.setVisible(false);
     // show notification
-    this.outMsg(TEXT[this.getLang()].editingFinished,"green");
+    this.outMsg(TEXT[this.getLang()].editingFinished, 'green');
 };
 
 // [P] onCloseRouteEditor - actions for closing editor
@@ -614,7 +613,7 @@ Livecity.prototype.onCloseRouteEditor = function() {
     // hide point layer
     this.pointLayer.setVisible(false);
     // show notify
-    this.outMsg(TEXT[this.getLang()].editingFinished,"green");
+    this.outMsg(TEXT[this.getLang()].editingFinished, 'green');
 };
 
 // [P] onCloseGuide - actions for closing guide
@@ -630,7 +629,7 @@ Livecity.prototype.onCloseGuideEditor = function() {
     // hide trans layer
     this.transLayer.hide();
     // show notify
-    this.outMsg(TEXT[this.getLang()].editingFinished,"green");
+    this.outMsg(TEXT[this.getLang()].editingFinished, 'green');
 };
 
 Livecity.prototype.optimizeView = function(point, callback) {
@@ -685,7 +684,7 @@ LoginBox.prototype.setVisible = function(is) {
 
 LoginBox.prototype.login = function(box, callback) {
     $.ajax({
-        url: '/login',
+        url: '/service/login?act=login',
         type: 'POST',
         data: box.serialize(),
         success: function(result) {
@@ -699,7 +698,7 @@ LoginBox.prototype.login = function(box, callback) {
 LoginBox.prototype.logout = function(callback) {
     var _this = this;
     $.ajax({
-        url: '/logout',
+        url: '/service/login?act=logout',
         type: 'POST',
         success: function(res) {
             if (res.logout) {
@@ -711,7 +710,7 @@ LoginBox.prototype.logout = function(callback) {
 };
 
 LoginBox.prototype.checkAuthorization = function(callback) {
-    $.get('/session', function(res) {
+    $.get('/service/login', function(res) {
         callback(true === res.authorized);
     });
 };
@@ -1959,7 +1958,7 @@ function MapPoint(parent, id, position, icon, title) {
 MapPoint.prototype.update = function(callback) {
     var link = this;
     // get traffic info for this point
-    $.get('/arrival/' + this.getId(), function(result) {
+    $.get('/service/arrival/' + this.getId(), function(result) {
         var content = '';
         // check each route
         async.each(result.routes, function(item,callback){
@@ -2287,7 +2286,6 @@ GuideEditor.prototype.push = function(position) {
         // get basic google route
         this.__parent.directionsService.route(request, function(result, status) {
             if (status === google.maps.DirectionsStatus.OK) {
-                console.log(JSON.stringify(result));
                 _this.__guide.setResult(result);
                 var myroute = result.routes[0];
                 var ttl = 0;

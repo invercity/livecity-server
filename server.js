@@ -484,7 +484,7 @@ app.get('/data/guide', function(req, res) {
  * Object
  *
  */
-app.get('/arrival/:id', function(req,res) {
+app.get('/service/arrival/:id', function(req,res) {
     service.getPointInfo(req.params.id, function(result) {
         return res.send(result);
     });
@@ -512,7 +512,19 @@ app.post('/service/guide', function(req, res) {
    });
 });
 
-app.get('/app/version', function(req, res) {
+/*
+ * Service app/version
+ *
+ * Type: GET
+ *
+ * Request:
+ * none
+ *
+ * Response:
+ * app version
+ */
+
+app.get('/service/app/version', function(req, res) {
     return res.send(pjson.version);
 });
 
@@ -542,7 +554,7 @@ app.get('/app/version', function(req, res) {
  *      title - route title
  *  }]
  */
-app.post('/work', function (req, res) {
+app.post('/service/transport', function (req, res) {
     // check act type
     // if init act
     if ('init' === req.query.act) {
@@ -615,54 +627,64 @@ app.post('/work', function (req, res) {
 });
 
 /*
- * Service login
+ * Service login/logout
  *
  * Type: POST
+ *
+ * Options:
+ * ?act=login
+ * ?act=logout
  *
  * Request:
  * @login - user login
  * @pass - user pass
  *
  * Response:
- * session token will be selected if OK
+ * session token will be selected if OK (login)
+ * empty Object (logout)
  */
-app.post('/login', function(req, res) {
-    User.findOne({username: req.body.login}, function(err, user) {
-        if ((!err) && (user)) {
-            user.comparePassword(req.body.pass, function (err, isMatch) {
-                if ((!err) && (isMatch)) {
-                    req.session.authorized = true;
-                    req.session.user = req.body.user;
-                    res.send({authorized: true});
-                }
-                else res.send({error: 'Invalid user data'});
-            });
-        }
-        else res.send({error: 'Invalid user data'});
-    });
-});
-
-app.post('/register', function(req, res){
-    var user = new User({
-        username: req.body.username,
-        password: req.body.password
-    });
-    user.save(function(err){
-        if (!err) res.send({user: user});
-        else res.send({err: err});
-    });
-});
-
-app.post('/logout', function(req, res) {
-    if (req.session) {
-        req.session.destroy(function() {
-            res.send({logout: true});
-        })
+app.post('/service/login', function(req, res) {
+    // ?act=login
+    if ('login' === req.query.act) {
+        User.findOne({username: req.body.login}, function(err, user) {
+            if ((!err) && (user)) {
+                user.comparePassword(req.body.pass, function (err, isMatch) {
+                    if ((!err) && (isMatch)) {
+                        req.session.authorized = true;
+                        req.session.user = req.body.user;
+                        res.send({authorized: true});
+                    }
+                    else res.send({error: 'Invalid user data'});
+                });
+            }
+            else res.send({error: 'Invalid user data'});
+        });
     }
-    else res.send({});
+    // ?act=logout
+    else if ('logout' === req.query.act) {
+        if (req.session) {
+            req.session.destroy(function() {
+                res.send({});
+            })
+        }
+        else res.send({});
+    }
 });
 
-app.get('/session', function(req, res){
+/*
+ * Service session
+ *
+ * Type: GET
+ *
+ * Request:
+ * session token with authorized field
+ *
+ * Response:
+ * @authorized - boolean
+ * @user - current user
+ *
+ */
+app.get('/service/login', function(req, res){
     if ((req.session) && (req.session.authorized)) {
         res.send({
             authorized: true,
@@ -674,6 +696,31 @@ app.get('/session', function(req, res){
     }
 });
 
+/*
+ * Service register
+ *
+ * Type: POST
+ *
+ * Request:
+ * @login - user login
+ * @pass - user pass
+ *
+ * Response:
+ * @user - created user
+ *
+ */
+app.post('/service/register', function(req, res){
+    var user = new User({
+        username: req.body.username,
+        password: req.body.password
+    });
+    user.save(function(err){
+        if (!err) res.send({user: user});
+        else res.send({err: err});
+    });
+});
+
+// Run app on selected port
 app.listen(config.get('port'), function(){
     console.log('Express server listening on port ' + config.get('port'));
 });

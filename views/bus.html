@@ -68,7 +68,7 @@ and open the template in the editor.
                 $.ajax({
                     datatype: 'JSON',
                     type: 'POST',
-                    url: 'http://178.54.56.121:3000/work?act=report',
+                    url: '/work?act=report',
                     data: {
                         _id:_id,
                         route: route,
@@ -84,7 +84,7 @@ and open the template in the editor.
                 $.ajax({
                     datatype: 'json',
                     type: 'POST',
-                    url: 'http://178.54.56.121:3000/work?act=init',
+                    url: '/work?act=init',
                     data: {
                         lat: pos.lat(),
                         lng: pos.lng()
@@ -104,7 +104,7 @@ and open the template in the editor.
                     $.ajax({
                         datatype: 'JSON',
                         type: 'POST',
-                        url: 'http://178.54.56.121:3000/work?act=end',
+                        url: '/work?act=end',
                         data: {
                             _id: _id
                         },
