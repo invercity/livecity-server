@@ -3,7 +3,7 @@
     "mongoose": {
         "uri": "mongodb://localhost/livecity"
     },
-    "debug": false,
+    "debug": true,
     "app": {
         "deltaDistance" : 50,
         "defaultSpeed" : 50,

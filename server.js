@@ -183,7 +183,8 @@ app.post('/data/nodes', function(req,res) {
         data: req.body.data,
         start: req.body.start,
         end: req.body.end,
-        total: req.body.total
+        total: req.body.total,
+        points: req.body.points
     });
 
     node.save(function(err) {
@@ -225,6 +226,7 @@ app.put('/data/nodes/:id', function(req,res) {
         node.start = req.body.start;
         node.end = req.body.end;
         node.total = req.body.total;
+        node.points = req.body.points;
         return node.save(function (err) {
             if (!err) {
                 return res.send({node: node});
