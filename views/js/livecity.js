@@ -225,38 +225,15 @@ $(document).ready(function() {
 
 /*
  * City Class
+ *
  * @objects - link to HTML objects
  * @settings - settings for livecity
  */
-function Livecity(objects,settings) {
+function Livecity(objects, settings) {
 
     /*
-     * PUBLIC ATTRIBUTES
+     * PRIVATE ATTRIBUTES
      */
-
-    // static - static functions and values
-    this.static = {
-        ICON_BLUE: function() {
-            return new google.maps.MarkerImage('img/stop2.png', new google.maps.Size(16, 16), new google.maps.Point(0, 0), new google.maps.Point(8, 10));
-        },
-        ICON_RED: function() {
-            return new google.maps.MarkerImage('img/stop-m2.png', new google.maps.Size(16, 16), new google.maps.Point(0, 0), new google.maps.Point(8, 10));
-        },
-        ICON_TRANS: function() {
-            return new google.maps.MarkerImage('img/bus.png', new google.maps.Size(32, 37), new google.maps.Point(0, 0), new google.maps.Point(16, 33));
-        },
-        ICON_A: function() {
-            return new google.maps.MarkerImage('http://www.google.com/mapfiles/markerA.png', new google.maps.Size(36, 36), new google.maps.Point(0, 0), new google.maps.Point(9, 33));
-        },
-        ICON_B: function() {
-            return new google.maps.MarkerImage('http://www.google.com/mapfiles/markerB.png', new google.maps.Size(36, 36), new google.maps.Point(0, 0), new google.maps.Point(9, 33));
-        },
-        TYPE_POST: 'POST',
-        TYPE_JSON: 'JSON',
-        TYPE_GET: 'GET',
-        TYPE_DELETE: 'DELETE',
-        TYPE_PUT: 'PUT'
-    };
 
     // objects
     this.__objects = objects;
@@ -467,9 +444,10 @@ Livecity.prototype.setCenter = function(center) {
     }
 };
 
+// [P] onUpdateInfo - onInfoClick handler
 Livecity.prototype.onUpdateInfo = function() {
     var _this = this;
-    $.get('/app/version', function(version) {
+    $.get('/service/app/version', function(version) {
         _this.__objects.app.version.html(version);
     });
     this.__objects.app.routes.html(city.routeLayer.routes.length);
