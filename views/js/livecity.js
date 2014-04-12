@@ -2269,24 +2269,24 @@ GuideEditor.prototype.push = function(position) {
     if ((this.__guide.getStart()) && (this.__guide.getEnd())) return;
     // if position is the pos of A
     if (!this.__guide.getStart()) {
-        this.__parent.geocoder.geocode({'latLng': position}, function(results, status) {
-            if (status == google.maps.GeocoderStatus.OK) {
-                if (results[1]) {
-                    _this.__parent.getObjects().guideEditor.valueStart.text(results[1].formatted_address.substr(0,30) + '...');
-                    _this.__guide.setStart(position, results[1].formatted_address);
-                }
-            }
-        });
+        //this.__parent.geocoder.geocode({'latLng': position}, function(results, status) {
+            //if (status == google.maps.GeocoderStatus.OK) {
+                //if (results[1]) {
+                    //_this.__parent.getObjects().guideEditor.valueStart.text(results[1].formatted_address.substr(0,30) + '...');
+                    _this.__guide.setStart(position);
+                //}
+            //}
+        //});
     }
     else {
-        this.__parent.geocoder.geocode({'latLng': position}, function(results, status) {
-            if (status == google.maps.GeocoderStatus.OK) {
-                if (results[1]) {
-                    _this.__parent.getObjects().guideEditor.valueEnd.text(results[1].formatted_address.substr(0,30) + '...');
-                    _this.__guide.setEnd(position, results[1].formatted_address);
-                }
-            }
-        });
+        //this.__parent.geocoder.geocode({'latLng': position}, function(results, status) {
+            //if (status == google.maps.GeocoderStatus.OK) {
+                //if (results[1]) {
+                    //_this.__parent.getObjects().guideEditor.valueEnd.text(results[1].formatted_address.substr(0,30) + '...');
+                    _this.__guide.setEnd(position);
+                //}
+           // }
+        //});
 
         var request = {
             origin: this.__guide.getStartPosition(),
@@ -2294,7 +2294,7 @@ GuideEditor.prototype.push = function(position) {
             travelMode: google.maps.TravelMode.DRIVING,
             optimizeWaypoints: false
         };
-        /*
+
         var json = {
             end: {
                 lat: position.lat(),
@@ -2308,23 +2308,16 @@ GuideEditor.prototype.push = function(position) {
         };
 
         // testing guide service
-        /*
-        $.ajax({
-            datatype: this.__parent.static.TYPE_JSON,
-            type: this.__parent.static.TYPE_POST,
+
+        /*$.ajax({
+            datatype: Livecity.TYPES.JSON,
+            type: Livecity.TYPES.POST,
             url: '/service/guide',
             data: json,
             success: function(result) {
                 // check result type
                 if (result.status == 'OK') {
-                    console.log(JSON.stringify(result));
-                    _this.__guide.setResult(result.basic);
-                    var myroute = result.basic.routes[0];
-                    var ttl = 0;
-                    for (var i = 0; i < myroute.legs.length; i++) ttl += myroute.legs[i].distance.value;
-                    _this.__guide.setTotal(ttl);
-                    _this.__parent.getObjects().guideEditor.valueLength.text(ttl);
-                    _this.__guide.setVisible(true);
+
                 }
             }
         });
@@ -2332,14 +2325,22 @@ GuideEditor.prototype.push = function(position) {
 
         // get basic google route
         this.__parent.directionsService.route(request, function(result, status) {
+            // check google result
             if (status === google.maps.DirectionsStatus.OK) {
-                console.log(result);
+                // set result
                 _this.__guide.setResult(result);
+                // get basic route
                 var myroute = result.routes[0];
+                // set values to guide editor
+                _this.__parent.getObjects().guideEditor.valueStart.text(parseAddress(myroute.legs[0].start_address));
+                _this.__parent.getObjects().guideEditor.valueEnd.text(parseAddress(myroute.legs[0].end_address));
+                // calculate total length
                 var ttl = 0;
                 for (var i = 0; i < myroute.legs.length; i++) ttl += myroute.legs[i].distance.value;
+                // set total value to editor
                 _this.__guide.setTotal(ttl);
                 _this.__parent.getObjects().guideEditor.valueLength.text(ttl);
+                // set guide visible
                 _this.__guide.setVisible(true);
             }
         });
@@ -2407,7 +2408,7 @@ Guide.prototype.setStart = function(position, address) {
         map: this.__parent.getMap(),
         icon: Livecity.ICONS.A()
     });
-    this.__startAddress = address;
+    //this.__startAddress = address;
 };
 
 Guide.prototype.setEnd = function(position, address) {
@@ -2417,7 +2418,7 @@ Guide.prototype.setEnd = function(position, address) {
         map: this.__parent.getMap(),
         icon: Livecity.ICONS.B()
     });
-    this.__endAddress = address;
+    //this.__endAddress = address;
 };
 
 Guide.prototype.setTotal = function(ttl) {
@@ -2450,4 +2451,15 @@ function parseNode(name, value) {
         var match = /LatLng\(([^,]+),([^,]+)\)/.exec(value);
         return new google.maps.LatLng(match[1], match[2]);
     } else return value;
+}
+
+function parseAddress(value) {
+    var index1 = value.indexOf(',');
+    if (index1 !== -1) {
+        var index2 = value.substr(index1 + 1, (value.length - 1)).indexOf(',');
+        if (index2 !== -1) {
+            return value.substr(0, index2 + index1 + 1);
+        }
+    }
+    return null;
 }
