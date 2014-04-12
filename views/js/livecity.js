@@ -329,7 +329,7 @@ function Livecity(objects,settings) {
     this.geocoder = new google.maps.Geocoder();
 }
 
-// [P] init - init map [DEPRECATED]
+// [P] init - init map
 Livecity.prototype.init = function() {
     // link to main document
     var link = this;
@@ -590,6 +590,10 @@ Livecity.prototype.onEditRoute = function() {
     if (!this.toolBox.isRouteEditorOpened()) this.outMsg(TEXT[this.getLang()].modeRouteEditor, 'green');
     // prepare toolbox
     this.toolBox.openRouteEditor(true);
+    // setting up cursor
+    this.__map.setOptions({
+        draggableCursor: 'pointer'
+    });
     // disable searchbar
     this.searchBar.deselect();
     // show all points
@@ -639,6 +643,10 @@ Livecity.prototype.onClosePointEditor = function() {
 Livecity.prototype.onCloseRouteEditor = function() {
     // prepare toolbox
     this.toolBox.openRouteEditor(false);
+    // change map cursor
+    this.__map.setOptions({
+        draggableCursor: 'pointer'
+    });
     // hide point layer
     this.pointLayer.setVisible(false);
     // show notify
@@ -735,7 +743,9 @@ LoginBox.prototype.logout = function(callback) {
             if (res.logout) {
                 callback(true);
             }
-            else callback(false);
+            else {
+                callback(false);
+            }
         }
     });
 };
@@ -2317,6 +2327,7 @@ GuideEditor.prototype.push = function(position) {
         // get basic google route
         this.__parent.directionsService.route(request, function(result, status) {
             if (status === google.maps.DirectionsStatus.OK) {
+                console.log(result);
                 _this.__guide.setResult(result);
                 var myroute = result.routes[0];
                 var ttl = 0;
@@ -2326,7 +2337,6 @@ GuideEditor.prototype.push = function(position) {
                 _this.__guide.setVisible(true);
             }
         });
-
     }
 };
 

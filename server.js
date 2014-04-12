@@ -664,10 +664,10 @@ app.post('/service/login', function(req, res) {
     else if ('logout' === req.query.act) {
         if (req.session) {
             req.session.destroy(function() {
-                res.send({});
+                res.send({logout: true});
             })
         }
-        else res.send({});
+        else res.send({logout: true});
     }
 });
 
