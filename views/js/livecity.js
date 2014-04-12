@@ -77,7 +77,9 @@ $(document).ready(function() {
             routes: $('#app-routes'),
             routesText: $('#app-routes-text'),
             transports: $('#app-transports'),
-            transportsText: $('#app-transports-text')
+            transportsText: $('#app-transports-text'),
+            points: $('#app-points'),
+            pointsText: $('#app-points-text')
         },
         editPoints: $('#edit_points'),
         editRoutes: $('#edit_routes'),
@@ -286,6 +288,11 @@ function Livecity(objects, settings) {
     this.getMap = function() {
         return this.__map;
     };
+
+    /*
+     * PUBLIC ATTRIBUTES
+     */
+
     // notifier
     this.notifier = new Notifier(this);
     // point layer
@@ -385,6 +392,7 @@ Livecity.prototype.onEscape = function() {
         }
         else this.onClosePointEditor();
     }
+    // route editor mode
     if (this.toolBox.isRouteEditorOpened()) {
         if (!this.toolBox.__routeEditor.isEmpty()) {
             this.toolBox.__routeEditor.resume();
@@ -393,6 +401,7 @@ Livecity.prototype.onEscape = function() {
         }
         else this.onCloseRouteEditor();
     }
+    // guide editor mode
     if (this.toolBox.isGuideEditorOpened()) {
         if (!this.toolBox.__guideEditor.isEmpty()) {
             this.toolBox.__guideEditor.resume();
@@ -420,12 +429,16 @@ Livecity.prototype.setEditPointData = function(position, title, focus) {
     if (focus) this.__objects.pointEditor.valueTitle.focus();
 };
 
-// [P] addPoint - add new point on map
+// [P] addPoint - add new point on map [WILL BE MOVED TO
 Livecity.prototype.addPoint = function(position) {
+    // create temporary title
     var title = "id" + (this.pointLayer.points.length);
+    // create new point
     var point = new MapPoint(this, null, position, Livecity.ICONS.RED(), title);
     point.getMarker().setDraggable(true);
+    // set point visible
     point.setVisible(true);
+    // set editor data
     this.setEditPointData(position, title, true);
     return point;
 };
@@ -452,6 +465,7 @@ Livecity.prototype.onUpdateInfo = function() {
     });
     this.__objects.app.routes.html(city.routeLayer.routes.length);
     this.__objects.app.transports.html(city.transLayer.trans.length);
+    this.__objects.app.points.html(city.pointLayer.points.length);
 };
 
 // [P] login - prepare view for authorized/unauthorized user
@@ -580,8 +594,8 @@ Livecity.prototype.onEditRoute = function() {
     this.pointLayer.setVisible(true);
     // hide trans layer
     this.transLayer.hide();
-
 };
+
 // [P] onGuide - actions on open guide
 Livecity.prototype.onEditGuide = function() {
     // show notify
@@ -647,21 +661,28 @@ Livecity.prototype.onCloseGuideEditor = function() {
     this.outMsg(TEXT[this.getLang()].editingFinished, 'green');
 };
 
+// [P] optimizeView - optimize points view on map
 Livecity.prototype.optimizeView = function(point, callback) {
     var __this = this;
+    // create new bounds
     var bounds = new google.maps.LatLngBounds();
+    // get all visible points/routes
     var vPoints = this.pointLayer.getVisible();
     var vRoutes = this.routeLayer.getVisible();
+    // extend bounds on each point
     async.each(vPoints, function(item ,callback) {
         bounds.extend(item.getPosition());
         callback();
     }, function() {
+        // extend bound on each route
         async.each(vRoutes, function(item, callback) {
             bounds.extend(item.getInfoStart().getPosition());
             bounds.extend(item.getInfoEnd().getPosition());
             callback();
         }, function(){
+            // if there are no items on map
             if ((vPoints.length === 0) && (vRoutes.length === 0)) {
+                // set map to default map center
                 var b1 = new google.maps.LatLngBounds();
                 b1.extend(__this.getProperties().center);
                 __this.__map.fitBounds(b1);
@@ -690,13 +711,14 @@ function LoginBox(parent) {
     this.__visible = false;
 };
 
-// [P]
+// [P] setVisible - set login box visibility
 LoginBox.prototype.setVisible = function(is) {
     if (true === is) this.__parent.getObjects().loginBox.base.show();
     else this.__parent.getObjects().loginBox.base.hide();
     this.__visible = is;
 };
 
+// [P] login - try to login user
 LoginBox.prototype.login = function(box, callback) {
     $.ajax({
         url: '/service/login?act=login',
@@ -711,6 +733,7 @@ LoginBox.prototype.login = function(box, callback) {
     }});
 };
 
+// [P] logout - try to logout
 LoginBox.prototype.logout = function(callback) {
     var _this = this;
     $.ajax({
@@ -728,6 +751,7 @@ LoginBox.prototype.logout = function(callback) {
     });
 };
 
+// [P] - check authorization data
 LoginBox.prototype.checkAuthorization = function(callback) {
     $.get('/service/login', function(res) {
         callback(true === res.authorized);
@@ -750,7 +774,7 @@ function ToolBox(parent) {
     this.__visible = false;
     // maximize flag
     this.__maximized = false;
-}
+};
 
 // [P]
 ToolBox.prototype.isPointEditorOpened = function() {
@@ -797,6 +821,7 @@ ToolBox.prototype.openPointEditor = function(is) {
     }
 };
 
+// [P]
 ToolBox.prototype.deselect = function() {
     this.__parent.getObjects().toolBox.activeGuide.removeClass('active');
     this.__parent.getObjects().toolBox.activePoint.removeClass('active');
@@ -834,6 +859,7 @@ ToolBox.prototype.openRouteEditor = function(is) {
     }
 };
 
+// [P]
 ToolBox.prototype.openGuideEditor = function(is) {
     if (true === is) {
         // close other editors
@@ -867,6 +893,7 @@ ToolBox.prototype.openGuideEditor = function(is) {
     }
 };
 
+// [P]
 ToolBox.prototype.maximize = function(is) {
     if (true === is) {
         this.__maximized = true;
@@ -880,6 +907,7 @@ ToolBox.prototype.maximize = function(is) {
     }
 };
 
+// [P]
 ToolBox.prototype.show = function(is) {
     if (true === is) {
         this.__visible = true;
@@ -889,8 +917,9 @@ ToolBox.prototype.show = function(is) {
         this.__visible = false;
         this.__parent.getObjects().toolBox.base.hide();
     }
-}
+};
 
+// [P]
 ToolBox.prototype.clear = function() {
     this.__parent.getObjects().pointEditor.valueLat.text(TEXT.zero);
     this.__parent.getObjects().pointEditor.valueLng.text(TEXT.zero);
@@ -946,7 +975,7 @@ Notifier.prototype.msg = function(text, color, sec) {
     this.push();
     this.__box.css("display", "block");
     // replace 'green' and 'red' with normal colors
-    // TBD
+    // UPD
     var col = (color === 'green') ? '#27A845' : '#F20505';
     this.__box.css("background-color", col);
     this.__box.text(text);
@@ -1083,7 +1112,7 @@ function SearchBar(parent) {
             // TBD
         });
     };
-}
+};
 
 // marker layer
 function PointLayer(main) {
@@ -1232,7 +1261,7 @@ function PointLayer(main) {
         for (var i = 0; i < points.length; i++) if (points[i].getId() === id) return points[i];
         return -1;
     };
-}
+};
 
 // route layer class
 function RouteLayer(main) {
@@ -1349,7 +1378,7 @@ function RouteLayer(main) {
         for (var i = 0; i < this.routes.length; i++) if ((this.routes[i].isPointOf(id)) && (this.routes[i].isVisible())) is = true;
         return is;
     };
-}
+};
 
 function TransLayer(main) {
     this.main = main;
@@ -1430,7 +1459,7 @@ function TransLayer(main) {
             });
         });
     };
-}
+};
 
 // class for route
 function MapRoute(parent, id, start, end, title, total) {
@@ -1594,7 +1623,7 @@ function MapRoute(parent, id, start, end, title, total) {
     this.isPointOf = function(id) {
         return __points.indexOf(id) !== -1;
     };
-}
+};
 
 // add node to route
 MapRoute.prototype.add = function(node) {
@@ -1772,7 +1801,7 @@ function MapNode(parent, id, start, end, data, total) {
     };
 
     if (__data) this.__base.setDirections(JSON.parse(__data, parseNode));
-}
+};
 
 // [P] init - init node using GService [ASYNC]
 MapNode.prototype.init = function(callback) {
@@ -1971,7 +2000,7 @@ function MapPoint(parent, id, position, icon, title) {
             __parent.outMsg(TEXT[__parent.getLang()].pointSaved,"green");
         }
     });
-}
+};
 
 // [P] update - update point data [ASYNC]
 MapPoint.prototype.update = function(callback) {
@@ -2066,7 +2095,6 @@ MapPoint.prototype.remove = function(callback) {
             if (callback) callback(result);
         }
     });
-
 };
 
 // class for cars
@@ -2100,7 +2128,7 @@ function MapTrans(main, id, id_route, position) {
     google.maps.event.addListener(this.marker, 'click', function(event) {
 
     });
-}
+};
 
 /*`
  * RouteEditor Class
@@ -2222,7 +2250,7 @@ function RouteEditor(main) {
         this.route = new MapRoute(this.main);
         this.leavePoints();
     };
-}
+};
 
 /*
  * GuideEditor Class
