@@ -513,19 +513,34 @@ app.post('/service/guide', function(req, res) {
 });
 
 /*
- * Service app/version
+ * Service app
  *
  * Type: GET
  *
  * Request:
- * none
+ * resource type/empty
  *
  * Response:
- * app version
+ * info
  */
 
-app.get('/service/app/version', function(req, res) {
-    return res.send(pjson.version);
+app.get('/service/app', function(req, res) {
+    return res.send({
+        version: pjson.version
+    });
+});
+
+app.get('/service/app/:type', function(req, res) {
+    // switch type
+    switch (req.params.type) {
+        // version
+        case 'version' :
+            return res.send(pjson.version);
+            break;
+        // default act
+        default:
+            return res.send(null);
+    }
 });
 
 /*
