@@ -12,9 +12,9 @@ Next beta version: ```0.4``` (will be released on or before April, 20).
 4. Basic authorization.
 
 ### Will be implemented:
-1. Full guide functionality ```0.3.1```
-2. User roles ```0.4.0```
-3. Saving, sharing guides ```0.4.0```
+1. Full guide functionality ```0.4.0```
+2. User roles ```1.0.0```
+3. Saving, sharing guides ```1.0.0```
 4. Transport info ```1.0.0```
 5. Locales ```1.0.0```
 6. Basic socket.io implementation ```1.0.0```
