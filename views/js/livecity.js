@@ -1678,7 +1678,12 @@ MapRoute.prototype.save = function(callback) {
             // get total distance, and array of node ID's
             async.eachSeries(link.getNodes(),function(item,callback){
                 total += item.getTotal();
-                ids.push({node: item.getId(), total: item.getTotal()});
+                ids.push({
+                    node: item.getId(),
+                    total: item.getTotal(),
+                    start: JSON.stringify(item.getStartPosition()),
+                    end: JSON.stringify(item.getEndPosition())
+                });
                 callback();
             },function(err) {
                 // save route
@@ -1773,6 +1778,14 @@ function MapNode(parent, id, start, end, data, total) {
 
     this.getEnd = function() {
         return __end;
+    };
+
+    this.getStartPosition = function() {
+        return __start.getPosition();
+    };
+
+    this.getEndPosition = function() {
+        return __end.getPosition();
     };
 
     // SET total

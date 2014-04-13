@@ -287,8 +287,6 @@ app.post('/data/routes', function(req,res) {
     });
     route.save(function(err) {
         if (!err) {
-            // update points of each route
-            service.addRouteToPoints(route.points, route._id);
             return res.send({route: route});
         }
         else {
@@ -330,11 +328,9 @@ app.put('/data/routes/:id', function(req,res) {
         route.points = req.body.points;
         route.total = req.body.total;
         route.title = req.body.title;
+        service.removeRouteFromPoints(route._id, points);
         return route.save(function (err) {
             if (!err) {
-                // remove route from OLD points, and add to NEW
-                service.removeRouteFromPoints(route._id, points);
-                service.addRouteToPoints(route._id, route.points);
                 return res.send({route: route});
             }
             else {
