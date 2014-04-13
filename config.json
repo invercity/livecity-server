@@ -8,6 +8,6 @@
         "deltaDistance" : 50,
         "defaultSpeed" : 50,
         "defaultStopTime" : 2,
-        "defaultSearchPointRadius" : 1000
+        "defaultSearchPointRadius" : 500
     }
 }

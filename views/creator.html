@@ -25,6 +25,11 @@ and open the template in the editor.
         <div style="position: absolute; height: 20px; width: 50px; z-index: 1000; right: 0">
             <button id="act" onclick="dropAll()"> Drop </button>
             <input id="index" type="text" style="width: 40px" value="none">
+            <select id="routeId" type="text" style="width: 40px">
+                <option>1</option>
+                <option>2</option>
+                <option>3</option>
+            </select>
         </div>
         <!-- MAP -->
         <div id="map_canvas">
@@ -64,7 +69,8 @@ and open the template in the editor.
                         data: {
                             lat: event.latLng.lat(),
                             lng: event.latLng.lng(),
-                            id: markers.length - 1
+                            id: markers.length - 1,
+                            route: $('#routeId').val()
                         },
                         success: function(result) {
                             ids.push(result.temp._id);

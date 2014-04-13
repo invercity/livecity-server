@@ -401,7 +401,8 @@ app.post('/data/temp', function(req,res) {
     var point = new Temp({
         lat: req.body.lat,
         lng: req.body.lng,
-        index: req.body.id
+        index: req.body.id,
+        route: req.body.route
     });
     point.save(function(err) {
         if (!err) return res.send({temp: point});

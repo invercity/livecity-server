@@ -1361,7 +1361,7 @@ function RouteLayer(main) {
                 callback();
             }, function() {
                 $.get('/data/routes', function(result) {
-                    async.each(result,function(item,callback) {
+                    async.each(result,function(item, callback) {
                         // get start point of route by id
                         var start = main.pointLayer.getPointById(item.start);
                         // get end point of route by id
@@ -2335,23 +2335,62 @@ GuideEditor.prototype.push = function(position) {
             success: function(result) {
                 // check result type
                 if (result.status == 'OK') {
-                    var res = result.basic;
-                    //console.log('server')
-                    //console.log(res);
-                    //console.log(result.points)
-                    console.log(result.points.length)
-                    for (var i=0;i<result.points.length;i++) {
-                        //console.log(result.points[i])
-                        var marker = new google.maps.Marker({
-                            position: result.points[i],
-                            icon: Livecity.ICONS.RED(),
-                            map: _this.__parent.getMap(),
-                            title: "",
-                            draggable: false,
-                            visible: true,
-                            zIndex: 5000
+                    if (result.result.type = 'ONE') {
+                        // calculate total distance
+                        var totalDistance = result.result.steps[0].total +
+                            result.result.steps[1].total +
+                            result.result.steps[2].total;
+                        // update distance in editor
+                        _this.__parent.getObjects().guideEditor.valueLength.text(totalDistance);
+                        // part 1
+                        _this.__parent.directionsService.route({
+                            origin: _this.__guide.getStartPosition(),
+                            destination: _this.__parent.pointLayer.getPointById(result.result.steps[0].end).getPosition(),
+                            travelMode: google.maps.TravelMode.WALKING,
+                            optimizeWaypoints: false
+                        }, function(res, status) {
+                            // check google result
+                            if (status === google.maps.DirectionsStatus.OK) {
+                                // add this leg to guide
+                                _this.__guide.pushRoute(res);
+                                // get route
+                                var myroute = res.routes[0];
+                                // update info
+                                _this.__parent.getObjects().guideEditor.valueStart.text(parseAddress(myroute.legs[0].start_address));
+                            }
+                        });
+                        // part 2
+                        _this.__parent.directionsService.route({
+                            origin: _this.__parent.pointLayer.getPointById(result.result.steps[0].end).getPosition(),
+                            destination: _this.__parent.pointLayer.getPointById(result.result.steps[1].end).getPosition(),
+                            travelMode: google.maps.TravelMode.DRIVING,
+                            optimizeWaypoints: false
+                        }, function(res, status) {
+                            // check google result
+                            if (status === google.maps.DirectionsStatus.OK) {
+                                _this.__guide.pushRoute(res);
+                            }
+                        });
+                        // part 3
+                        _this.__parent.directionsService.route({
+                            origin: _this.__parent.pointLayer.getPointById(result.result.steps[1].end).getPosition(),
+                            destination: position,
+                            travelMode: google.maps.TravelMode.WALKING,
+                            optimizeWaypoints: false
+                        }, function(res, status) {
+                            // check google result
+                            if (status === google.maps.DirectionsStatus.OK) {
+                                // add this leg
+                                _this.__guide.pushRoute(res);
+                                var myroute = res.routes[0];
+                                // update info
+                                _this.__parent.getObjects().guideEditor.valueEnd.text(parseAddress(myroute.legs[0].end_address));
+                            }
                         });
                     }
+                }
+                    //console.log('done');
+                    //console.log(result.result)
                     /*_this.__guide.setResult(res);
                     // get basic route
                     var myroute = result.routes[0];
@@ -2367,13 +2406,12 @@ GuideEditor.prototype.push = function(position) {
                     _this.__parent.getObjects().guideEditor.valueLength.text(ttl);
                     // set guide visible
                     _this.__guide.setVisible(true); */
-                }
             }
         });
 
 
         // get basic google route
-        this.__parent.directionsService.route(request, function(result, status) {
+      /*  this.__parent.directionsService.route(request, function(result, status) {
             // check google result
             if (status === google.maps.DirectionsStatus.OK) {
 
@@ -2395,12 +2433,12 @@ GuideEditor.prototype.push = function(position) {
                 // set guide visible
                 _this.__guide.setVisible(true);
             }
-        });
+        }); */
     }
 };
 
 GuideEditor.prototype.resume = function() {
-    this.__guide.setVisible(false);
+    this.__guide.hide();
     this.__guide = new Guide(this.__parent);
     // TBD
     this.__parent.toolBox.clear();
@@ -2416,11 +2454,8 @@ GuideEditor.prototype.isEmpty = function() {
 function Guide(parent) {
     // link to parent
     this.__parent = parent;
-    // base
-    this.__base = new google.maps.DirectionsRenderer({
-        suppressMarkers: true,
-        preserveViewport: true
-    });
+    // bases
+    this.__bases = [];
     // start marker
     this.__start = null;
     // end marker
@@ -2437,8 +2472,27 @@ function Guide(parent) {
     this.__id = null;
 };
 
+Guide.prototype.pushRoute = function(data) {
+    var base = new google.maps.DirectionsRenderer({
+        suppressMarkers: true,
+        preserveViewport: true
+    });
+    base.setDirections(data);
+    base.setMap(this.__parent.getMap());
+    this.__bases.push(base);
+};
+
 Guide.prototype.getStartPosition = function() {
     return this.__start == null ? null : this.__start.position;
+};
+
+Guide.prototype.hide = function() {
+    if (this.__start) this.__start.setVisible(false);
+    if (this.__end) this.__end.setVisible(false);
+    async.each(this.__bases, function(item, callback) {
+        item.setMap(null);
+        callback();
+    });
 };
 
 Guide.prototype.getEndPosition = function() {
@@ -2457,6 +2511,7 @@ Guide.prototype.setStart = function(position, address) {
     this.__start = new google.maps.Marker({
         position: position,
         draggable: true,
+        visible: true,
         map: this.__parent.getMap(),
         icon: Livecity.ICONS.A()
     });
@@ -2467,6 +2522,7 @@ Guide.prototype.setEnd = function(position, address) {
     this.__end = new google.maps.Marker({
         position: position,
         draggable: true,
+        visible: true,
         map: this.__parent.getMap(),
         icon: Livecity.ICONS.B()
     });
@@ -2475,18 +2531,6 @@ Guide.prototype.setEnd = function(position, address) {
 
 Guide.prototype.setTotal = function(ttl) {
     this.__total = ttl;
-};
-
-Guide.prototype.setResult = function(result) {
-    this.__base.setDirections(result);
-    this.__result = JSON.stringify(result, stringifyNode);
-};
-
-Guide.prototype.setVisible = function(is) {
-    if (true === is) this.__base.setMap(this.__parent.getMap());
-    else this.__base.setMap(null);
-    if (this.__start) this.__start.setVisible(is);
-    if (this.__end) this.__end.setVisible(is);
 };
 
 Guide.prototype.save = function() {
