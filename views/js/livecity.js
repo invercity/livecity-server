@@ -1079,25 +1079,36 @@ function SearchBar(parent) {
             else {
                 //get old element we need to hide
                 var oldElem = $(__chosed).not(selected).get(0);
-                // pop it from choosed items
+                // pop it from chosen items
                 __chosed.splice(__chosed.indexOf(oldElem),1);
                 // get type
                 // this is old route we need to hide
                 if (__points.indexOf(oldElem) === -1) {
                     var oldRoute = __parent.routeLayer.getRouteById(oldElem);
+                    // set old route hidden
                     oldRoute.setVisible(false);
-                    // TEMPORARY
-                    // check if we hide one of chosed points
+                    // check if we hide one of chosen points
                     async.each(oldRoute.getPoints(), function(point, callback) {
+                        // check
                         if (__chosed.indexOf(point) !== -1) {
-                            var p = parent.pointLayer.getPointById(point);
+                            // get point
+                            var p = __parent.pointLayer.getPointById(point);
+                            // set point and point info visible
                             p.setVisible(true);
                             p.setInfoVisible(true);
                         }
                         callback();
                     },function() {});
-                    // add logic for displaying points
-                    __parent.transLayer.setVisibleByRoute(oldElem,false);
+                    // hide transport, of closed route
+                    __parent.transLayer.setVisibleByRoute(oldElem, false);
+                    // check selected ele,ents
+                    async.each(__chosed, function(item, callback) {
+                        // get route by this id
+                        var route = __parent.routeLayer.getRouteById(item);
+                        // set route visible
+                        if (route) route.setVisible(true);
+                        callback();
+                    });
                 }
                 // this is old point we need to hide
                 else {
@@ -1321,14 +1332,14 @@ function RouteLayer(main) {
 
     // get route by title
     this.getRouteByTitle = function(title) {
-        var route = -1;
+        var route = null;
         for (var i = 0; i < this.routes.length; i++) if (this.routes[i].getTitle() == title) route = this.routes[i];
         return route;
     };
 
     // get route by id
     this.getRouteById = function(id) {
-        var route = -1;
+        var route = null;
         for (var i = 0; i < this.routes.length; i++) if (this.routes[i].getId() === id) route = this.routes[i];
         return route;
     };
