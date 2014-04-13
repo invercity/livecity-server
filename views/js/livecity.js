@@ -2304,15 +2304,9 @@ GuideEditor.prototype.push = function(position) {
     // if position is the pos of A
     if (!this.__guide.getStart()) _this.__guide.setStart(position);
     else {
+        // set End of Guide
         _this.__guide.setEnd(position);
-
-        var request = {
-            origin: this.__guide.getStartPosition(),
-            destination: position,
-            travelMode: google.maps.TravelMode.DRIVING,
-            optimizeWaypoints: false
-        };
-
+        // request body
         var json = {
             end: {
                 lat: position.lat(),
@@ -2324,9 +2318,7 @@ GuideEditor.prototype.push = function(position) {
             },
             mode: google.maps.TravelMode.DRIVING
         };
-
-        // testing guide service
-
+        // make request to service
         $.ajax({
             datatype: Livecity.TYPES.JSON,
             type: Livecity.TYPES.POST,
@@ -2335,24 +2327,33 @@ GuideEditor.prototype.push = function(position) {
             success: function(result) {
                 // check result type
                 if (result.status == 'OK') {
-                    if (result.result.type = 'ONE') {
+                    if ((result.result) && (result.result.type === 'ONE')) {
                         // calculate total distance
                         var totalDistance = result.result.steps[0].total +
                             result.result.steps[1].total +
                             result.result.steps[2].total;
                         // update distance in editor
                         _this.__parent.getObjects().guideEditor.valueLength.text(totalDistance);
+                        // create redirect boxes
+                        // get redirect positions
+                        var routeStartPosition = _this.__parent.pointLayer.getPointById(result.result.steps[0].end).getPosition();
+                        var routeEndPosition = _this.__parent.pointLayer.getPointById(result.result.steps[1].end).getPosition();
+                        // get route
+                        var route = result.result.steps[0].route;
+                        // push redirects
+                        _this.__guide.pushRedirect(routeStartPosition, null, route.title);
+                        _this.__guide.pushRedirect(routeEndPosition, route.title, null);
                         // part 1
                         _this.__parent.directionsService.route({
                             origin: _this.__guide.getStartPosition(),
-                            destination: _this.__parent.pointLayer.getPointById(result.result.steps[0].end).getPosition(),
+                            destination: routeStartPosition,
                             travelMode: google.maps.TravelMode.WALKING,
                             optimizeWaypoints: false
                         }, function(res, status) {
                             // check google result
                             if (status === google.maps.DirectionsStatus.OK) {
                                 // add this leg to guide
-                                _this.__guide.pushRoute(res);
+                                _this.__guide.pushRoute(res, 'WALKING');
                                 // get route
                                 var myroute = res.routes[0];
                                 // update info
@@ -2361,8 +2362,8 @@ GuideEditor.prototype.push = function(position) {
                         });
                         // part 2
                         _this.__parent.directionsService.route({
-                            origin: _this.__parent.pointLayer.getPointById(result.result.steps[0].end).getPosition(),
-                            destination: _this.__parent.pointLayer.getPointById(result.result.steps[1].end).getPosition(),
+                            origin: routeStartPosition,
+                            destination: routeEndPosition,
                             travelMode: google.maps.TravelMode.DRIVING,
                             optimizeWaypoints: false
                         }, function(res, status) {
@@ -2373,7 +2374,7 @@ GuideEditor.prototype.push = function(position) {
                         });
                         // part 3
                         _this.__parent.directionsService.route({
-                            origin: _this.__parent.pointLayer.getPointById(result.result.steps[1].end).getPosition(),
+                            origin: routeEndPosition,
                             destination: position,
                             travelMode: google.maps.TravelMode.WALKING,
                             optimizeWaypoints: false
@@ -2381,7 +2382,7 @@ GuideEditor.prototype.push = function(position) {
                             // check google result
                             if (status === google.maps.DirectionsStatus.OK) {
                                 // add this leg
-                                _this.__guide.pushRoute(res);
+                                _this.__guide.pushRoute(res, 'WALKING');
                                 var myroute = res.routes[0];
                                 // update info
                                 _this.__parent.getObjects().guideEditor.valueEnd.text(parseAddress(myroute.legs[0].end_address));
@@ -2389,54 +2390,16 @@ GuideEditor.prototype.push = function(position) {
                         });
                     }
                 }
-                    //console.log('done');
-                    //console.log(result.result)
-                    /*_this.__guide.setResult(res);
-                    // get basic route
-                    var myroute = result.routes[0];
-                    //console.log(myroute.legs)
-                    // set values to guide editor
-                    _this.__parent.getObjects().guideEditor.valueStart.text(parseAddress(myroute.legs[0].start_address));
-                    _this.__parent.getObjects().guideEditor.valueEnd.text(parseAddress(myroute.legs[0].end_address));
-                    // calculate total length
-                    var ttl = 0;
-                    for (var i = 0; i < myroute.legs.length; i++) ttl += myroute.legs[i].distance.value;
-                    // set total value to editor
-                    _this.__guide.setTotal(ttl);
-                    _this.__parent.getObjects().guideEditor.valueLength.text(ttl);
-                    // set guide visible
-                    _this.__guide.setVisible(true); */
+                else {
+                    // TO DO
+                    // add error handler
+                }
             }
         });
-
-
-        // get basic google route
-      /*  this.__parent.directionsService.route(request, function(result, status) {
-            // check google result
-            if (status === google.maps.DirectionsStatus.OK) {
-
-                //console.log(result);
-                // set result
-                _this.__guide.setResult(result);
-                // get basic route
-                var myroute = result.routes[0];
-                //console.log(myroute.legs)
-                // set values to guide editor
-                _this.__parent.getObjects().guideEditor.valueStart.text(parseAddress(myroute.legs[0].start_address));
-                _this.__parent.getObjects().guideEditor.valueEnd.text(parseAddress(myroute.legs[0].end_address));
-                // calculate total length
-                var ttl = 0;
-                for (var i = 0; i < myroute.legs.length; i++) ttl += myroute.legs[i].distance.value;
-                // set total value to editor
-                _this.__guide.setTotal(ttl);
-                _this.__parent.getObjects().guideEditor.valueLength.text(ttl);
-                // set guide visible
-                _this.__guide.setVisible(true);
-            }
-        }); */
     }
 };
 
+// [P] resume - finish Guide editor, close all
 GuideEditor.prototype.resume = function() {
     this.__guide.hide();
     this.__guide = new Guide(this.__parent);
@@ -2444,6 +2407,7 @@ GuideEditor.prototype.resume = function() {
     this.__parent.toolBox.clear();
 };
 
+// [P] isEmpty - check if editor is empty
 GuideEditor.prototype.isEmpty = function() {
     return this.__guide.getStart() === null;
 };
@@ -2456,6 +2420,8 @@ function Guide(parent) {
     this.__parent = parent;
     // bases
     this.__bases = [];
+    // redirects info
+    this.__boxes = [];
     // start marker
     this.__start = null;
     // end marker
@@ -2464,49 +2430,95 @@ function Guide(parent) {
     this.__startAddress = null;
     // end address
     this.__endAddress = null;
-    // total distance
-    this.__total = 0;
-    // DirectionsResult stringified
-    this.__result = null;
     // id
     this.__id = null;
 };
 
-Guide.prototype.pushRoute = function(data) {
+// [P] pushRoute - add route to Guide
+Guide.prototype.pushRoute = function(data, type) {
+    // chose color
+    var color = ('WALKING' === type) ? '#0000ff' : '#ff0000';
+    // create renderer
     var base = new google.maps.DirectionsRenderer({
         suppressMarkers: true,
-        preserveViewport: true
+        preserveViewport: true,
+        polylineOptions: {strokeColor: color}
     });
+    // set directions
     base.setDirections(data);
+    // set visible
     base.setMap(this.__parent.getMap());
+    // add to array
     this.__bases.push(base);
 };
 
+// [P] pushRedirect - add redirect to Guide
+Guide.prototype.pushRedirect = function(position, from, to) {
+    // fill text
+    var text = ' >> ';
+    if (from) text = from + text;
+    if (to) text += to;
+    // create info box
+    var box = new InfoBox({
+        content: '<div class="text"><center>' + text + '</center></div>',
+        boxClass: "infoGuide",
+        pixelOffset: new google.maps.Size(-50, -50),
+        closeBoxURL: '',
+        visible: true
+    });
+    // create marker for box
+    var marker = new google.maps.Marker({
+        position: position,
+        icon: Livecity.ICONS.BLUE(),
+        map: this.__parent.getMap(),
+        draggable: false,
+        visible: true
+    });
+    // show box
+    box.open(this.__parent.getMap(), marker);
+    // add box to array
+    this.__boxes.push({info: box, marker: marker});
+};
+
+// [P] getStartPosition - get position of guide start
 Guide.prototype.getStartPosition = function() {
     return this.__start == null ? null : this.__start.position;
 };
 
-Guide.prototype.hide = function() {
-    if (this.__start) this.__start.setVisible(false);
-    if (this.__end) this.__end.setVisible(false);
-    async.each(this.__bases, function(item, callback) {
-        item.setMap(null);
-        callback();
-    });
-};
-
+// [P] getEndPosition - get position of guide end
 Guide.prototype.getEndPosition = function() {
     return this.__end == null ? null : this.__end.position;
 };
 
+// [P] hide - hide Guide
+Guide.prototype.hide = function() {
+    // set visible Guide A && B
+    if (this.__start) this.__start.setVisible(false);
+    if (this.__end) this.__end.setVisible(false);
+    // async set visible route parts
+    async.each(this.__bases, function(item, callback) {
+        item.setMap(null);
+        callback();
+    });
+    // async set visible info boxes
+    async.each(this.__boxes, function(item, callback) {
+        item.info.setMap(null);
+        item.marker.setVisible(false);
+        callback();
+    });
+};
+
+// [P] getStart - get Start marker
 Guide.prototype.getStart = function() {
     return this.__start;
 };
 
+// [P] getEnd - get End marker
 Guide.prototype.getEnd = function() {
     return this.__end;
 };
 
+// [P] setStart - set start marker & info
 Guide.prototype.setStart = function(position, address) {
     this.__start = new google.maps.Marker({
         position: position,
@@ -2515,9 +2527,10 @@ Guide.prototype.setStart = function(position, address) {
         map: this.__parent.getMap(),
         icon: Livecity.ICONS.A()
     });
-    //this.__startAddress = address;
+    this.__startAddress = address;
 };
 
+// [P] setEnd - set end marker & info
 Guide.prototype.setEnd = function(position, address) {
     this.__end = new google.maps.Marker({
         position: position,
@@ -2526,15 +2539,12 @@ Guide.prototype.setEnd = function(position, address) {
         map: this.__parent.getMap(),
         icon: Livecity.ICONS.B()
     });
-    //this.__endAddress = address;
+    this.__endAddress = address;
 };
 
-Guide.prototype.setTotal = function(ttl) {
-    this.__total = ttl;
-};
-
+// [P] save - save this guide
 Guide.prototype.save = function() {
-
+    // TO DO
 };
 
 function stringifyNode(name, value) {

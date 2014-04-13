@@ -59,8 +59,23 @@ body { height: 100%; margin: 0; padding: 0}
     
 }
 
-.infoRoute .text {
+.infoGuide {
+    width: 100px;
+    height: 15px;
+    font-size: 12px;
+    font-weight: bolder;
+    opacity: 0.8;
+}
+
+.infoRoute .text, {
     width: 120px;
+    background: #f7f73d;
+    border: solid 1px #9f9c9c;
+    border-radius: 5px;
+}
+
+.infoGuide .text {
+    width: 50px;
     background: #f7f73d;
     border: solid 1px #9f9c9c;
     border-radius: 5px;
