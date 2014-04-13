@@ -30,7 +30,8 @@ TEXT = {
         login: 'Вход',
         exit: 'Выход',
         minute: 'мин.',
-        transArrived: 'прибыл'
+        transArrived: 'прибыл',
+        errorGuide: 'Невозможно построить маршрут'
     },
     ENG: {
         backToDefaultPlace: 'You have back to default place',
@@ -56,7 +57,8 @@ TEXT = {
         login: 'Login',
         exit: 'Exit',
         minute: 'min.',
-        transArrived: 'arrived'
+        transArrived: 'arrived',
+        errorGuide: 'Cannot build route'
     }
 };
 
@@ -2329,9 +2331,7 @@ GuideEditor.prototype.push = function(position) {
                 if (result.status == 'OK') {
                     if ((result.result) && (result.result.type === 'ONE')) {
                         // calculate total distance
-                        var totalDistance = result.result.steps[0].total +
-                            result.result.steps[1].total +
-                            result.result.steps[2].total;
+                        var totalDistance = result.result.steps[1].total;
                         // update distance in editor
                         _this.__parent.getObjects().guideEditor.valueLength.text(totalDistance);
                         // create redirect boxes
@@ -2356,6 +2356,12 @@ GuideEditor.prototype.push = function(position) {
                                 _this.__guide.pushRoute(res, 'WALKING');
                                 // get route
                                 var myroute = res.routes[0];
+                                // calculate distance for this route part
+                                var d = 0;
+                                for (var u=0;u<myroute.legs.length;u++) d+= myroute.legs[0].distance.value;
+                                totalDistance += d;
+                                // update distance in editor
+                                _this.__parent.getObjects().guideEditor.valueLength.text(totalDistance);
                                 // update info
                                 _this.__parent.getObjects().guideEditor.valueStart.text(parseAddress(myroute.legs[0].start_address));
                             }
@@ -2384,6 +2390,12 @@ GuideEditor.prototype.push = function(position) {
                                 // add this leg
                                 _this.__guide.pushRoute(res, 'WALKING');
                                 var myroute = res.routes[0];
+                                // calculate distance for this route part
+                                var d = 0;
+                                for (var u=0;u<myroute.legs.length;u++) d+= myroute.legs[0].distance.value;
+                                totalDistance += d;
+                                // update distance in editor
+                                _this.__parent.getObjects().guideEditor.valueLength.text(totalDistance);
                                 // update info
                                 _this.__parent.getObjects().guideEditor.valueEnd.text(parseAddress(myroute.legs[0].end_address));
                             }
@@ -2391,8 +2403,8 @@ GuideEditor.prototype.push = function(position) {
                     }
                 }
                 else {
-                    // TO DO
-                    // add error handler
+                    _this.__parent.outMsg(TEXT[_this.__parent.getLang()].errorGuide, 'red');
+                    _this.resume();
                 }
             }
         });
