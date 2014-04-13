@@ -43,10 +43,44 @@
 <a name="livecity" class="anchor" href="#livecity"><span class="octicon octicon-link"></span></a>livecity</h1>
 
 <p>Interactive system for monitoring city traffic<br>
-Current stable version: <code>0.3</code>;
-Current beta version: <code>0.3</code>  .</p>
+Current stable version: <code>0.3</code>;<br>
+Current beta version: <code>0.3.2</code>;<br>
+Next beta version: <code>0.4</code> (will be released on or before April, 20).</p>
 
 <h2>
+<a name="features" class="anchor" href="#features"><span class="octicon octicon-link"></span></a>Features</h2>
+
+<h3>
+<a name="current-features-list" class="anchor" href="#current-features-list"><span class="octicon octicon-link"></span></a>Current features list:</h3>
+
+<ol>
+<li>Displaying routes, points, transports;</li>
+<li>Displaying transport arrival data;</li>
+<li>Point editor (full functionality), route editor (create only), basic guide editor;</li>
+<li>Basic authorization.</li>
+</ol><h3>
+<a name="will-be-implemented" class="anchor" href="#will-be-implemented"><span class="octicon octicon-link"></span></a>Will be implemented:</h3>
+
+<ol>
+<li>Full guide functionality <code>0.4.0</code>
+</li>
+<li>User roles <code>1.0.0</code>
+</li>
+<li>Saving, sharing guides <code>1.0.0</code>
+</li>
+<li>Transport info <code>1.0.0</code>
+</li>
+<li>Locales <code>1.0.0</code>
+</li>
+<li>Basic socket.io implementation <code>1.0.0</code>
+</li>
+<li>API documentation <code>1.0.0</code>
+</li>
+<li>Registration <code>1.0.0</code>
+</li>
+<li>Route editor (full functionality) <code>1.1.0</code>
+</li>
+</ol><h2>
 <a name="quick-guide" class="anchor" href="#quick-guide"><span class="octicon octicon-link"></span></a>Quick guide</h2>
 
 <h3>
@@ -70,7 +104,25 @@ In future releases installing scripts will be added</p>
 <h3>
 <a name="running" class="anchor" href="#running"><span class="octicon octicon-link"></span></a>Running</h3>
 
-<p>To run livecity, just fire in terminal:<br><code>npm start</code>  </p>
+<p>To run livecity, just fire in terminal:
+<code>npm start</code></p>
+
+<h2>
+<a name="routes" class="anchor" href="#routes"><span class="octicon octicon-link"></span></a>Routes</h2>
+
+<p><code>/data/[points, routes, nodes, transports]</code> - Data CRUD</p>
+
+<ul>
+<li>GET - get all items</li>
+<li>POST - create item</li>
+<li>PUT <code>/data/[type]/id</code> - update item by <code>id</code>
+</li>
+<li>GET <code>/data/[type]/id</code> - get item by <code>id</code>
+</li>
+<li>DELETE <code>/data/[type]/id</code> - delete item by <code>id</code>
+</li>
+</ul><p><code>/service/[type]</code> - Services
+[TBA]</p>
 
 <h2>
 <a name="wiki" class="anchor" href="#wiki"><span class="octicon octicon-link"></span></a>Wiki</h2>
