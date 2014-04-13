@@ -67,7 +67,7 @@ body { height: 100%; margin: 0; padding: 0}
     opacity: 0.8;
 }
 
-.infoRoute .text, {
+.infoRoute .text {
     width: 120px;
     background: #f7f73d;
     border: solid 1px #9f9c9c;
