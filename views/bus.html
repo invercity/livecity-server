@@ -1,24 +1,22 @@
-<!--
-To change this template, choose utils | Templates
-and open the template in the editor.
--->
 <!DOCTYPE html>
 <html>
     <head>
         <title> Testing Client RESTful Service</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <script type="text/javascript" src="./js/jquery-1.9.1.min.js"></script>
+        <!-- SCRIPT -->
         <script type="text/javascript" src="http://maps.google.com/maps/api/js?key=AIzaSyCtoc2CLiq0QkGfdVKuyxJPhMfvSvNriRo&sensor=false&language=uk"></script>
-
+        <script type="text/javascript" src="./js/jquery-1.9.1.min.js"></script>
+        <script type="text/javascript" src="./js/bus.js"></script>
+        <!-- FAVICON -->
         <link rel="shortcut icon" href="img/favicon.ico" type="image/gif">
-
+        <!-- STYLE -->
         <style type="text/css">
             html { height: 100% }
             body { height: 100%; margin: 0px; padding: 0px }
             #map_canvas { height: 100% }
         </style>
     </head>
-    <body onload="map()">
+    <body onload="initializeMap()">
         <!-- START/END BUTTON -->
         <div style="position: absolute; height: 20px; width: 50px; z-index: 1000; right: 0">
             <button id="act" onclick="act()"> End </button>
@@ -27,97 +25,5 @@ and open the template in the editor.
         <div id="map_canvas">
             &nbsp;
         </div>
-        <script type="text/javascript">
-            var pos = new google.maps.LatLng(51.4982000,31.2893500);
-            // act flag, if flag === 0, act = 'exit', if flag === 1, act = 'enter'
-            var action = 0;
-            // route id
-            var route = null;
-            // transport id
-            var _id = null;
-            // create map, and marker [CAR]
-            function map() {
-
-                var settings = {
-                    zoom: 15,
-                    center: pos,
-                    mapTypeControl: true,
-                    mapTypeControlOptions: {
-                        style: google.maps.MapTypeControlStyle,
-                        position: google.maps.ControlPosition.BOTTOM_LEFT
-                    },
-                    navigationControl: true,
-                    navigationControlOptions: {
-                        style: google.maps.NavigationControlStyle.SMALL
-                    },
-                    mapTypeId: google.maps.MapTypeId.ROADMAP
-                };
-                var m = new google.maps.Map(document.getElementById("map_canvas"), settings);
-                var marker = new google.maps.Marker({
-                    position: pos, 
-                    map: m,
-                    draggable: true
-                });
-                google.maps.event.addListener(marker, 'dragend', function(event) {
-                    upd(event.latLng);
-                });
-                init();
-            };
-            // update marker [CAR] data on drag
-            function upd (pos) {
-                $.ajax({
-                    datatype: 'JSON',
-                    type: 'POST',
-                    url: '/service/transport?act=report',
-                    data: {
-                        _id:_id,
-                        route: route,
-                        lat: pos.lat(),
-                        lng: pos.lng()
-                    },
-                    success: function(result) {
-                    }
-                });
-            }
-            // init app
-            function init() {
-                $.ajax({
-                    datatype: 'json',
-                    type: 'POST',
-                    url: '/service/transport?act=init',
-                    data: {
-                        lat: pos.lat(),
-                        lng: pos.lng()
-                    },
-                    success: function(result) {
-                        route = result.routes[0]._id;
-                        _id = result.trans._id;
-                        action = 0;
-                        $('#act').text('Exit');
-                    }
-                });
-            }
-            // init or end act
-            function act() {
-                // end act
-                if (action === 0) {
-                    $.ajax({
-                        datatype: 'JSON',
-                        type: 'POST',
-                        url: '/service/transport?act=end',
-                        data: {
-                            _id: _id
-                        },
-                        success: function(result) {
-                            _id = null;
-                            route = null;
-                            action = 1;
-                            $('#act').text('Init');
-                        }
-                    })
-                }
-                else if (action === 1) init();
-            }
-        </script>
     </body>
 </html>
