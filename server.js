@@ -350,7 +350,6 @@ app.delete('/data/routes/:id', function(req, res) {
         }
         return route.remove(function(err){
             if (!err) {
-                //service.removeRouteFromPoints(route.points, route._id);
                 return res.send({status: 'OK'});
             }
             else {
