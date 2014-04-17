@@ -68,7 +68,7 @@ and open the template in the editor.
                 $.ajax({
                     datatype: 'JSON',
                     type: 'POST',
-                    url: '/work?act=report',
+                    url: '/service/transport?act=report',
                     data: {
                         _id:_id,
                         route: route,
@@ -84,7 +84,7 @@ and open the template in the editor.
                 $.ajax({
                     datatype: 'json',
                     type: 'POST',
-                    url: '/work?act=init',
+                    url: '/service/transport?act=init',
                     data: {
                         lat: pos.lat(),
                         lng: pos.lng()
@@ -104,7 +104,7 @@ and open the template in the editor.
                     $.ajax({
                         datatype: 'JSON',
                         type: 'POST',
-                        url: '/work?act=end',
+                        url: '/service/transport?act=end',
                         data: {
                             _id: _id
                         },
