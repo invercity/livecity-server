@@ -783,12 +783,12 @@ function ToolBox(parent) {
 };
 
 // [P]
-Toolbox.prototype.getRouteEditor = function() {
+ToolBox.prototype.getRouteEditor = function() {
     return this.__routeEditor;
 };
 
 // [P]
-Toolbox.prototype.getGuideEditor = function() {
+ToolBox.prototype.getGuideEditor = function() {
     return this.__guideEditor;
 };
 
@@ -2301,7 +2301,7 @@ RouteEditor.prototype.add = function(point) {
             // after init - add node to route
             _this.__route.add(node);
             // [TMP]
-            _this.__parent.getObjects().routeEditor.valueLength.html(_this.route.getTotal());
+            _this.__parent.getObjects().routeEditor.valueLength.html(_this.__route.getTotal());
             // set node visible
             node.setVisible(true);
         });
