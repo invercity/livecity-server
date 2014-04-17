@@ -190,11 +190,13 @@ $(document).ready(function() {
     // back to city center
     objects.control.click(function (){city.setCenter();});
     // save route handler
-    objects.routeEditor.save.click(function() { city.toolBox.__routeEditor.save();});
+    objects.routeEditor.save.click(function() { city.toolBox.getRouteEditor().save();});
     // set route start handler
-    objects.routeEditor.start.click(function() {city.toolBox.__routeEditor.setStart();});
+    objects.routeEditor.start.click(function() {city.toolBox.getRouteEditor().setStart();});
     // set route start handler
-    objects.routeEditor.end.click(function() {city.toolBox.__routeEditor.setEnd();});
+    objects.routeEditor.end.click(function() {city.toolBox.getRouteEditor().setEnd();});
+    // set route delete handler
+    objects.routeEditor.remove.click(function(){});
     // onAuth button handler
     objects.onAuth.click(function() {city.onAuth();});
     // login button handler
@@ -210,7 +212,7 @@ $(document).ready(function() {
         else city.pointLayer.setVisible(false);
     });
     // new guide handler
-    objects.guideEditor.create.click(function() {city.toolBox.__guideEditor.resume();});
+    objects.guideEditor.create.click(function() {city.toolBox.getGuideEditor().resume();});
     // search bar init
     objects.searchBar.chosen.chosen({
             no_results_text: TEXT[city.getLang()]
@@ -776,6 +778,16 @@ function ToolBox(parent) {
     this.__visible = false;
     // maximize flag
     this.__maximized = false;
+};
+
+// [P]
+Toolbox.prototype.getRouteEditor = function() {
+    return this.__routeEditor;
+};
+
+// [P]
+Toolbox.prototype.getGuideEditor = function() {
+    return this.__guideEditor;
 };
 
 // [P]
@@ -2119,7 +2131,7 @@ MapPoint.prototype.save = function(callback) {
 
 // [P] delete - delete point [ASYNC]
 MapPoint.prototype.remove = function(callback) {
-    var link = this;
+    var _this = this;
     // async delete on server
     $.ajax({
         datatype: Livecity.TYPES.JSON,
@@ -2127,7 +2139,7 @@ MapPoint.prototype.remove = function(callback) {
         url: '/data/points/' + this.getId(),
         cache: false,
         success: function(result) {
-            link.getMarker().setMap(null);
+            _this.getMarker().setMap(null);
             if (callback) callback(result);
         }
     });
@@ -2170,122 +2182,140 @@ function MapTrans(main, id, id_route, position) {
  * RouteEditor Class
  * @main - link to parent layer
  */
-function RouteEditor(main) {
+function RouteEditor(parent) {
     // link to parent object
-    this.main = main;
+    this.__parent = parent;
     // array for points
-    this.points = [];
+    this.__points = [];
     // buffer route
-    this.route = new MapRoute(this.main);
-    // add point to buffer
-    this.add = function(point) {
-        this.points.push(point);
-        point.getMarker().setIcon(Livecity.ICONS.RED());
-        var size = this.points.length;
-        if (this.points.length > 1) {
-            var node = new MapNode(this.main, null, this.points[size - 2], this.points[size - 1], null, 0);
-            var _this = this;
-            node.init(function() {
-                _this.route.add(node);
-                _this.main.getObjects().routeEditor.valueLength.html(_this.route.getTotal());
-                node.setVisible(true);
-            });
-        }
-    };
+    this.__route = new MapRoute(parent);
+};
 
-    // set endpoint of route
-    this.setEnd = function() {
-        if (this.points.length === 0) main.outMsg(TEXT[main.getLang()].nothingSelected,"red");
-        else {
-            // FEATURE
-            var end = this.route.getInfoEnd();
-            // close previous endpoint info
-            if (end) end.open(null);
-            var lastPoint = this.points[this.points.length - 1];
-            // set new endpoint
-            this.route.setEnd(lastPoint);
-            // show new endpoint info
-            this.route.getInfoEnd().open(this.main.getMap(), lastPoint.getMarker());
-            // set info in box
-            this.main.getObjects().routeEditor.valueEnd.text(lastPoint.getTitle());
-        }
-    };
+// [P] setStart - set start point of route
+RouteEditor.prototype.setStart = function() {
+    if (this.__points.length === 0) this.__parent.outMsg(TEXT[this.__parent.getLang()].nothingSelected,"red");
+    else {
+        var start = this.__route.getInfoStart();
+        // close previous endpoint info
+        if (start) start.open(null);
+        // get last point
+        var lastPoint = this.__points[this.__points.length - 1];
+        // set new endpoint
+        this.__route.setStart(lastPoint);
+        // show new endpoint info
+        this.__route.getInfoStart().open(this.__parent.getMap(), lastPoint.getMarker());
+        // set info in box
+        this.__parent.getObjects().routeEditor.valueStart.text(lastPoint.getTitle());
+    }
+};
 
-    // set start point of route
-    this.setStart = function() {
-        if (this.points.length === 0) main.outMsg(TEXT[main.getLang()].nothingSelected,"red");
-        else {
-            var start = this.route.getInfoStart();
-            // close previous endpoint info
-            if (start) start.open(null);
-            var lastPoint = this.points[this.points.length - 1];
-            // set new endpoint
-            this.route.setStart(lastPoint);
-            // show new endpoint info
-            this.route.getInfoStart().open(this.main.getMap(), lastPoint.getMarker());
-            // set info in box
-            this.main.getObjects().routeEditor.valueStart.text(lastPoint.getTitle());
-        }
-    };
+// [P] init - init routeEditor by existing route
+RouteEditor.prototype.initExist = function(route) {
+    // TBD
+};
 
-    // init routeEditor by existing route
-    this.initExist = function(route) {
-        // TBD
-    };
+// [P] leavePoints - set points to defaults
+RouteEditor.prototype.leavePoints = function() {
+    var _this = this;
+    // async set default marker
+    async.each(this.__points,function(item, callback) {
+        item.getMarker().setIcon(Livecity.ICONS.BLUE());
+        callback();
+    },function() {
+        // finally set length
+        _this.__points.length = 0;
+    })
+};
 
-    // set points to defaults
-    this.leavePoints = function() {
-        var main = this.main;
-        var obj = this;
-        async.each(this.points,function(item,callback) {
-            item.getMarker().setIcon(Livecity.ICONS.BLUE());
-            callback();
-        },function() {
-            obj.points.length = 0;
-        })
-    };
+// [P] isEmpty - check if empty
+RouteEditor.prototype.isEmpty = function() {
+    return this.__points.length === 0;
+};
 
-    // empty - check
-    this.isEmpty = function() {
-        return this.points.length === 0;
-    };
+// [P] save - save new route [ASYNC]
+RouteEditor.prototype.save = function(callback) {
+    // link to this
+    var _this = this;
+    // check name
+    var title = this.__parent.getObjects().routeEditor.valueTitle.val();
+    // TBD - move to parent
+    if (title === '') this.__parent.outMsg(TEXT[this.__parent.getLang()].nameNotChoosed, "red");
+    else if (!this.__route.getStart()) this.__parent.outMsg(TEXT[this.__parent.getLang()].routeStartNotSelected, "red");
+    else if (!this.__route.getEnd()) this.__parent.outMsg(TEXT[this.__parent.getLang()].routeEndNotSelected, "red");
+    else {
+        this.__route.setTitle(title);
+        // save each route
+        this.__route.save(function(err) {
+            // check if this is a new route, if not add it to route layer
+            var index = _this.__parent.routeLayer.routes.indexOf(_this.route);
+            if (index === -1) _this.__parent.routeLayer.add(_this.__route);
+            // UPD
+            else _this.__parent.routeLayer.routes[index] = link.route;
+            // update searchBar
+            _this.__parent.searchBar.update();
+            _this.__parent.outMsg(TEXT[_this.__parent.getLang()].routeSaved,"green");
+            if (callback) callback(err);
+        });
+    }
+};
 
-    // save new route [ASYNC]
-    this.save = function(callback) {
+// [P] resume - finish editing route and create new
+RouteEditor.prototype.resume = function() {
+    if (this.__points.length === 0) return;
+    this.__route.setVisible(false);
+    this.__route = new MapRoute(this.__parent);
+    this.leavePoints();
+};
+
+// [P] add - add point to buffer
+RouteEditor.prototype.add = function(point) {
+    // add to point array
+    this.__points.push(point);
+    // set marker
+    point.getMarker().setIcon(Livecity.ICONS.RED());
+    // get length
+    var size = this.__points.length;
+    // if size gt 1 - create node
+    if (size > 1) {
+        // create
+        var node = new MapNode(this.__parent, null, this.__points[size - 2], this.__points[size - 1], null, 0);
         // link to this
-        var link = this;
-        // check name
-        var title = this.main.getObjects().routeEditor.valueTitle.val();
-        // TBD - move to parent
-        if (title === '') this.main.outMsg(TEXT[this.main.getLang()].nameNotChoosed, "red");
-        else if (!this.route.getStart()) this.main.outMsg(TEXT[this.main.getLang()].routeStartNotSelected, "red");
-        else if (!this.route.getEnd()) this.main.outMsg(TEXT[this.main.getLang()].routeEndNotSelected, "red");
-        else {
-            this.route.setTitle(title);
-            // save each route
-            this.route.save(function(err) {
-                // check if this is a new route, if not add it to route layer
-                var indx = link.main.routeLayer.routes.indexOf(link.route);
-                if (indx === -1) {
-                    link.main.routeLayer.add(link.route);
-                }
-                // UPD
-                else link.main.routeLayer.routes[indx] = link.route;
-                // update searchBar
-                link.main.searchBar.update();
-                link.main.outMsg(TEXT[link.main.getLang()].routeSaved,"green");
-                if (callback) callback(err);
-            });
-        }
-    };
+        var _this = this;
+        // init node
+        node.init(function() {
+            // after init - add node to route
+            _this.__route.add(node);
+            // [TMP]
+            _this.__parent.getObjects().routeEditor.valueLength.html(_this.route.getTotal());
+            // set node visible
+            node.setVisible(true);
+        });
+    }
+};
 
-    // resume - finish editing route and create new
-    this.resume = function() {
-        if (this.points.length === 0) return;
-        this.route.setVisible(false);
-        this.route = new MapRoute(this.main);
-        this.leavePoints();
-    };
+// [P] setEnd - set endpoint of route
+RouteEditor.prototype.setEnd = function() {
+    // check if not selected
+    if (this.__points.length === 0) this.__parent.outMsg(TEXT[this.__parent.getLang()].nothingSelected,"red");
+    else {
+        // FEATURE
+        var end = this.__route.getInfoEnd();
+        // close previous endpoint info
+        if (end) end.open(null);
+        // get last point of points
+        var lastPoint = this.__points[this.__points.length - 1];
+        // set new endpoint
+        this.__route.setEnd(lastPoint);
+        // show new endpoint info
+        this.__route.getInfoEnd().open(this.__parent.getMap(), lastPoint.getMarker());
+        // set info in box
+        this.__parent.getObjects().routeEditor.valueEnd.text(lastPoint.getTitle());
+    }
+};
+
+// [P] remove - remove current route in editor
+RouteEditor.prototype.remove = function() {
+
 };
 
 /*
