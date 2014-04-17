@@ -17,6 +17,7 @@ TEXT = {
         pointRemoved: 'Метка удалена',
         pointSaved: 'Метка сохранена',
         routeSaved: 'Маршрут сохранен',
+        routeRemoved: 'Маршрут удален',
         routeEndNotSelected: 'Конец маршрута не задан',
         routeStartNotSelected: 'Начало маршрута не задано',
         notSelected: 'Не выбрано',
@@ -44,6 +45,7 @@ TEXT = {
         pointRemoved: 'Point removed successfully',
         pointSaved: 'Point saved successfully',
         routeSaved: 'Route saved successfully',
+        routeRemoved: 'Route removed successfully',
         routeEndNotSelected: 'Route end not selected',
         routeStartNotSelected: 'Route start not selected',
         noData: 'No data',
@@ -196,7 +198,7 @@ $(document).ready(function() {
     // set route start handler
     objects.routeEditor.end.click(function() {city.toolBox.getRouteEditor().setEnd();});
     // set route delete handler
-    objects.routeEditor.remove.click(function(){});
+    objects.routeEditor.remove.click(function(){city.toolBox.getRouteEditor().remove()});
     // onAuth button handler
     objects.onAuth.click(function() {city.onAuth();});
     // login button handler
@@ -1736,7 +1738,20 @@ MapRoute.prototype.save = function(callback) {
 
 // [P] remove - remove route [ASYNC]
 MapRoute.prototype.remove = function(callback) {
-    // TBD
+    // get route id
+    var _id = this.getId();
+    // check it
+    if (_id) {
+        $.ajax({
+            datatype: Livecity.TYPES.JSON,
+            type: Livecity.TYPES.DELETE,
+            url: '/data/routes/' + _id,
+            success: function(result) {
+                // callback on finish
+                if (callback) callback();
+            }
+        });
+    }
 };
 
 /*
@@ -2315,7 +2330,21 @@ RouteEditor.prototype.setEnd = function() {
 
 // [P] remove - remove current route in editor
 RouteEditor.prototype.remove = function() {
+    // link to this
+    var _this = this;
+    // check if exist
+    if (this.__route) {
+        // resume route editor
+        this.resume();
+        // remove route
+        this.__route.remove(function() {
+            // show message
+            _this.__parent.outMsg(TEXT[_this.__parent.getLang()].routeRemoved,"green");
+        });
+        // create new route [TBD]
+        this.__route = new MapRoute(this.__parent);
 
+    }
 };
 
 /*
