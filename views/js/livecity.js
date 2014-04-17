@@ -101,7 +101,7 @@ $(document).ready(function() {
             open: $('#open-route-editor'),
             close: $('#route-editor-close'),
             save: $('#route-save'),
-            remove: $('#route-route-remove'),
+            remove: $('#route-remove'),
             start: $('#button-route-start'),
             end: $('#button-route-end'),
             valueTitle: $('#route-name'),
@@ -1334,10 +1334,10 @@ function RouteLayer(main) {
     };
 
     // remove route from layer
-    this.remove = function(route) {
+    this.remove = function(route, callback) {
         var index = this.routes.indexOf(route);
         if (index === -1) return;
-        this.routes[index].remove();
+        this.routes[index].remove(callback);
         this.routes.splice(index,1);
     };
 
@@ -1526,26 +1526,30 @@ function MapRoute(parent, id, start, end, title, total) {
     var __title = (title) ? title : null;
 
     // SET nodeVisible [ASYNC]
-    this.setNodeVisible = function(is, callback) {
-        async.each(__nodes,function(item,callback) {
-            item.setVisible(is);
+    this.setNodeVisible = function(is, callback, setNodeVisible) {
+        async.each(__nodes,function(item, callback) {
+            item.setVisible(is, setNodeVisible);
             callback();
         },function(err) {
             if (callback) callback(err);
         });
     };
 
+    this.setInfoVisible = function(is) {
+        if (is) {
+            if (__infoStart) __infoStart.open(__parent.getMap());
+            if (__infoEnd) __infoEnd.open(__parent.getMap());
+        } else {
+            if (__infoStart) __infoStart.open(null);
+            if (__infoEnd) __infoEnd.open(null);
+        }
+        __visible = is;
+    };
+
     // SET visible [ASYNC]
     this.setVisible = function(is, callback) {
+        this.setInfoVisible(is);
         this.setNodeVisible(is, function(err) {
-            if (is) {
-                if (__infoStart) __infoStart.open(__parent.getMap());
-                if (__infoEnd) __infoEnd.open(__parent.getMap());
-            } else {
-                if (__infoStart) __infoStart.open(null);
-                if (__infoEnd) __infoEnd.open(null);
-            }
-            __visible = is;
             if (callback) callback(err);
         })
     };
@@ -1789,10 +1793,13 @@ function MapNode(parent, id, start, end, data, total) {
     };
 
     // setter visibility
-    this.setVisible = function(is) {
+    this.setVisible = function(is, setPointsVisible) {
         __visible = is;
-        __start.setVisible(is);
-        __end.setVisible(is);
+        if (!setPointsVisible) {
+            __start.setVisible(is);
+            __end.setVisible(is);
+        }
+
         if (!is) {
             this.__base.setMap(null);
             // if info was opened
@@ -2233,7 +2240,7 @@ RouteEditor.prototype.initExist = function(route) {
 RouteEditor.prototype.leavePoints = function() {
     var _this = this;
     // async set default marker
-    async.each(this.__points,function(item, callback) {
+    async.each(this.__points, function(item, callback) {
         item.getMarker().setIcon(Livecity.ICONS.BLUE());
         callback();
     },function() {
@@ -2265,7 +2272,7 @@ RouteEditor.prototype.save = function(callback) {
             var index = _this.__parent.routeLayer.routes.indexOf(_this.route);
             if (index === -1) _this.__parent.routeLayer.add(_this.__route);
             // UPD
-            else _this.__parent.routeLayer.routes[index] = link.route;
+            else _this.__parent.routeLayer.routes[index] = _this.route;
             // update searchBar
             _this.__parent.searchBar.update();
             _this.__parent.outMsg(TEXT[_this.__parent.getLang()].routeSaved,"green");
@@ -2276,9 +2283,14 @@ RouteEditor.prototype.save = function(callback) {
 
 // [P] resume - finish editing route and create new
 RouteEditor.prototype.resume = function() {
+    // check if points exists
     if (this.__points.length === 0) return;
-    this.__route.setVisible(false);
+    // hide route
+    this.__route.setNodeVisible(false, null, true);
+    this.__route.setInfoVisible(false);
+    // create new
     this.__route = new MapRoute(this.__parent);
+    // leave points
     this.leavePoints();
 };
 
@@ -2334,16 +2346,17 @@ RouteEditor.prototype.remove = function() {
     var _this = this;
     // check if exist
     if (this.__route) {
-        // resume route editor
-        this.resume();
         // remove route
-        this.__route.remove(function() {
+        this.__parent.routeLayer.remove(this.__route, function() {
             // show message
             _this.__parent.outMsg(TEXT[_this.__parent.getLang()].routeRemoved,"green");
+            // update search bar
+            _this.__parent.searchBar.update();
         });
-        // create new route [TBD]
-        this.__route = new MapRoute(this.__parent);
-
+        // resume route editor
+        this.resume();
+        // clear items
+        this.__parent.toolBox.clear();
     }
 };
 
