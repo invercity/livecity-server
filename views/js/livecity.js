@@ -1407,8 +1407,12 @@ function RouteLayer(main) {
     };
 };
 
-function TransLayer(main) {
-    this.main = main;
+/*
+ * TransLayer Class
+ */
+function TransLayer(parent) {
+    // link to parent
+    this.parent = parent;
     // array for trans
     this.trans = [];
     // array for route ID's
@@ -1416,18 +1420,23 @@ function TransLayer(main) {
 
     // get visible trans
     this.getVisible = function() {
+        // create empty result
         var result = [];
-        for (var i = 0; i < this.trans.length; i++) if (this.trans[i].visible) result.push(this.trans[i]);
+        // ad items to result
+        for (var i = 0; i < this.trans.length; i++) if (this.trans[i].isVisible()) result.push(this.trans[i]);
         return result;
     };
 
     // clear all items [ASYNC]
     this.clear = function(callback) {
         var _this = this;
-        async.each(this.trans, function(item ,callback) {
+        // async check each transport
+        async.each(this.trans, function(item, callback) {
+            // hide it
             item.setVisible(false);
             callback();
         }, function() {
+            // set transport array empty
             _this.trans = [];
             if (callback) callback();
         });
@@ -1436,9 +1445,13 @@ function TransLayer(main) {
     // load cars from server
     this.load = function(callback) {
         var _this = this;
+        // get transport from server
         $.get('/data/transport', function(result) {
+            // async check each transport
             async.each(result, function(trans, callback) {
+                // create new object
                 var t = new MapTrans(main, trans._id, trans.route, new google.maps.LatLng(trans.lat, trans.lng));
+                // add to layer
                 _this.add(t);
                 if (_this.routes.indexOf(trans.route) !== -1) t.setVisible(true);
                 callback();
@@ -1450,6 +1463,7 @@ function TransLayer(main) {
 
     // add trans to layer
     this.add = function(item) {
+        // push item to transport array
         this.trans.push(item);
         // here we can provide any checks, etc
         // TBD
@@ -1457,10 +1471,13 @@ function TransLayer(main) {
 
     // set visibility by route id
     this.setVisibleByRoute = function(id, is, callback) {
+        // add or remove route from routes
         if (is) this.routes.push(id);
         else this.routes.splice(this.routes.indexOf(id), 1);
+        // async check each transport
         async.each(this.trans, function(item, callback) {
-            if (item.id_route === id) item.setVisible(is);
+            // check ID
+            if (item.getRouteId() === id) item.setVisible(is);
             callback();
         }, function() {
             if (callback) callback();
@@ -1469,8 +1486,11 @@ function TransLayer(main) {
 
     // hide - hide all transports [ASYNC]
     this.hide = function(callback) {
+        // set route array empty
         this.routes = [];
+        // async check each transport
         async.each(this.trans, function(item, callback) {
+            // hide it
             item.setVisible(false);
         },function() {
             if (callback) callback();
@@ -1480,7 +1500,9 @@ function TransLayer(main) {
     // update points, and set visible required [ASYNC]
     this.update = function(callback) {
         var _this = this;
+        // cleat all
         this.clear(function() {
+            // and load after it
             _this.load(function() {
                 if (callback) callback();
             });
@@ -2172,34 +2194,51 @@ MapPoint.prototype.remove = function(callback) {
 };
 
 // class for cars
-function MapTrans(main, id, id_route, position) {
-    this.main = main;
+function MapTrans(parent, id, id_route, position) {
+    // set parent
+    this.__parent = parent;
     // unique id
-    this.id = id;
+    this.__id = id;
     // unique route id
-    this.id_route = id_route;
+    this.__idRoute = id_route;
     // latLng()
-    this.position = position;
+    this.__position = position;
     // icon
-    this.marker = new google.maps.Marker({
+    this.__marker = new google.maps.Marker({
         position: position,
         icon: Livecity.ICONS.TRANS(),
-        map: main.getMap(),
+        map: parent.getMap(),
         title: "",
         draggable: false,
         visible: false,
         zIndex: 5000
     });
     // flag visibility
-    this.visible = false;
+    this.__visible = false;
 
-    // visible setter
+    // SET visibility
     this.setVisible = function(is) {
-        this.marker.setVisible(is);
-        this.visible = is;
+        this.__marker.setVisible(is);
+        this.__visible = is;
     };
+
+    // GET visibility
+    this.isVisible = function() {
+        return this.__visible;
+    };
+
+    // GET route ID
+    this.getRouteId = function() {
+        return this.__idRoute;
+    };
+
+    // GET position
+    this.getPosition = function() {
+        return this.__position;
+    };
+
     // listener
-    google.maps.event.addListener(this.marker, 'click', function(event) {
+    google.maps.event.addListener(this.__marker, 'click', function(event) {
 
     });
 };
