@@ -1763,96 +1763,100 @@ MapRoute.prototype.remove = function(callback) {
  */
 function MapNode(parent, id, start, end, data, total) {
     // link to parent
-    var __parent = parent;
+    this.__parent = parent;
     // visible flag
-    var __visible = false;
+    this.__visible = false;
     // total distance
-    var __total = (total) ? total : 0;
+    this.__total = (total) ? total : 0;
     // unique identifier for node
-    var __id = (id) ? id : null;
+    this.__id = (id) ? id : null;
     // point A
-    var __start = (start) ? start : null;
+    this.__start = (start) ? start : null;
     // point b
-    var __end = (end) ? end : null;
+    this.__end = (end) ? end : null;
     // node base class
     this.__base = new google.maps.DirectionsRenderer({
         suppressMarkers: true,
         preserveViewport: true
     });
     // node result
-    var __data = (data) ? data : null;
+    this.__data = (data) ? data : null;
 
     // SET id
     this.setId = function(id) {
-        __id = id;
+        this.__id = id;
     };
 
     // GET id
     this.getId = function() {
-        return __id;
+        return this.__id;
     };
 
     // setter visibility
     this.setVisible = function(is, setPointsVisible) {
-        __visible = is;
+        this.__visible = is;
         if (!setPointsVisible) {
-            __start.setVisible(is);
-            __end.setVisible(is);
+            this.__start.setVisible(is);
+            this.__end.setVisible(is);
         }
 
         if (!is) {
             this.__base.setMap(null);
             // if info was opened
-            __start.setInfoVisible(false);
-            __end.setInfoVisible(false);
+            this.__start.setInfoVisible(false);
+            this.__end.setInfoVisible(false);
         }
-        else this.__base.setMap(__parent.getMap());
+        else this.__base.setMap(this.__parent.getMap());
     };
 
     // GET visible
     this.isVisible = function() {
-        return __visible;
+        return this.__visible;
     };
 
     // GET total
     this.getTotal = function() {
-        return __total;
+        return this.__total;
     };
 
+    // GET start
     this.getStart = function() {
-        return __start;
+        return this.__start;
     };
 
+    // GET end
     this.getEnd = function() {
-        return __end;
+        return this.__end;
     };
 
+    // GET start.getPosition
     this.getStartPosition = function() {
-        return __start.getPosition();
+        return this.__start.getPosition();
     };
 
+    // GET end.getPosition
     this.getEndPosition = function() {
-        return __end.getPosition();
+        return this.__end.getPosition();
     };
 
     // SET total
     this.setTotal = function(ttl) {
-        __total = ttl;
+        this.__total = ttl;
     };
 
     // GET parent
     this.getParent = function() {
-        return __parent;
+        return this.__parent;
     };
 
     // SET data
     this.setData = function(data) {
-        __data = data;
+        this.__data = data;
     };
 
     // GET data
     this.getData = function() {
-        return __data;
+        return this.__data;
     };
 
     // GET base
@@ -1860,15 +1864,15 @@ function MapNode(parent, id, start, end, data, total) {
         return this.__base;
     };
 
-    if (__data) this.__base.setDirections(JSON.parse(__data, parseNode));
+    if (this.__data) this.__base.setDirections(JSON.parse(this.__data, parseNode));
 };
 
 // [P] init - init node using GService [ASYNC]
 MapNode.prototype.init = function(callback) {
     var link = this;
     var request = {
-        origin: this.getStart().getPosition(),
-        destination: this.getEnd().getPosition(),
+        origin: this.__start.getPosition(),
+        destination: this.__end.getPosition(),
         travelMode: google.maps.TravelMode.DRIVING,
         optimizeWaypoints: false
     };
@@ -1883,7 +1887,7 @@ MapNode.prototype.init = function(callback) {
 };
 
 MapNode.prototype.calculate = function() {
-    var result = JSON.parse(this.getData(), parseNode);
+    var result = JSON.parse(this.__data, parseNode);
     if (!result) return;
     var myroute = result.routes[0];
     var ttl = 0;
@@ -1895,13 +1899,13 @@ MapNode.prototype.calculate = function() {
 MapNode.prototype.save = function(callback) {
     // check if this node is unsaved
     // TBD - add update logic
-    if (this.getId()) return;
+    if (this.__id) return;
     // make points
-    var steps = JSON.parse(this.getData(), parseNode).routes[0].legs[0].steps;
+    var steps = JSON.parse(this.__data, parseNode).routes[0].legs[0].steps;
     // buffer array for points
     var points = [];
     // check steps en fill array of points
-    for (var i=0;i<steps.length;i++) {
+    for (var i = 0;i < steps.length;i++) {
         if (i === 0) points.push(steps[i].start_location);
         else points.push(steps[i].end_location);
     }
@@ -1912,10 +1916,10 @@ MapNode.prototype.save = function(callback) {
         type: Livecity.TYPES.POST,
         url: '/data/nodes/',
         data: {
-            start: this.getStart().getId(),
-            end: this.getEnd().getId(),
-            total: this.getTotal(),
-            data: this.getData(),
+            start: this.__start.getId(),
+            end: this.__end.getId(),
+            total: this.__total,
+            data: this.__data,
             points: JSON.stringify(points)
         },
         success: function(result) {
