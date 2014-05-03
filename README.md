@@ -1,8 +1,10 @@
+
 # livecity  
+#### [![Build Status](https://travis-ci.org/invercity/livecity.svg?branch=master)](https://travis-ci.org/invercity/livecity)
 Interactive system for monitoring city traffic  
 Current stable version: ```0.3```;  
-Current beta version: ```0.3.3```;
-Next beta version: ```0.4```
+Current beta version: ```0.3.3```;  
+Next beta version: ```0.4```  
 
 ## Features
 ### Current features list:
