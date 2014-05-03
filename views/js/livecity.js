@@ -1450,7 +1450,7 @@ function TransLayer(parent) {
             // async check each transport
             async.each(result, function(trans, callback) {
                 // create new object
-                var t = new MapTrans(main, trans._id, trans.route, new google.maps.LatLng(trans.lat, trans.lng));
+                var t = new MapTrans(_this.parent, trans._id, trans.route, new google.maps.LatLng(trans.lat, trans.lng));
                 // add to layer
                 _this.add(t);
                 if (_this.routes.indexOf(trans.route) !== -1) t.setVisible(true);
@@ -2564,7 +2564,7 @@ function Guide(parent) {
 // [P] pushRoute - add route to Guide
 Guide.prototype.pushRoute = function(data, type) {
     // chose color
-    var color = ('WALKING' === type) ? '#0000ff' : '#ff0000';
+    var color = ('WALKING' === type) ? '#ff0000' : '#0000ff';
     // create renderer
     var base = new google.maps.DirectionsRenderer({
         suppressMarkers: true,

@@ -46,7 +46,7 @@ function updateMarkerData (pos) {
     $.ajax({
         datatype: 'JSON',
         type: 'POST',
-        url: '/service/transport?endAction=report',
+        url: '/service/transport?act=report',
         data: {
             _id:_id,
             route: route,
@@ -63,7 +63,7 @@ function initAction() {
     $.ajax({
         datatype: 'json',
         type: 'POST',
-        url: '/service/transport?endAction=initAction',
+        url: '/service/transport?act=init',
         data: {
             lat: pos.lat(),
             lng: pos.lng()
@@ -72,6 +72,7 @@ function initAction() {
             route = result.routes[0]._id;
             _id = result.trans._id;
             action = 0;
+            console.log(route);
             // set text for 'ACT' button
             $('#act').text('Exit');
         }
@@ -84,7 +85,7 @@ function endAction() {
         $.ajax({
             datatype: 'JSON',
             type: 'POST',
-            url: '/service/transport?endAction=end',
+            url: '/service/transport?act=end',
             data: {
                 _id: _id
             },
