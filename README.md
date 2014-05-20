@@ -29,7 +29,7 @@ Last version: ```0.3.3```
 2. Install required software (```mongoDB```, ```nodejs```, ```npm```):  
 ```sudo apt-get install mongodb nodejs npm```
 3. Install dependencies:  
-```npm install```
+```npm i```
 4. Configure application  
 ``` nano config.json```
 
