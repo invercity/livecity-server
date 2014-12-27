@@ -17,7 +17,7 @@
         "url": "https://github.com/invercity/livecity.git"
     },
     "dependencies" : {
-        "express" : "3.*",
+        "express" : "*",
         "request" : "*",
         "mongoose": "*",
         "ejs"     : "*",
@@ -25,7 +25,13 @@
         "nconf"   : "*",
         "async"   : "*",
         "bcrypt"  : "*",
-        "googlemaps" : "*"
+        "googlemaps" : "*",
+        "body-parser" : "*",
+        "cookie-parser" : "*",
+        "serve-favicon" : "*",
+        "express-session" : "*",
+        "method-override" : "*",
+        "serve-static": "*"
     },
     "analyze": false,
     "engines": {

@@ -2,9 +2,17 @@
  * Created by invercity on 12/16/13.
  */
 var express = require('express');
-var app = express();
+var favicon = require('serve-favicon');
+var cookieParser = require('cookie-parser');
+var bodyParser = require('body-parser');
+var methodOverride = require('method-override');
+var session = require('express-session');
+var stat = require('serve-static');
 var config = require('./lib/config');
 var pjson = require('./package.json');
+var utils = require('./lib/utils').Utils;
+
+var app = express();
 
 // data types
 var Point = require('./lib/db').Point;
@@ -23,37 +31,25 @@ var service = new Service(Point, Node, Route, Transport);
 
 var __DEBUG = config.get('debug');
 
-// adding CORS support...
-var CORS = function(req, res, next) {
-    // allowed domains (F - add options)
-    res.header('Access-Control-Allow-Origin', '*');
-    // allowed methods
-    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-    // allowed headers
-    res.header('Access-Control-Allow-Headers', 'Content-Type');
-    next();
-};
-
-// garbage collector
-var GC = function(req, res, next) {
-    gc();
-    next();
-};
-
-app.configure(function() {
-    app.use(express.cookieParser());
-    app.use(express.session({secret: '123454321'}));
-    app.use(CORS);
-    app.use(GC);
-    app.use(express.favicon());
-    app.use(express.compress());
-    app.use(express.bodyParser());
-    app.use(express.methodOverride()); // support PUT, DELETE
-    app.use(app.router);
-    app.use(express.static(__dirname + '/views'));
-    app.set('/views',__dirname + '/views');
-    app.engine('html', require('ejs').renderFile);
-})
+app.use(utils.gc());
+app.use(utils.cors());
+app.use(cookieParser());
+app.use(session({
+    secret: '123454321',
+    resave: true,
+    saveUninitialized: true
+}));
+//app.use(favicon());
+//app.use(express.compress());
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
+app.use(bodyParser.json());
+app.use(methodOverride()); // support PUT, DELETE
+//app.use(app.router);
+app.use(stat(__dirname + '/views'));
+app.set('/views',__dirname + '/views');
+app.engine('html', require('ejs').renderFile);
 
 app.get('/', function (req, res) {
     res.render('index.html');
@@ -735,5 +731,5 @@ app.post('/service/register', function(req, res){
 
 // Run app on selected port
 app.listen(config.get('port'), function(){
-    console.log('Express server listening on port ' + config.get('port'));
+    console.log('Livecity server listening on port ' + config.get('port'));
 });
