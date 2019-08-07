@@ -1,6 +1,6 @@
 
 # livecity  
-#### [![Build Status](https://travis-ci.org/invercity/livecity.svg?branch=master)](https://travis-ci.org/invercity/livecity)
+#### [![Build Status](https://travis-ci.org/invercity/livecity-server.svg?branch=master)](https://travis-ci.org/invercity/livecity-server)
 Interactive system for monitoring city traffic  
 Last version: ```0.3.3```  
 ## Features
