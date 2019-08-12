@@ -410,13 +410,12 @@ router.post('/service/transport', (req, res) => {
             logger.error(findErr);
             result.routes = [];
           }
-          res.send(result);
+          return res.send(result);
         });
-      } else {
-        logger.error(err);
-        res.statusCode = 500;
-        res.send({ error: 'Server error' });
       }
+      logger.error(err);
+      res.statusCode = 500;
+      return res.send({ error: 'Server error' });
     });
   } else if (req.query.act === 'end') {
     if (req.body._id) {
@@ -470,16 +469,15 @@ router.post('/service/login', (req, res) => {
   if (req.query.act === 'login') {
     User.findOne({ username: req.body.login }, (err, user) => {
       if ((!err) && (user)) {
-        user.comparePassword(req.body.pass, (err, isMatch) => {
-          if ((!err) && (isMatch)) {
-            req.session.authorized = true;
-            req.session.user = req.body.user;
-            res.send({ authorized: true });
-          } else res.send({ error: 'Invalid user data' });
-        });
+        const isMatch = user.comparePassword(req.body.pass);
+        if (isMatch) {
+          req.session.authorized = true;
+          req.session.user = req.body.user;
+          res.send({ authorized: true });
+        } else res.send({ error: 'Invalid user data' });
       } else res.send({ error: 'Invalid user data' });
     });
-  }  else if (req.query.act === 'logout') { // ?act=logout
+  } else if (req.query.act === 'logout') { // ?act=logout
     if (req.session) {
       req.session.destroy(() => {
         res.send({ logout: true });

@@ -43,25 +43,25 @@ RouteSchema.post('save', async route => Promise.all(route.points.map(async (id) 
     }
     return point.save().exec();
   }
-}))
-  // check points of route
-  /* async.each(route.points, function(id, callback) {
-    // check if it is not first point
-    if (route.points.lastIndexOf(id) !== route.points.length - 1) {
-      Point.findById(id, function(err, point){
-        if ((!err) && (point)) {
-          // disable duplicating indexes
-          if (point.routes.indexOf(route._id) == -1) point.routes.push(route._id);
-          point.save(function() {
-            callback();
-          })
-        }
-        else callback();
-      });
-    }
-  }, function() {
-  }); */
-);
+  return null;
+})));
+// check points of route
+/* async.each(route.points, function(id, callback) {
+  // check if it is not first point
+  if (route.points.lastIndexOf(id) !== route.points.length - 1) {
+    Point.findById(id, function(err, point){
+      if ((!err) && (point)) {
+        // disable duplicating indexes
+        if (point.routes.indexOf(route._id) == -1) point.routes.push(route._id);
+        point.save(function() {
+          callback();
+        })
+      }
+      else callback();
+    });
+  }
+}, function() {
+}); */
 
 RouteSchema.pre('remove', async () => {
   const route = this;

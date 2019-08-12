@@ -33,9 +33,9 @@ PointSchema.statics.findNear = async (position, distance) => {
   // filter points
   const points = allPoints.filter((item) => {
     // calculate distance
-    const dist = dist(position.lat, position.lng, item.lat, item.lng);
+    const pointDistance = dist(position.lat, position.lng, item.lat, item.lng);
     // check distance
-    const flag = (dist <= distance);
+    const flag = (pointDistance <= distance);
     // add id to ids array
     if (flag) {
       ids.push(item._id);
