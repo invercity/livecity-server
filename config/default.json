@@ -1,0 +1,30 @@
+{
+  "db": {
+    "uri": "mongodb://localhost/livecity"
+  },
+  "app": {
+    "port": 3000,
+    "debug": true,
+    "saltWorkFactor": 10
+  },
+  "map": {
+    "deltaDistance" : 50,
+    "defaultSpeed" : 50,
+    "defaultStopTime" : 2,
+    "defaultSearchPointRadius" : 500
+  },
+  "log4js": {
+    "config": {
+      "appenders": {
+        "fileAppender": {
+          "type": "file",
+          "filename": "./logs/app/app.log"
+        },
+        "consoleAppender": {
+          "type": "console"
+        }
+      }
+    },
+    "logLevel": "DEBUG"
+  }
+}
