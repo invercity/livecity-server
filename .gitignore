@@ -1,1 +1,5 @@
-# Created by .gitignore support plugin (hsz.mobi)
+node_modules
+logs
+.idea
+config/*.json
+!config/default.json

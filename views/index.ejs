@@ -4,13 +4,13 @@
     <meta charset="utf-8">
     <title> Livecity </title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="author" content="invercity" >
+    <meta name="author" content="Andrii Yermolenko" >
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
-    
-    <!-- SCRIPTS --> 
-    <script type="text/javascript" 
-        src="http://maps.google.com/maps/api/js?key=AIzaSyCtoc2CLiq0QkGfdVKuyxJPhMfvSvNriRo&sensor=true&language=uk">
-    </script>
+
+    <!-- SCRIPTS -->
+    <% if (googleApiKey) { var gApiSrc = "http://maps.google.com/maps/api/js?key=" + googleApiKey + "&language=uk"; %>
+    <script type="text/javascript" src=<%= gApiSrc %>></script>
+    <% } %>
     <script src="js/jquery-1.9.1.min.js"></script>
     <script src="js/livecity.js"></script>
     <script src="js/infobox.js"></script>
@@ -18,14 +18,14 @@
     <script src="js/chosen.jquery.js"></script>
     <script src="js/async.js"></script>
       <!-- STYLES -->
-    <link rel="stylesheet" href="css/livecity.css">
-    <link rel="stylesheet" href="css/chosen.css">
-    <link rel="stylesheet" href="css/bootstrap.css">
-    <link rel="stylesheet" href="css/bootstrap-responsive.css">
+    <link rel="stylesheet" href="/css/livecity.css">
+    <link rel="stylesheet" href="/css/chosen.css">
+    <link rel="stylesheet" href="/css/bootstrap.css">
+    <link rel="stylesheet" href="/css/bootstrap-responsive.css">
 
-    <link rel="shortcut icon" href="img/favicon.ico" type="image/gif">
-    </head>
-    <body>
+    <link rel="shortcut icon" href="/img/favicon.ico" type="image/gif">
+  </head>
+  <body>
 
     <!-- MAIN CONTAINER -->
 
@@ -84,7 +84,7 @@
             </label>
         </form>
     </div>
-    
+
     <!-- TOOL BOX -->
 
     <div id="toolbox" class="toolbox">
@@ -224,17 +224,17 @@
             <ul class="nav nav-tabs" style="padding-left: 5%; position: absolute; bottom: 0; margin-bottom: 3px">
                 <li id="tab-guide-active">
                     <a href="#tab-guide" data-toggle="tab" id="open-guide">
-                        <img src="img/flag.png" style="width: 20px">
+                        <img src="/img/flag.png" style="width: 20px">
                     </a>
                 </li>
                 <li id="tab-point-active">
                     <a href="#tab-point" data-toggle="tab" id="open-point-editor">
-                        <img src="img/gmap.png" style="width: 20px">
+                        <img src="/img/gmap.png" style="width: 20px">
                     </a>
                 </li>
                 <li id="tab-route-active">
                     <a href="#tab-route" data-toggle="tab" id="open-route-editor">
-                        <img src="img/train.png" style="width: 20px">
+                        <img src="/img/train.png" style="width: 20px">
                     </a>
                 </li>
             </ul>

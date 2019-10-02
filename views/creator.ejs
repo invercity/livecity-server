@@ -7,11 +7,11 @@ and open the template in the editor.
     <head>
         <title> Create temporary points </title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <script src="./js/jquery-1.9.1.min.js"></script>
-        <script src="js/async.js"></script>
-        <script src="http://maps.google.com/maps/api/js?key=AIzaSyCtoc2CLiq0QkGfdVKuyxJPhMfvSvNriRo&sensor=false&language=uk"></script>
+        <script src="../public/js/jquery-1.9.1.min.js"></script>
+        <script src="../public/js/async.js"></script>
+        <script src="http://maps.google.com/maps/api/js?key=<%- googleApiKey %>&sensor=false&language=uk"></script>
 
-        <link rel="shortcut icon" href="img/favicon.ico" type="image/gif">
+        <link rel="shortcut icon" href="../public/img/favicon.ico" type="image/gif">
 
         <style type="text/css">
             html { height: 100% }
@@ -21,7 +21,7 @@ and open the template in the editor.
     </head>
     <body onload="initialize()">
         <!-- START/END BUTTON -->
-        
+
         <div style="position: absolute; height: 20px; width: 50px; z-index: 1000; right: 0">
             <button id="act" onclick="dropAll()"> Drop </button>
             <input id="index" type="text" style="width: 40px" value="none">

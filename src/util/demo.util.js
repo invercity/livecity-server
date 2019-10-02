@@ -1,9 +1,7 @@
 /**
- * Created by invercity on 2/3/14.
+ * Created by Andrii Yermolenko on 2/3/14.
  */
 /*
- * DEMO - moving static transport on a map
- */
 var async = require('async');
 var ObjectId = require('mongoose').Schema.Types.ObjectId;
 var Point = require('./lib/db').Point;
@@ -20,7 +18,7 @@ var arg = process.argv.slice(2)[0];
 
 if (arg) {
     // if 'create' option selected
-    if (arg == 'create') {
+    if (arg === 'create') {
         Temp.find(function(err, points) {
             // transport basic indexes
             var indexes = [12, 64, 103, 161, 191, 211, 253, 297, 313, 360, 402, 428, 475];
@@ -49,7 +47,7 @@ if (arg) {
         });
     }
     // if 'do' option selected
-    else if (arg == 'do') {
+    else if (arg === 'do') {
         Route.find(function(err, routes) {
             Temp.find(function(err, points) {
                 Transport.find(function(err, trans){
@@ -89,10 +87,11 @@ if (arg) {
         });
     }
     // if 'clean' option selected
-    else if (arg == 'clean') {
+    else if (arg === 'clean') {
         Transport.remove({}, function() {
             process.exit();
         })
     }
     else process.exit();
 }
+*/

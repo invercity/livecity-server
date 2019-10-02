@@ -1,8 +1,11 @@
+# livecity-server
+[![GitHub Release](https://github-basic-badges.herokuapp.com/release/invercity/livecity-server.svg)](https://github.com/invercity/livecity-server/releases)
+[![Build Status](https://travis-ci.org/invercity/livecity-server.svg?branch=master)](https://travis-ci.org/invercity/livecity-server)
+[![David](https://david-dm.org/invercity/livecity-server.svg)](https://david-dm.org/invercity/livecity-server)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/a97494f4f98946d2bdacdc1194335ad9)](https://www.codacy.com/manual/andriy.ermolenko/livecity-server?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=invercity/livecity-server&amp;utm_campaign=Badge_Grade)
+[![Open Source Love](https://badges.frapsoft.com/os/mit/mit.svg?v=102)](https://github.com/ellerbrock/open-source-badge/)
 
-# livecity  
-#### [![Build Status](https://travis-ci.org/invercity/livecity-server.svg?branch=master)](https://travis-ci.org/invercity/livecity-server)
 Interactive system for monitoring city traffic  
-Last version: ```0.3.3```  
 ## Features
 ### Current features list:
 1. Displaying routes, points, transports;
@@ -10,40 +13,21 @@ Last version: ```0.3.3```
 3. Point editor (full functionality), route editor (create only), basic guide editor;
 4. Basic authorization.
 
-### Will be implemented:
-1. Full guide functionality ```0.4.0```
-2. User roles ```1.0.0```
-3. Saving, sharing guides ```1.0.0```
-4. Transport info ```1.0.0```
-5. Locales ```1.0.0```
-6. Basic socket.io implementation ```1.0.0```
-8. API documentation ```1.0.0```
-9. Registration ```1.0.0```
-10. Route editor (full functionality) ```1.1.0```
+## Installation
+### Pre-requirements
+- [Node.JS](https://nodejs.org) 8 and above;
+- [MongoDB](https://www.mongodb.com/what-is-mongodb) 3 and above;
 
-## Quick guide
-### Installing livecity (Linux users)
-
-1. Download source, and go to the source folder:  
-```cd livecity```
-2. Install required software (```mongoDB```, ```nodejs```, ```npm```):  
-```sudo apt-get install mongodb nodejs npm```
-3. Install dependencies:  
+### Next steps
+Install dependencies:  
 ```npm i```
-4. Configure application  
-``` nano config.json```
+Configure application  
+``` nano config/<$ENV>.json```
 
-### Installing livecity (Windows users)
-
-Currently manual for installing livecity on Windows is not ready  
-In future releases installing scripts will be added
-
-### Running
-
-To run livecity, just fire in terminal:
+## Running
 ```npm start```
 
-## Routes
+## API
 
 ```/data/[points, routes, nodes, transports]``` - Data CRUD
 * GET - get all items
@@ -52,15 +36,26 @@ To run livecity, just fire in terminal:
 * GET ```/data/[type]/id``` - get item by ```id```
 * DELETE ```/data/[type]/id``` - delete item by ```id```
 
-
 ```/service/[type]``` - Services
-[TBA]
+[TBD]
 
-
+## Will be implemented:
+- [!] ES6 migrate
+- [!] Logger
+- [!] Error handler
+- Move to modern Vue2 interface
+- Full guide functionality
+- User roles
+- Saving, sharing guides
+- Transport info
+- Locales
+- Basic socket.io implementation
+- API documentation
+- Registration
+- Route editor (full functionality)
 
 ## Wiki
-
-Github [wiki] (https://github.com/invercity/livecity/wiki) pages
+[TBD]
 
 
 
