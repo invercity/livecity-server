@@ -31,7 +31,7 @@ const RouteSchema = new mongoose.Schema({
   }
 });
 
-RouteSchema.post('save', async route => Promise.all(route.points.map(async (id) => {
+RouteSchema.post('save', async (route) => Promise.all(route.points.map(async (id) => {
   // check if it is not last point
   if (route.points.lastIndexOf(id) !== route.points.length - 1) {
     const point = await Point.findById(id).exec();

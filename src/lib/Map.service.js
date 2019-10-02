@@ -44,7 +44,7 @@ function Service(point, node, route, trans) {
  * @_id - point ID
  * @callback - callback function
  */
-Service.prototype.getPointInfo = function (_id, callback) {
+Service.prototype.getPointInfo = (_id, callback) => {
   const __this = this;
   // result item
   const result = {
@@ -60,28 +60,28 @@ Service.prototype.getPointInfo = function (_id, callback) {
       // check if point find
     } else if (currentPoint) {
       // check each route of point, route is route _id
-      async.each(currentPoint.routes, (routeId, callback) => {
+      async.each(currentPoint.routes, (routeId, eachRouteCallback) => {
         // find each route
-        __this.__route.findById(routeId, (err, route) => {
+        __this.__route.findById(routeId, (findRouteErr, route) => {
           // route not found
-          if ((err) || (!route)) {
+          if ((findRouteErr) || (!route)) {
             // return NOTFOUND result
             result.routes.push({
               route: routeId,
               status: 'NOTFOUND'
             });
-            callback();
+            eachRouteCallback();
           } else if (route) {
             // get index of this point in route traffic
             const currentPointPosition = route.points.indexOf(_id);
             // find all trans, of this route
-            __this.__trans.find({ route: routeId }, (err, allTransport) => {
+            __this.__trans.find({ route: routeId }, (findTransErr, allTransport) => {
               // link for nearest trans
               let nearTransport = null;
               // link to the near transport on a lap+
               let nearTransportLap = null;
               // check each trans, and find trans which is nearest to this station
-              async.eachSeries(allTransport, (transport, callback) => {
+              async.eachSeries(allTransport, (transport, eachTransportCallback) => {
                 // find each transport index
                 const transportIndex = route.points.indexOf(transport.next._id);
                 // if nearTransportLap not set before, set it
@@ -89,23 +89,25 @@ Service.prototype.getPointInfo = function (_id, callback) {
                 // if near not selected before, set current trans as near
                 if (!nearTransport) {
                   // only if this transport BEFORE or ON current station
-                  if (transportIndex <= currentPointPosition) nearTransport = transport;
-                }
-
-                // if nearTransport selected already, compare it with each transport
-                else {
+                  if (transportIndex <= currentPointPosition) {
+                    nearTransport = transport;
+                  }
+                  // if nearTransport selected already, compare it with each transport
+                } else {
                   // find index of currently nearest transport
                   const currentNearIndex = route.points.indexOf(nearTransport.next._id);
                   // check if currentTransport closer to currentStation
-                  if ((transportIndex <= currentPointPosition) && (transportIndex > currentNearIndex))
-                  // set each transport as nearTransport
-                  { nearTransport = transport; }
+                  if ((transportIndex <= currentPointPosition) && (transportIndex > currentNearIndex)) {
+                    // set each transport as nearTransport
+                    nearTransport = transport;
+                  }
                   // if transport AFTER the current station, and AFTER the nearTransportLap
-                  if ((transportIndex > currentPointPosition) && (transportIndex < nearTransportLap))
-                  // set transport as @nearTransportLap
-                  { nearTransportLap = transport; }
+                  if ((transportIndex > currentPointPosition) && (transportIndex < nearTransportLap)) {
+                    // set transport as @nearTransportLap
+                    nearTransportLap = transport;
+                  }
                 }
-                callback();
+                eachTransportCallback();
               }, () => {
                 // when nearest trans find
                 if ((nearTransport) || (nearTransportLap)) {
@@ -139,9 +141,8 @@ Service.prototype.getPointInfo = function (_id, callback) {
                       nodes++;
                       distance += route.nodes[x].total;
                     }
-                  }
-                  // if this trans on a circle to current station
-                  else {
+                    // if this trans on a circle to current station
+                  } else {
                     // sum of nodes 0..index-1
                     for (let y = 0; y < currentPointPosition - 1; y++) {
                       nodes++;
@@ -164,9 +165,8 @@ Service.prototype.getPointInfo = function (_id, callback) {
                     distance,
                     time: time.toFixed(0)
                   });
-                }
-                // if nearest trans don't found, and there no trans on a lap+
-                else {
+                  // if nearest trans don't found, and there no trans on a lap+
+                } else {
                   // return NOTRANS result
                   result.routes.push({
                     status: 'NOTRANS',
@@ -175,7 +175,7 @@ Service.prototype.getPointInfo = function (_id, callback) {
                   });
                 }
                 // finish checking
-                callback();
+                eachRouteCallback();
               });
             });
           }
@@ -193,7 +193,7 @@ Service.prototype.getPointInfo = function (_id, callback) {
  * @end - end point position (LatLng)
  * @callback - callback function
  */
-Service.prototype.getPersonalRoute = function (start, end, mode, callback) {
+Service.prototype.getPersonalRoute = (start, end, mode, callback) => {
   // if start or end not set - callback error
   if ((!start) || (!end) || (!end.lat) || (!end.lng) || (!start.lat) || (!start.lng)) {
     callback({
@@ -220,9 +220,8 @@ Service.prototype.getPersonalRoute = function (start, end, mode, callback) {
       callback({
         status: 'ERROR'
       });
-    }
-    // if there are way(s)
-    else {
+      // if there are way(s)
+    } else {
       // get important points from current route, which we find
       const { steps } = data.routes[0].legs[0];
       // check each step
@@ -243,19 +242,19 @@ Service.prototype.getPersonalRoute = function (start, end, mode, callback) {
             });
           }
           // check points...
-          async.each(startResult.points, (point, callback) => {
+          async.each(startResult.points, (point, pointsCallback) => {
             // check routes of each point
             if (point.routes.length > 0) {
               // check each route and try to make road
-              async.each(point.routes, (routeId, callback) => {
+              async.each(point.routes, (routeId, routesCallback) => {
                 // try to make line through this route
-                _this.__route.findById(routeId, (err, currentRoute) => {
+                _this.__route.findById(routeId, (findRouteErr, currentRoute) => {
                   // next
-                  if (!err) {
+                  if (!findRouteErr) {
                     // try to find ONE route between start and end
-                    async.filterSeries(endResult.ids, (endPoint, callback) => {
+                    async.filterSeries(endResult.ids, (endPoint, filterRouteCallback) => {
                       // callback - if this is a point of currentRoute
-                      callback(currentRoute.points.indexOf(endPoint) !== -1);
+                      filterRouteCallback(currentRoute.points.indexOf(endPoint) !== -1);
                     }, (xRoutes) => {
                       // make result for each route
                       if (xRoutes.length > 0) {
@@ -273,12 +272,17 @@ Service.prototype.getPersonalRoute = function (start, end, mode, callback) {
                             // if A point BEFORE B point
                             if (indexA < indexB) {
                               // calculate total distance
-                              for (let indx = indexA; indx < indexB; indx++) { distance += currentRoute.nodes[indx].total; }
-                            }
-                            // if A point AFTER B point
-                            else {
-                              for (let i = indexB; i < currentRoute.nodes.length; i++) { distance += currentRoute.nodes[i].total; }
-                              for (let i = 0; i < indexB; i++) { distance += currentRoute.nodes[i].total; }
+                              for (let indx = indexA; indx < indexB; indx++) {
+                                distance += currentRoute.nodes[indx].total;
+                              }
+                              // if A point AFTER B point
+                            } else {
+                              for (let j = indexB; j < currentRoute.nodes.length; j++) {
+                                distance += currentRoute.nodes[j].total;
+                              }
+                              for (let k = 0; k < indexB; k++) {
+                                distance += currentRoute.nodes[k].total;
+                              }
                             }
                             // calculate WALK TO
                             const distTo = utils.dist(start.lat, start.lng, point.lat, point.lng);
@@ -315,39 +319,42 @@ Service.prototype.getPersonalRoute = function (start, end, mode, callback) {
                               total: distance
                             };
                             // check if result exist
-                            if (!result.result) result.result = r;
-                            else {
-                              if (result.result.type === 'ONE') {
-                                const totalWalkCurr = result.result.steps[0].total
-                                  + result.result.steps[2].total;
-                                const totalWalkResultNew = distTo + distFrom;
-                                // compare
-                                const totalBusCurr = result.result.total;
-                                // replace
-                                if ((totalWalkCurr * 5 + totalBusCurr) > (totalWalkResultNew * 5
-                                  + distance)) result.result = r;
-                                // end ----
-                              }
+                            if (!result.result) {
+                              result.result = r;
+                            } else if (result.result.type === 'ONE') {
+                              const totalWalkCurr = result.result.steps[0].total
+                                + result.result.steps[2].total;
+                              const totalWalkResultNew = distTo + distFrom;
+                              // compare
+                              const totalBusCurr = result.result.total;
+                              // replace
+                              if ((totalWalkCurr * 5 + totalBusCurr) > (totalWalkResultNew * 5
+                                + distance)) result.result = r;
                               // add checks for other types
                             }
                           }
                         }
-                        callback();
-                      }
-                      /*
+                        routesCallback();
+                        /*
                        * TO DO:
                        * add creating route through more than one current routes
                        *
                        *
                        */
-                      else callback();
+                      } else {
+                        routesCallback();
+                      }
                     });
-                  } else callback();
+                  } else {
+                    routesCallback();
+                  }
                 });
               }, () => {
-                callback();
+                pointsCallback();
               });
-            } else callback();
+            } else {
+              pointsCallback();
+            }
             /*
              * finished checking points...
              */
@@ -370,16 +377,16 @@ Service.prototype.getPersonalRoute = function (start, end, mode, callback) {
  * @lng - transport longitude
  * @callback - callback function
  */
-Service.prototype.updateTransportData = function (_id, routeId, lat, lng, callback) {
+Service.prototype.updateTransportData = (_id, routeId, lat, lng, callback) => {
   const __this = this;
   // find each transport by _id
   this.__trans.findById(_id, (err, currentTrans) => {
     // check if we find each transport
     if ((!err) && (currentTrans)) {
       // find selected route
-      __this.__route.findById(routeId, (err, currentRoute) => {
+      __this.__route.findById(routeId, (findRouteErr, currentRoute) => {
         // check error
-        if ((!err) && (currentRoute)) {
+        if ((!findRouteErr) && (currentRoute)) {
           // set route
           currentTrans.route = routeId;
           // update latitude
@@ -401,9 +408,8 @@ Service.prototype.updateTransportData = function (_id, routeId, lat, lng, callba
                 // set distance
                 currentTrans.distance = 0;
                 // get index of NEXT point in array route.points
-                async.detect(currentRoute.points, (point, callback) => {
-                  if (point.toString() === currentTrans.next._id.toString()) callback(true);
-                  callback(false);
+                async.detect(currentRoute.points, (point, detectPointCallback) => {
+                  detectPointCallback(point.toString() === currentTrans.next._id.toString());
                 }, (nextPoint) => {
                   // if there are such point
                   if (nextPoint) {
@@ -412,7 +418,7 @@ Service.prototype.updateTransportData = function (_id, routeId, lat, lng, callba
                     // WILL BE DECREASED (done)
                     index = (index === currentRoute.points.length - 1) ? 0 : index;
                     // find this point in db
-                    __this.__point.findById(currentRoute.points[index], (err, newNextPoint) => {
+                    __this.__point.findById(currentRoute.points[index], (findPointErr, newNextPoint) => {
                       // set new next point
                       currentTrans.next = {
                         lat: newNextPoint.lat,
@@ -421,48 +427,47 @@ Service.prototype.updateTransportData = function (_id, routeId, lat, lng, callba
                         _id: newNextPoint._id
                       };
                       // save this trans to db and response it
-                      currentTrans.save((err) => {
+                      currentTrans.save((saveTransErr) => {
                         // return result
-                        if (!err) callback({ trans: currentTrans });
-                        else callback({ error: true });
+                        if (!saveTransErr) {
+                          callback({ trans: currentTrans });
+                        } else {
+                          callback({ error: true });
+                        }
                       });
                     });
-                  }
-                  // if there are not such point
-                  else {
+                    // if there are not such point
+                  } else {
                     currentTrans.save(() => {
                       callback({ error: true });
                     });
                   }
                 });
-              }
-              // we are between CURRENT and NEXT
-              else {
+                // we are between CURRENT and NEXT
+              } else {
                 currentTrans.distance = left;
-                currentTrans.save((err) => {
-                  // add error checking
+                currentTrans.save(() => {
+                  // TODO: add error checking
                   callback({ trans: currentTrans });
                 });
               }
-            }
-            // we are stayed at current station
-            else {
+              // we are stayed at current station
+            } else {
               currentTrans.save(() => {
+                // TODO: add error checking
                 callback({ trans: currentTrans });
               });
             }
-          }
-          // position is not selected before
-          else {
-            __this.__point.find({ routes: routeId }, (err, points) => {
-              if (!err) {
+            // position is not selected before
+          } else {
+            __this.__point.find({ routes: routeId }, (findPointErr, points) => {
+              if (!findPointErr) {
                 // async check each point
-                async.detect(points, (point, callback) => {
+                async.detect(points, (point, detectPointCallback) => {
                   // calculate distance between each point and current position
                   const length = utils.dist(point.lat, point.lng, lat, lng);
                   // if we get required point
-                  if (length < __deltaDistance) callback(true);
-                  else callback(false);
+                  detectPointCallback(length < __deltaDistance);
                 }, (currentPoint) => {
                   // there are required point
                   if (currentPoint) {
@@ -472,9 +477,8 @@ Service.prototype.updateTransportData = function (_id, routeId, lat, lng, callba
                     // WILL BE DECREASED (done #0.1.2)
                     index = (index === currentRoute.points.length - 1) ? 0 : index;
                     // get index of this point in point array
-                    async.detect(points, (p, callback) => {
-                      if (p._id.toString() === currentRoute.points[index].toString()) callback(true);
-                      callback(false);
+                    async.detect(points, (p, detectNextPointCallback) => {
+                      detectNextPointCallback(p._id.toString() === currentRoute.points[index].toString());
                     }, (nextPoint) => {
                       if (nextPoint) {
                         currentTrans.current = {
@@ -491,8 +495,10 @@ Service.prototype.updateTransportData = function (_id, routeId, lat, lng, callba
                         };
                         currentTrans.distance = 0;
                         // update each trans data in database
-                        currentTrans.save((err) => {
-                          if (!err) callback({ trans: currentTrans });
+                        currentTrans.save((saveTransErr) => {
+                          if (!saveTransErr) {
+                            callback({ trans: currentTrans });
+                          }
                         });
                       }
                     });

@@ -11,7 +11,7 @@ const MapService = require('../lib/Map.service');
 const { getLogger } = require('../util');
 const { version } = require('../../package');
 
-const router = express.Router;
+const router = express.Router();
 const service = new MapService(Point, Node, Route, Transport);
 const logger = getLogger('controllers/index');
 
@@ -312,7 +312,7 @@ router.get('/data/guide', (req, res) => Guide.find((err, guide) => {
  */
 router.get('/service/arrival/:id', (req, res) => {
   const { id } = req.params;
-  return service.getPointInfo(id, result => res.send(result));
+  return service.getPointInfo(id, (result) => res.send(result));
 });
 
 /*
@@ -333,7 +333,7 @@ router.get('/service/arrival/:id', (req, res) => {
  */
 router.post('/service/guide', (req, res) => {
   const { start, end, mode } = req.body;
-  return service.getPersonalRoute(start, end, mode, results => res.send(results));
+  return service.getPersonalRoute(start, end, mode, (results) => res.send(results));
 });
 
 /*

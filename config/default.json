@@ -23,6 +23,12 @@
         "consoleAppender": {
           "type": "console"
         }
+      },
+      "categories": {
+        "default": {
+          "appenders": ["consoleAppender"],
+          "level": "debug"
+        }
       }
     },
     "logLevel": "DEBUG"

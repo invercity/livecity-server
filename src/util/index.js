@@ -8,7 +8,7 @@ module.exports = {
     return hash.update(value).digest('hex');
   },
   generateSalt: () => crypto.randomBytes(config.get('app.saltWorkFactor')).toString('hex'),
-  rad: x => x * Math.PI / 180,
+  rad: (x) => (x * Math.PI) / 180,
   dist: (p1Lat, p1Lng, p2Lat, p2Lng) => {
     const R = 6371; // earth's mean radius in km
     const dLat = this.rad(p2Lat - p1Lat);
@@ -23,7 +23,7 @@ module.exports = {
     const logger = log4js.getLogger(moduleName);
     log4js.configure(config.get('log4js.config'));
     // pattern: '-yyyy-MM-dd'
-    logger.setLevel(config.get('log4js.logLevel'));
+    logger.level = config.get('log4js.logLevel');
     return logger;
   }
 };
