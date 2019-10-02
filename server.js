@@ -1,13 +1,13 @@
 /**
  * Created by Andrii Yermolenko on 12/16/13.
  */
+const path = require('path');
 const express = require('express');
 // const favicon = require('serve-favicon');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const methodOverride = require('method-override');
 const session = require('express-session');
-const serveStatic = require('serve-static');
 const cors = require('cors');
 const config = require('config');
 
@@ -30,6 +30,8 @@ const app = express();
 // const service = new Service(Point, Node, Route, Transport);
 const api = require('./src/controllers');
 
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
 app.use(cors());
 app.use(cookieParser());
 app.use(session({
@@ -45,23 +47,25 @@ app.use(bodyParser.urlencoded({
 app.use(bodyParser.json());
 app.use(methodOverride()); // support PUT, DELETE
 //app.use(app.router);
-app.use(serveStatic(__dirname + '/views'));
-app.set('/views',__dirname + '/views');
-app.engine('html', require('ejs').renderFile);
+
+// app.engine('html', require('ejs').renderFile);
+
+const { googleApiKey } = config.get('api');
 
 app.get('/', function (req, res) {
-  res.render('index.html');
+  return res.render('index', { googleApiKey });
 });
 
 app.get('/client', function(req, res) {
-  res.render('bus.html');
+  res.render('bus', { googleApiKey });
 });
 
 app.get('/points', function(req, res) {
-  res.render('creator.html');
+  res.render('creator', { googleApiKey });
 });
 
 app.use(api);
+app.use('/', express.static('public'));
 
 // Run app on selected port
 app.listen(config.get('app.port'), () => {

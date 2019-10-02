@@ -32,5 +32,8 @@
       }
     },
     "logLevel": "DEBUG"
+  },
+  "api": {
+    "googleApiKey": ""
   }
 }
