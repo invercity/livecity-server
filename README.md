@@ -1,7 +1,10 @@
 # livecity-server
-[![Build Status](https://travis-ci.org/invercity/livecity-server.svg?branch=master)](https://travis-ci.org/invercity/livecity-server)  
+[![GitHub Release](https://github-basic-badges.herokuapp.com/release/invercity/livecity-server.svg)]()
+[![Build Status](https://travis-ci.org/invercity/livecity-server.svg?branch=master)](https://travis-ci.org/invercity/livecity-server)
+[![David](https://david-dm.org/invercity/livecity-server.svg)](https://david-dm.org/invercity/livecity-server)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/a97494f4f98946d2bdacdc1194335ad9)](https://www.codacy.com/manual/andriy.ermolenko/livecity-server?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=invercity/livecity-server&amp;utm_campaign=Badge_Grade)
+[![Open Source Love](https://badges.frapsoft.com/os/mit/mit.svg?v=102)](https://github.com/ellerbrock/open-source-badge/)
 Interactive system for monitoring city traffic  
-Last version: ```0.3.3```  
 ## Features
 ### Current features list:
 1. Displaying routes, points, transports;
@@ -11,7 +14,7 @@ Last version: ```0.3.3```
 
 ## Installation
 ### Pre-requirements
-- [Node.JS](https://nodejs.org) 6 and above;
+- [Node.JS](https://nodejs.org) 8 and above;
 - [MongoDB](https://www.mongodb.com/what-is-mongodb) 3 and above;
 
 ### Next steps
