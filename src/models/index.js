@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
 const config = require('config');
+const logger = require('../util').getLogger('mongoose')
 
-mongoose.connect(config.get('db.uri'), { useNewUrlParser: true });
+mongoose.connect(config.get('db.uri')).then(() => logger.info('Connected to db'));
 
 const Guide = require('./Guide.model');
 const Node = require('./Node.model');

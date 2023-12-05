@@ -1,9 +1,7 @@
 # livecity-server
-[![GitHub Release](https://github-basic-badges.herokuapp.com/release/invercity/livecity-server.svg)](https://github.com/invercity/livecity-server/releases)
-[![Build Status](https://travis-ci.org/invercity/livecity-server.svg?branch=master)](https://travis-ci.org/invercity/livecity-server)
-[![David](https://david-dm.org/invercity/livecity-server.svg)](https://david-dm.org/invercity/livecity-server)
+![GitHub package.json version](https://img.shields.io/github/package-json/v/invercity/livecity-server)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/a97494f4f98946d2bdacdc1194335ad9)](https://www.codacy.com/manual/andriy.ermolenko/livecity-server?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=invercity/livecity-server&amp;utm_campaign=Badge_Grade)
-[![Open Source Love](https://badges.frapsoft.com/os/mit/mit.svg?v=102)](https://github.com/ellerbrock/open-source-badge/)
+![License](https://img.shields.io/github/license/invercity/livecity-server)
 
 Interactive system for monitoring city traffic  
 ## Features
@@ -15,8 +13,8 @@ Interactive system for monitoring city traffic
 
 ## Installation
 ### Pre-requirements
-- [Node.JS](https://nodejs.org) 8 and above;
-- [MongoDB](https://www.mongodb.com/what-is-mongodb) 3 and above;
+- [Node.JS](https://nodejs.org);
+- [MongoDB](https://www.mongodb.com/what-is-mongodb)
 
 ### Next steps
 Install dependencies:  
@@ -43,13 +41,14 @@ Configure application
 - [!] ES6 migrate
 - [!] Logger
 - [!] Error handler
-- Move to modern Vue2 interface
+- [!] Webpack
+- Move to React interface
 - Full guide functionality
 - User roles
 - Saving, sharing guides
 - Transport info
 - Locales
-- Basic socket.io implementation
+- Basic Socket.io implementation
 - API documentation
 - Registration
 - Route editor (full functionality)
