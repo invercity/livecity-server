@@ -1,1 +1,13 @@
-# Created by .gitignore support plugin (hsz.mobi)
+node_modules/
+dist/
+.env
+.env.local
+apps/*/.env
+apps/*/dist/
+packages/*/dist/
+.DS_Store
+*.log
+.idea/
+.vscode/
+.gemini/
+.agents/
