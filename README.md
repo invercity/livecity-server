@@ -1,6 +1,8 @@
 # livecity-server
 
-[![CI — Audit, Build & Test](https://github.com/invercity/livecity-server/actions/workflows/ci.yml/badge.svg)](https://github.com/invercity/livecity-server/actions/workflows/ci.yml)
+[![CI — Build & Test](https://github.com/invercity/livecity-server/actions/workflows/ci.yml/badge.svg)](https://github.com/invercity/livecity-server/actions/workflows/ci.yml)
+[![Dependency Audit](https://github.com/invercity/livecity-server/actions/workflows/audit.yml/badge.svg)](https://github.com/invercity/livecity-server/actions/workflows/audit.yml)
+[![Latest Tag](https://img.shields.io/github/v/tag/invercity/livecity-server?include_prereleases&sort=semver&label=latest%20tag)](https://github.com/invercity/livecity-server/tags)
 
 Interactive real-time city public transport monitoring and route planning system, modernized for the **Node.js 24 / 26+**, **NestJS**, **MongoDB (GeoJSON)**, **React 19**, and **Google Maps API** stack.  
 Modern upgrade of **livecity** project from 2014
@@ -24,7 +26,9 @@ Livecity is structured as a TypeScript monorepo (`npm workspaces`):
   - End-to-end TypeScript DTOs and interfaces shared between `@livecity/api` and `@livecity/web`.
 - **Testing & CI/CD:**
   - Unit tests powered by Node's built-in test runner (`node:test` and `node:assert/strict`) with zero external test framework bloat.
-  - GitHub Actions workflow (`.github/workflows/ci.yml`) running `npm audit`, `npm run typecheck`, `npm test`, and `npm run build`.
+  - GitHub Actions CI workflow (`.github/workflows/ci.yml`) running `npm run typecheck`, `npm test`, and `npm run build`.
+  - Dedicated Security Audit workflow (`.github/workflows/audit.yml`) running `npm audit` on every push, PR, and weekly schedule.
+  - Automated Release workflow (`.github/workflows/release.yml`) that tags and publishes a new GitHub Release with auto-generated release notes whenever a PR is merged into `master` / `main`.
 
 ---
 
@@ -32,7 +36,10 @@ Livecity is structured as a TypeScript monorepo (`npm workspaces`):
 
 ```text
 .
-├── .github/workflows/ci.yml   # GitHub Actions: audit, typecheck, test, build
+├── .github/workflows/
+│   ├── audit.yml              # GitHub Actions: npm security audit (push, PR & weekly cron)
+│   ├── ci.yml                 # GitHub Actions: typecheck, unit tests, build
+│   └── release.yml            # GitHub Actions: auto tag & GitHub Release on merge
 ├── apps/
 │   ├── api/                   # NestJS REST + SSE backend (@livecity/api)
 │   │   └── src/

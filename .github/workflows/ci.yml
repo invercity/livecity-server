@@ -1,4 +1,4 @@
-name: CI — Audit, Build & Test
+name: CI — Build & Test
 
 on:
   push:
@@ -7,8 +7,8 @@ on:
     branches: [master, main]
 
 jobs:
-  audit-build-test:
-    name: Dependency Audit, Build & Unit Tests
+  build-and-test:
+    name: Typecheck, Unit Tests & Build
     runs-on: ubuntu-latest
 
     strategy:
@@ -27,9 +27,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Security audit (production dependencies)
-        run: npm audit --omit=dev --audit-level=high
 
       - name: TypeScript typecheck
         run: npm run typecheck

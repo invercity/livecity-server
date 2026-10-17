@@ -1,0 +1,28 @@
+name: Dependency Audit
+
+on:
+  push:
+    branches: [master, main, 'feat/**']
+  pull_request:
+    branches: [master, main]
+  schedule:
+    # Run security audit automatically every Monday at 06:00 UTC
+    - cron: '0 6 * * 1'
+
+jobs:
+  security-audit:
+    name: npm Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
+          cache: 'npm'
+
+      - name: Run npm security audit
+        run: npm audit --omit=dev --audit-level=high
