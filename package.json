@@ -1,40 +1,25 @@
 {
-    "name": "livecity",
-    "version": "v0.3.3-beta",
-    "author": "invercity",
-    "description": "node js based app for city traffic monitoring",
-    "contributors": [
-        {
-            "name": "Andriy Ermolenko",
-            "email": "andriy.ermolenko@gmail.com"
-        }
-    ],
-    "scripts": {
-        "start": "nodejs app.js run"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/invercity/livecity.git"
-    },
-    "dependencies" : {
-        "express" : "*",
-        "request" : "*",
-        "mongoose": "*",
-        "ejs"     : "*",
-        "path"    : "*",
-        "nconf"   : "*",
-        "async"   : "*",
-        "bcrypt"  : "*",
-        "googlemaps" : "*",
-        "body-parser" : "*",
-        "cookie-parser" : "*",
-        "serve-favicon" : "*",
-        "express-session" : "*",
-        "method-override" : "*",
-        "serve-static": "*"
-    },
-    "analyze": false,
-    "engines": {
-        "node": ">=0.8"
-    }
+  "name": "livecity-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Modern city traffic monitoring system (NestJS + Mongoose + React + Google Maps API)",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "node dev-runner.mjs",
+    "dev:api": "npm --workspace=@livecity/api run start:dev",
+    "dev:web": "npm --workspace=@livecity/web run dev",
+    "build": "npm --workspaces --if-present run build",
+    "typecheck": "npm --workspaces --if-present run typecheck",
+    "test": "npm --workspaces --if-present run test"
+  },
+  "allowScripts": {
+    "esbuild@0.25.12": true,
+    "fsevents@2.3.3": true
+  }
 }
